@@ -13,8 +13,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="assets\grass_path_tileset.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="assets\main.tmx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\path_grass_tileset.tsx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="assets\reference.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

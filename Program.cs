@@ -125,7 +125,9 @@ class RaylibTilemap
         var neighbourIndex = 0;
         for (var i = 0; i < dualGridOffsets.Length; i++)
         {
-            if (GetTileAt(layer, x + (int)dualGridOffsets[i].X, y + (int)dualGridOffsets[i].Y) == gid)
+            var tile_id = GetTileAt(layer, x + (int)dualGridOffsets[i].X, y + (int)dualGridOffsets[i].Y);
+
+            if (tile_id == gid || tile_id == 0)
             {
                 neighbourIndex += (1 << i);
             }
