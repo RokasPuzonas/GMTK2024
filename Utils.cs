@@ -105,6 +105,24 @@ static class Utils
         return texture;
     }
 
+    public static RaylibAnimation FlattenLayerToAnimation(AsepriteFile ase, string layerName)
+    {
+        var frames = new List<RaylibAnimationFrame>();
+
+        foreach (var frame in ase.Frames)
+        {
+            frames.Add(new RaylibAnimationFrame
+            {
+                texture = FlattenLayerToTexture(frame, layerName),
+                duration = (float)frame.Duration.TotalSeconds
+            });
+        }
+
+        return new RaylibAnimation
+        {
+            frames = frames
+        };
+    }
 
     private static void BlendCel(Span<Rgba32> backdrop, ReadOnlySpan<Rgba32> source, AsepriteBlendMode blendMode, AsepriteDotNet.Common.Rectangle bounds, int frameWidth, int celOpacity, int layerOpacity)
     {
@@ -123,5 +141,42 @@ static class Utils
                 backdrop[index] = AsepriteColorUtilities.Blend(backdrop2, source2, opacity, blendMode);
             }
         }
+    }
+
+    public static void DrawTextureCentered(Texture texture, Vector2 position, float rotation, float scale, Color tint)
+    {
+        var source = new Raylib_CsLo.Rectangle(0, 0, texture.width, texture.height);
+        var dest = new Raylib_CsLo.Rectangle(position.X, position.Y, texture.width, texture.height);
+        Raylib.DrawTexturePro(texture, source, dest, new Vector2(texture.width, texture.height) / 2, rotation, tint);
+    }
+
+    public static float LineAngle(Vector2 start, Vector2 end)
+    {
+        return (float)Math.Atan2(end.Y - start.Y, end.X - start.X);
+    }
+
+    public static float ToDegrees(float radians)
+    {
+        return (float)(radians * 180 / Math.PI);
+    }
+
+    public static float GetAimAngle(Vector2 from, Vector2 to)
+    {
+        var dir = Vector2.Normalize(to - from);
+        if (Math.Abs(dir.X - 1) < 1e-5)
+        {
+            return 0;
+        }
+
+        var lineAngle = LineAngle(dir, new Vector2(1, 0));
+        return (-2*lineAngle + 3*(float)Math.PI) % (float)(2*Math.PI);
+    }
+
+    public static float AngleDifference(float a, float b)
+    {
+        var diff = a % (2*Math.PI) - b % (2 * Math.PI);
+        if (diff > Math.PI) diff -= 2*Math.PI;
+        if (diff < -Math.PI) diff += 2*Math.PI;
+        return (float)diff;
     }
 }

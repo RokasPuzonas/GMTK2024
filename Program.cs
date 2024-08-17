@@ -6,6 +6,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Numerics;
+using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices.JavaScript;
 using TiledCS;
@@ -16,6 +17,7 @@ internal class Program
 {
     static float tileSize = 32;
     static Vector2 canvasSize = new Vector2(320 * 3, 180 * 3);
+    static Random rng = new Random();
 
     public static float DivMultipleFloor(float a, float b)
     {
@@ -219,15 +221,35 @@ internal class Program
                         towers.Remove(tower);
                     }
 
+                    var aim = rng.NextSingle() * 2 * (float)Math.PI;
                     towers.Add(new Tower
                     {
                         position = topLeft,
                         size = size,
-                        type = TowerType.Revolver
+                        type = TowerType.Revolver,
+                        createdAt = (float)Raylib.GetTime(),
+                        targetAim = aim,
+                        aim = aim
                     });
                 }
             }
         }
+    }
+
+    public static Enemy? GetNearestEnemy(List<Enemy> enemies, Vector2 position)
+    {
+        if (enemies.Count == 0) return null;
+
+        var nearestEnemy = enemies[0];
+        foreach (var enemy in enemies)
+        {
+            if (Vector2.DistanceSquared(nearestEnemy.position, position) > Vector2.DistanceSquared(enemy.position, position))
+            {
+                nearestEnemy = enemy;
+            }
+        }
+
+        return nearestEnemy;
     }
 
     public static void Main(string[] args)
@@ -273,7 +295,7 @@ internal class Program
         currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.5f, type = EnemyType.Slime });
         currentWave.spawns.Add(new EnemyWaveSpawn { delay = 1.0f, type = EnemyType.Slime });
         currentWave.spawns.Add(new EnemyWaveSpawn { delay = 1.0f, type = EnemyType.Slime });
-
+        
         var enemies = new List<Enemy>();
 
         var maxHealth = 100f;
@@ -290,6 +312,10 @@ internal class Program
             Utils.FlattenLayerToTexture(towerBaseTileset.Frames[0], "foliage"),
             new Vector2(tileSize, tileSize)
         );
+
+        var revolverAse = AsepriteFileLoader.FromFile("assets/revolver.aseprite");
+        var revolverBase = Utils.FlattenLayerToAnimation(revolverAse, "underbelly");
+        var revolverHead = Utils.FlattenLayerToAnimation(revolverAse, "gub");
 
         var towers = new List<Tower>();
 
@@ -353,14 +379,71 @@ internal class Program
                     var existingTower = GetTowerAt(towers, mouseTile + new Vector2(tileSize, tileSize) / 2);
                     if (existingTower == null)
                     {
+                        var aim = rng.NextSingle() * 2 * (float)Math.PI;
                         towers.Add(new Tower
                         {
                             position = mouseTile,
-                            size = new Vector2(tileSize, tileSize)
+                            size = new Vector2(tileSize, tileSize),
+                            createdAt = (float)Raylib.GetTime(),
+                            targetAim = aim,
+                            aim = aim
                         });
 
                         CheckMergingTowers(towers, mouseTile);
                     }
+                }
+            }
+
+            foreach (var tower in towers)
+            {
+                tower.shootCooldown = Math.Max(tower.shootCooldown - dt, 0);
+                
+                if (tower.shootCooldown == 0)
+                {
+                    tower.state = TowerState.Idle;
+                }
+
+                if (tower.state == TowerState.Shoot)
+                {
+                    tower.animationTimer += dt;
+                    while (tower.animationTimer > revolverBase.frames[tower.animationIndex].duration)
+                    {
+                        tower.animationTimer -= revolverBase.frames[tower.animationIndex].duration;
+                        tower.animationIndex = (tower.animationIndex + 1) % revolverBase.frames.Count;
+                    }
+
+                } else {
+                    tower.animationIndex = 0;
+                }
+
+                if (tower.state == TowerState.Idle)
+                {
+                    var nearestEnemy = GetNearestEnemy(enemies, tower.position);
+                    if (nearestEnemy != null && Vector2.Distance(nearestEnemy.position, tower.position) < tower.range)
+                    {
+                        tower.targetAim = Utils.GetAimAngle(tower.Center(), nearestEnemy.position);
+                        tower.target = nearestEnemy;
+                    } else
+                    {
+                        tower.target = null;
+                    }
+
+                    if (tower.target == null)
+                    {
+                        tower.targetAim += (float)Math.Sin(Raylib.GetTime()) / (2*(float)Math.PI) / 10;
+                    }
+
+                    if (tower.target != null && Math.Abs(Utils.AngleDifference(tower.targetAim, tower.aim)) < 0.01)
+                    {
+                        tower.state = TowerState.Shoot;
+                        tower.shootCooldown = revolverBase.GetDuration();
+                    }
+                }
+
+                var aimDiff = Utils.AngleDifference(tower.targetAim, tower.aim);
+                if (Math.Abs(aimDiff) > 0.01)
+                {
+                    tower.aim += Math.Sign(aimDiff) * Math.Min(dt * tower.aimSpeed, Math.Abs(aimDiff));
                 }
             }
 
@@ -387,7 +470,7 @@ internal class Program
                         }
                     }
                     
-                    var enemySpeed = tileSize*2;
+                    var enemySpeed = tileSize/2;
 
                     var targetPosition = path[enemy.targetEndpoint];
                     var distanceToTarget = Vector2.Distance(targetPosition, enemy.position);
@@ -418,9 +501,18 @@ internal class Program
 
                 foreach (var tower in towers)
                 {
+                    var middle = tower.position + tower.size / 2;
                     var towerRect = tower.GetRect();
                     dualGridTowerBase.DrawRectangle(towerRect, Raylib.GetColor(0x5f5f5fFF));
                     dualGridTowerFoliage.DrawRectangle(towerRect, Raylib.WHITE);
+
+                    if (tower.type == TowerType.Revolver)
+                    {
+                        var rotation = Utils.ToDegrees(tower.aim) - 90;
+                        Utils.DrawTextureCentered(revolverBase.frames[tower.animationIndex].texture, middle, -rotation, 1, Raylib.WHITE);
+                        Utils.DrawTextureCentered(revolverHead.frames[tower.animationIndex].texture, middle, -rotation, 1, Raylib.WHITE);
+                        Raylib.DrawCircleLines((int)middle.X, (int)middle.Y, tower.range, Raylib.RED);
+                    }
                 }
 
                 if (mouse != null)
