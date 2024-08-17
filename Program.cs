@@ -165,19 +165,24 @@ internal class Program
         var path = new List<Vector2>();
 
         var pathLayer = rlTilemap.GetLayer("path", TiledLayerType.ObjectLayer);
-        if (pathLayer != null)
+        Debug.Assert(pathLayer != null);
+        Array.Sort(pathLayer.objects, Comparer<TiledObject>.Create((a, b) => a.name.CompareTo(b.name)));
+
+        foreach (var obj in pathLayer.objects)
         {
-            Debug.Assert(pathLayer.objects != null);
-            Array.Sort(pathLayer.objects, Comparer<TiledObject>.Create((a, b) => a.name.CompareTo(b.name)));
+            if (obj.point == null) continue;
 
-            foreach (var obj in pathLayer.objects)
-            {
-                if (obj.point == null) continue;
-
-                path.Add(new Vector2(obj.x, obj.y));
-            }
+            path.Add(new Vector2(obj.x, obj.y));
         }
 
+        var markersLayer = rlTilemap.GetLayer("markers", TiledLayerType.ObjectLayer);
+        Debug.Assert(markersLayer != null);
+        var baseMarker = RaylibTilemap.GetObject(markersLayer, "base");
+        Debug.Assert(baseMarker != null);
+
+        var basePosition = new Vector2(baseMarker.x, baseMarker.y);
+
+        path.Add(basePosition);
 
         var enemies = new List<Enemy>();
         enemies.Add(new Enemy
@@ -185,6 +190,8 @@ internal class Program
             position = path[0]
         });
 
+        var maxHealth = 100;
+        var health = maxHealth;
 
         // Main game loop
         while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
@@ -251,7 +258,6 @@ internal class Program
                         }
                         enemy.position += step;
                     }
-                   
 
                     var size = new Vector2(16, 16);
                     Raylib.DrawRectangleV(enemy.position - size / 2, size, Raylib.PURPLE);
@@ -263,6 +269,8 @@ internal class Program
                 }
 
                 DrawLine(path, Raylib.RED);
+
+                Raylib.DrawCircleLines((int)basePosition.X, (int)basePosition.Y, tileSize/3, Raylib.YELLOW);
             }
             Raylib.EndMode2D();
 

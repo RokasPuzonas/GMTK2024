@@ -170,4 +170,17 @@ class RaylibTilemap
 
         return null;
     }
+
+    public static TiledObject? GetObject(TiledLayer layer, string name)
+    {
+        foreach (var obj in layer.objects)
+        {
+            if (obj.name == name)
+            {
+                return obj;
+            }
+        }
+
+        return null;
+    }
 }
