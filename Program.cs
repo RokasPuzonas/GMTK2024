@@ -1,8 +1,10 @@
 ﻿using AsepriteDotNet.Aseprite.Types;
 using AsepriteDotNet.IO;
+using AsepriteDotNet.Processors;
 using Raylib_CsLo;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using System.Numerics;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices.JavaScript;
@@ -209,6 +211,18 @@ internal class Program
         var maxHealth = 100f;
         var health = maxHealth;
 
+        var towerBaseTileset = AsepriteFileLoader.FromFile("assets/grass_tower_base_tileset.aseprite");
+
+        var dualGridTowerBase = new DualGridTileset(
+            Utils.FlattenLayerToTexture(towerBaseTileset.Frames[0], "tower_base"),
+            new Vector2(tileSize, tileSize)
+        );
+
+        var dualGridTowerFoliage = new DualGridTileset(
+            Utils.FlattenLayerToTexture(towerBaseTileset.Frames[0], "foliage"),
+            new Vector2(tileSize, tileSize)
+        );
+
         // Main game loop
         while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
         {
@@ -280,7 +294,7 @@ internal class Program
                         }
                     }
                     
-                    var enemySpeed = 32* 5;
+                    var enemySpeed = tileSize*2;
 
                     var targetPosition = path[enemy.targetEndpoint];
                     var distanceToTarget = Vector2.Distance(targetPosition, enemy.position);
@@ -345,6 +359,12 @@ internal class Program
                 healtbarRect.width *= (health / maxHealth);
                 Raylib.DrawRectangleRec(healtbarRect, Raylib.GREEN);
 
+
+                var foo = new Rectangle(32, 32, tileSize*3, tileSize*3);
+                dualGridTowerBase.DrawRectangle(foo, Raylib.GetColor(0x5f5f5fFF));
+                dualGridTowerFoliage.DrawRectangle(foo, Raylib.WHITE);
+
+                Raylib.DrawRectangleLinesEx(foo, 1, Raylib.RED);
                 RlGl.rlPopMatrix();
             }
 

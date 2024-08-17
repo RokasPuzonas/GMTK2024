@@ -44,28 +44,6 @@ class RaylibTilemap
     {
         Debug.Assert(rlTileset.tileset.TileCount == 16);
 
-        var neighbourLookup = new Vector2[16];
-
-        neighbourLookup[0b0100] = new Vector2(0, 0);
-        neighbourLookup[0b1001] = new Vector2(0, 1);
-        neighbourLookup[0b0010] = new Vector2(0, 2);
-        neighbourLookup[0b0000] = new Vector2(0, 3);
-
-        neighbourLookup[0b1010] = new Vector2(1, 0);
-        neighbourLookup[0b1110] = new Vector2(1, 1);
-        neighbourLookup[0b0011] = new Vector2(1, 2);
-        neighbourLookup[0b1000] = new Vector2(1, 3);
-
-        neighbourLookup[0b1101] = new Vector2(2, 0);
-        neighbourLookup[0b1111] = new Vector2(2, 1);
-        neighbourLookup[0b1011] = new Vector2(2, 2);
-        neighbourLookup[0b0110] = new Vector2(2, 3);
-
-        neighbourLookup[0b1100] = new Vector2(3, 0);
-        neighbourLookup[0b0111] = new Vector2(3, 1);
-        neighbourLookup[0b0101] = new Vector2(3, 2);
-        neighbourLookup[0b0001] = new Vector2(3, 3);
-
         var gid = 0;
         foreach (var mapTileset in map.Tilesets)
         {
@@ -89,16 +67,11 @@ class RaylibTilemap
             }
         }
 
-        var rect = new Rectangle(
-            neighbourLookup[neighbourIndex].X * rlTileset.tileset.TileWidth,
-            neighbourLookup[neighbourIndex].Y * rlTileset.tileset.TileHeight,
-            rlTileset.tileset.TileWidth,
-            rlTileset.tileset.TileHeight
-        );
+        var dualGrid = new DualGridTileset(rlTileset.texture, new Vector2(rlTileset.tileset.TileWidth, rlTileset.tileset.TileHeight));
 
-        var tileX = (x + 0.5f) * map.TileWidth;
-        var tileY = (y + 0.5f) * map.TileHeight;
-        Raylib.DrawTexturePro(rlTileset.texture, rect, new Rectangle(tileX, tileY, map.TileWidth, map.TileHeight), Vector2.Zero, 0, Raylib.WHITE);
+        var tileX = x * map.TileWidth;
+        var tileY = y * map.TileHeight;
+        dualGrid.DrawTile(new Rectangle(tileX, tileY, map.TileWidth, map.TileHeight), Raylib.WHITE, neighbourIndex);
     }
 
     public void Draw()
