@@ -290,11 +290,11 @@ internal class Program
         var currentWave = new EnemyWave();
         var waveSpawnTimer = 0f;
         currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.1f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.5f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.5f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.5f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 1.0f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 1.0f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 3.0f, type = EnemyType.Slime });
         
         var enemies = new List<Enemy>();
 
@@ -315,6 +315,9 @@ internal class Program
 
         var revolverAse = AsepriteFileLoader.FromFile("assets/revolver.aseprite");
         var revolver = Utils.FlattenToAnimation(revolverAse);
+
+        var slimeAse = AsepriteFileLoader.FromFile("assets/slime.aseprite");
+        var slime = Utils.FlattenTagToAnimation(slimeAse, "jump");
 
         var towers = new List<Tower>();
         var bullets = new List<Bullet>();
@@ -354,117 +357,184 @@ internal class Program
                 camera.target += new Vector2(dx, dy) * dt * tileSize * 2;
             }
 
-            waveSpawnTimer += dt;
-            while (currentWave.spawns.Count > 0 && waveSpawnTimer > currentWave.spawns[0].delay)
+            // Towers
             {
-                enemies.Add(new Enemy
+                if (mouse != null)
                 {
-                    position = path[0],
-                    type = currentWave.spawns[0].type
-                });
-                waveSpawnTimer -= currentWave.spawns[0].delay;
+                    var mouseTile = new Vector2(
+                        DivMultipleFloor(mouse.Value.X, tileSize),
+                        DivMultipleFloor(mouse.Value.Y, tileSize)
+                    );
 
-                currentWave.spawns.RemoveAt(0);
-            }
-
-            if (mouse != null)
-            {
-                var mouseTile = new Vector2(
-                    DivMultipleFloor(mouse.Value.X, tileSize),
-                    DivMultipleFloor(mouse.Value.Y, tileSize)
-                );
-
-                if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                {
-                    var existingTower = GetTowerAt(towers, mouseTile + new Vector2(tileSize, tileSize) / 2);
-                    if (existingTower == null)
+                    if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
                     {
-                        var aim = rng.NextSingle() * 2 * (float)Math.PI;
-                        towers.Add(new Tower
+                        var existingTower = GetTowerAt(towers, mouseTile + new Vector2(tileSize, tileSize) / 2);
+                        if (existingTower == null)
                         {
-                            position = mouseTile,
-                            size = new Vector2(tileSize, tileSize),
-                            createdAt = (float)Raylib.GetTime(),
-                            targetAim = aim,
-                            aim = aim
-                        });
+                            var aim = rng.NextSingle() * 2 * (float)Math.PI;
+                            towers.Add(new Tower
+                            {
+                                position = mouseTile,
+                                size = new Vector2(tileSize, tileSize),
+                                createdAt = (float)Raylib.GetTime(),
+                                targetAim = aim,
+                                aim = aim
+                            });
 
-                        CheckMergingTowers(towers, mouseTile);
+                            CheckMergingTowers(towers, mouseTile);
+                        }
                     }
                 }
-            }
 
-            foreach (var tower in towers)
-            {
-                tower.shootCooldown = Math.Max(tower.shootCooldown - dt, 0);
+                foreach (var tower in towers)
+                {
+                    tower.shootCooldown = Math.Max(tower.shootCooldown - dt, 0);
                 
-                if (tower.shootCooldown == 0)
-                {
-                    tower.state = TowerState.Idle;
-                }
-
-                if (tower.state == TowerState.Shoot)
-                {
-                    tower.animationTimer += dt;
-                    while (tower.animationTimer > revolver.frames[tower.animationIndex].duration)
+                    if (tower.shootCooldown == 0)
                     {
-                        tower.animationTimer -= revolver.frames[tower.animationIndex].duration;
-                        tower.animationIndex = (tower.animationIndex + 1) % revolver.frames.Count;
+                        tower.state = TowerState.Idle;
                     }
 
-                } else {
-                    tower.animationIndex = 0;
-                }
-
-                if (tower.state == TowerState.Idle)
-                {
-                    var nearestEnemy = GetNearestEnemy(enemies, tower.position);
-                    if (nearestEnemy != null && Vector2.Distance(nearestEnemy.position, tower.position) < tower.range)
+                    if (tower.state == TowerState.Shoot)
                     {
-                        tower.targetAim = Utils.GetAimAngle(tower.Center(), nearestEnemy.position);
-                        tower.target = nearestEnemy;
-                    } else
-                    {
-                        tower.target = null;
+                        revolver.UpdateAnimation(dt, ref tower.animationTimer, ref tower.animationIndex);
+                    } else {
+                        tower.animationIndex = 0;
                     }
 
-                    if (tower.target == null)
+                    if (tower.state == TowerState.Idle)
                     {
-                        tower.targetAim += (float)Math.Sin(Raylib.GetTime()) / (2*(float)Math.PI) / 10;
-                    }
-
-                    if (tower.target != null && Math.Abs(Utils.AngleDifference(tower.targetAim, tower.aim)) < 0.01)
-                    {
-                        tower.state = TowerState.Shoot;
-                        tower.shootCooldown = revolver.GetDuration();
-                        bullets.Add(new Bullet
+                        var nearestEnemy = GetNearestEnemy(enemies, tower.position);
+                        if (nearestEnemy != null && Vector2.Distance(nearestEnemy.position, tower.position) < tower.range)
                         {
-                            position = tower.Center(),
-                            speed = 100,
-                            direction = new Vector2((float)Math.Cos(tower.aim), (float)Math.Sin(tower.aim))
-                        });
+                            tower.targetAim = Utils.GetAimAngle(tower.Center(), nearestEnemy.position);
+                            tower.target = nearestEnemy;
+                        } else
+                        {
+                            tower.target = null;
+                        }
+
+                        if (tower.target == null)
+                        {
+                            tower.targetAim += (float)Math.Sin(Raylib.GetTime() + tower.createdAt) / (2*(float)Math.PI) / 10;
+                        }
+
+                        if (tower.target != null && Math.Abs(Utils.AngleDifference(tower.targetAim, tower.aim)) < 0.01)
+                        {
+                            tower.state = TowerState.Shoot;
+                            tower.shootCooldown = revolver.GetDuration();
+                            bullets.Add(new Bullet
+                            {
+                                position = tower.Center(),
+                                speed = 200,
+                                direction = new Vector2((float)Math.Cos(tower.aim), (float)Math.Sin(tower.aim))
+                            });
+                        }
+                    }
+
+                    tower.aim = Utils.ApproachAngle(tower.aim, tower.targetAim, dt * tower.aimSpeed);
+                }
+            }
+
+            // Bullets
+            {
+                foreach (var bullet in bullets)
+                {
+                    bullet.position += bullet.direction * dt * bullet.speed;
+
+                    foreach (var enemy in enemies)
+                    {
+                        if (Raylib.CheckCollisionCircleRec(bullet.position, 3, enemy.GetRect())) {
+                            enemy.health = Math.Max(enemy.health -= bullet.damage, 0);
+                            bullet.dead = true;
+                        }
+                    }
+
+                    if (Vector2.Distance(bullet.position, camera.target) > 10_000)
+                    {
+                        bullet.dead = true;
                     }
                 }
 
-                var aimDiff = Utils.AngleDifference(tower.targetAim, tower.aim);
-                if (Math.Abs(aimDiff) > 0.01)
+                for (int i = 0; i < bullets.Count; i++)
                 {
-                    tower.aim += Math.Sign(aimDiff) * Math.Min(dt * tower.aimSpeed, Math.Abs(aimDiff));
+                    if (bullets[i].dead)
+                    {
+                        bullets.RemoveAt(i);
+                        i--;
+                    }
                 }
             }
 
-            foreach (var bullet in bullets)
+            // Enemies
             {
-                bullet.position += bullet.direction * dt * bullet.speed;
-
-            }
-
-            for (int i = 0; i < bullets.Count; i++)
-            {
-                if (bullets[i].dead)
+                waveSpawnTimer += dt;
+                while (currentWave.spawns.Count > 0 && waveSpawnTimer > currentWave.spawns[0].delay)
                 {
-                    bullets.RemoveAt(i);
-                    i--;
+                    var enemyHealth = 100;
+                    enemies.Add(new Enemy
+                    {
+                        position = path[0],
+                        type = currentWave.spawns[0].type,
+                        size = new Vector2(slimeAse.CanvasWidth, slimeAse.CanvasHeight),
+                        maxHealth = enemyHealth,
+                        health = enemyHealth
+                    });
+                    waveSpawnTimer -= currentWave.spawns[0].delay;
+
+                    currentWave.spawns.RemoveAt(0);
+                }
+
+                foreach (var enemy in enemies)
+                {
+                    slime.UpdateAnimation(dt, ref enemy.animationTimer, ref enemy.animationIndex);
+
+                    if (enemy.health == 0)
+                    {
+                        enemy.dead = true;
+                    }
+
+                    if (Vector2.Distance(path[enemy.targetEndpoint], enemy.position) < 0.01)
+                    {
+                        if (enemy.targetEndpoint < path.Count - 1)
+                        {
+                            enemy.targetEndpoint += 1;
+                        }
+                        else
+                        {
+                            enemy.dead = true;
+                            health = Math.Max(health - 10, 0);
+                        }
+                    }
+
+                    var enemySpeed = tileSize / 2;
+
+                    var targetPosition = path[enemy.targetEndpoint];
+                    var distanceToTarget = Vector2.Distance(targetPosition, enemy.position);
+
+                    enemy.targetAim = Utils.GetAimAngle(enemy.position, targetPosition);
+
+                    if (distanceToTarget > 0)
+                    {
+                        var velocity = Vector2.Normalize(targetPosition - enemy.position) * enemySpeed;
+                        var step = velocity * dt;
+                        if (step.Length() > distanceToTarget)
+                        {
+                            step = Vector2.Normalize(step) * distanceToTarget;
+                        }
+                        enemy.position += step;
+                    }
+
+                    enemy.aim = Utils.ApproachAngle(enemy.aim, enemy.targetAim, dt * 3);
+                }
+
+                for (int i = 0; i < enemies.Count; i++)
+                {
+                    if (enemies[i].dead)
+                    {
+                        enemies.RemoveAt(i);
+                        i--;
+                    }
                 }
             }
 
@@ -478,51 +548,16 @@ internal class Program
 
                 foreach (var enemy in enemies)
                 {
-                    if (Vector2.Distance(path[enemy.targetEndpoint], enemy.position) < 8)
-                    {
-                        if (enemy.targetEndpoint < path.Count - 1)
-                        {
-                            enemy.targetEndpoint += 1;
-                        }
-                        else
-                        {
-                            enemy.alive = false;
-                            health = Math.Max(health - 10, 0);
-                        }
-                    }
-                    
-                    var enemySpeed = tileSize/2;
-
-                    var targetPosition = path[enemy.targetEndpoint];
-                    var distanceToTarget = Vector2.Distance(targetPosition, enemy.position);
-         
-                    if (distanceToTarget > 0)
-                    {
-                        var velocity = Vector2.Normalize(targetPosition - enemy.position) * enemySpeed;
-                        var step = velocity * dt;
-                        if (step.Length() > distanceToTarget)
-                        {
-                            step = Vector2.Normalize(step) * distanceToTarget;
-                        }
-                        enemy.position += step;
-                    }
-
-                    var size = new Vector2(16, 16);
-                    Raylib.DrawRectangleV(enemy.position - size / 2, size, Raylib.PURPLE);
-                }
-
-                for (int i = 0; i < enemies.Count; i++)
-                {
-                    if (!enemies[i].alive)
-                    {
-                        enemies.RemoveAt(i);
-                        i--;
-                    }
+                    var rotation = Utils.ToDegrees(enemy.aim) - 90;
+                    Utils.DrawTextureCentered(slime.frames[enemy.animationIndex].texture, enemy.position, rotation, 1, Raylib.WHITE);
+                    //Raylib.DrawRectangleRec(enemy.GetRect(), Raylib.RED);
+                    //Raylib.DrawCircleV(enemy.position, 1, Raylib.BLUE);
+                    //Raylib.DrawLineV(enemy.position, enemy.position + new Vector2((float)Math.Cos(enemy.aim), (float)Math.Sin(enemy.aim)) * 100, Raylib.GREEN);
                 }
 
                 foreach (var bullet in bullets)
                 {
-                    Raylib.DrawCircleV(bullet.position, 5, Raylib.RED);
+                    Raylib.DrawCircleV(bullet.position, 3, Raylib.RED);
                 }
 
                 foreach (var tower in towers)

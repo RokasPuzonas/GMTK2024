@@ -132,12 +132,13 @@ static class Utils
         };
     }
 
-    public static RaylibAnimation FlattenToAnimation(AsepriteFile ase)
+    public static RaylibAnimation FlattenRangeToAnimation(AsepriteFile ase, int from, int to)
     {
         var frames = new List<RaylibAnimationFrame>();
-
-        foreach (var frame in ase.Frames)
+        
+        for (int i = from; i <= to; i++)
         {
+            var frame = ase.Frames[i];
             var rgba = frame.FlattenFrame();
             frames.Add(new RaylibAnimationFrame
             {
@@ -150,6 +151,27 @@ static class Utils
         {
             frames = frames
         };
+    }
+
+    public static RaylibAnimation FlattenToAnimation(AsepriteFile ase)
+    {
+        return FlattenRangeToAnimation(ase, 0, ase.FrameCount - 1);
+    }
+
+    public static RaylibAnimation FlattenTagToAnimation(AsepriteFile ase, string tagName)
+    {
+        AsepriteTag? foundTag = null;
+        foreach (var tag in ase.Tags)
+        {
+            if (tag.Name == tagName)
+            {
+                foundTag = tag;
+            }
+        }
+
+        Debug.Assert(foundTag != null);
+
+        return FlattenRangeToAnimation(ase, foundTag.From, foundTag.To);
     }
 
     private static void BlendCel(Span<Rgba32> backdrop, ReadOnlySpan<Rgba32> source, AsepriteBlendMode blendMode, AsepriteDotNet.Common.Rectangle bounds, int frameWidth, int celOpacity, int layerOpacity)
@@ -202,9 +224,20 @@ static class Utils
 
     public static float AngleDifference(float a, float b)
     {
-        var diff = a % (2*Math.PI) - b % (2 * Math.PI);
-        if (diff > Math.PI) diff -= 2*Math.PI;
+        var diff = a % (2 * Math.PI) - b % (2 * Math.PI);
+        if (diff >  Math.PI) diff -= 2*Math.PI;
         if (diff < -Math.PI) diff += 2*Math.PI;
         return (float)diff;
+    }
+
+    public static float ApproachAngle(float angle, float targetAnle, float stepSize)
+    {
+        var angleDiff = AngleDifference(targetAnle, angle);
+        if (Math.Abs(angleDiff) > 0.01)
+        {
+            angle += Math.Sign(angleDiff) * Math.Min(stepSize, Math.Abs(angleDiff));
+        }
+
+        return angle;
     }
 }

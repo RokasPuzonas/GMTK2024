@@ -13,4 +13,5 @@ internal class Bullet
     public Vector2 position;
     public Vector2 direction;
     public float speed;
+    public int damage = 50;
 }

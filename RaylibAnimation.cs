@@ -21,4 +21,14 @@ internal class RaylibAnimation
         }
         return duration;
     }
+
+    public void UpdateAnimation(float dt, ref float animationTimer, ref int animationIndex)
+    {
+        animationTimer += dt;
+        while (animationTimer > frames[animationIndex].duration)
+        {
+            animationTimer -= frames[animationIndex].duration;
+            animationIndex = (animationIndex + 1) % frames.Count;
+        }
+    }
 }
