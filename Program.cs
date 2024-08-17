@@ -1,204 +1,17 @@
 ﻿using Raylib_CsLo;
-using TiledCS;
-using System.Numerics;
-using System.Reflection.Emit;
+using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
+using TiledCS;
 
 namespace GMTK2024;
 
-class RaylibTileset
-{
-    public string source;
-    public TiledTileset tileset;
-    public Texture texture;
-
-    public RaylibTileset(string dir, string source)
-    {
-        var path = Path.Join(dir, source);
-        this.source = source;
-        tileset = new TiledTileset(path);
-
-        var imagePath = Path.Join(Path.GetDirectoryName(path), tileset.Image.source);
-        texture = Raylib.LoadTexture(imagePath);
-    }
-
-    public static Dictionary<string, RaylibTileset> LoadAllInFolder(string dir) {
-        var tilesets = new Dictionary<string, RaylibTileset>();
-        foreach (var filename in Directory.GetFiles(dir))
-        {
-            if (!filename.EndsWith(".tsx")) continue;
-
-            var rlTileset = new RaylibTileset(dir, Path.GetFileName(filename));
-            tilesets.Add(rlTileset.source, rlTileset);
-        }
-
-        return tilesets;
-    }
-
-    public bool GetBoolProperty(string name, bool fallback)
-    {
-        foreach (var prop in tileset.Properties)
-        {
-            if (prop.type == TiledPropertyType.Bool)
-            {
-                return prop.value == "true";
-            }
-        }
-
-        return fallback;
-    }
-}
-
-class RaylibTilemap
-{
-    TiledMap map;
-    Dictionary<int, RaylibTileset> rlTilesets;
-
-    static Vector2[] dualGridOffsets = 
-    {
-        new Vector2(0, 0), // Top left
-        new Vector2(1, 0), // Top right
-        new Vector2(0, 1), // Bottom left
-        new Vector2(1, 1)  // Bottom right
-    };
-
-    public RaylibTilemap(Dictionary<string, RaylibTileset> tilesets, string tilemap)
-    {
-        map = new TiledMap(tilemap);
-
-        rlTilesets = new Dictionary<int, RaylibTileset>();
-        foreach (var mapTileset in map.Tilesets)
-        {
-            rlTilesets.Add(mapTileset.firstgid, tilesets[mapTileset.source]);
-        }
-    }
-
-    static int GetTileAt(TiledLayer layer, int x, int y)
-    {
-        if ((0 <= x && x < layer.width) && (0 <= y && y < layer.height))
-        {
-            var index = (y * layer.width) + x;
-            return layer.data[index];
-        }
-
-        return 0;
-    }
-
-    static void DrawDualLayerTile(RaylibTileset rlTileset, TiledLayer layer, TiledMap map, int x, int y)
-    {
-        Debug.Assert(rlTileset.tileset.TileCount == 16);
-
-        var neighbourLookup = new Vector2[16];
-
-        neighbourLookup[0b0100] = new Vector2(0, 0);
-        neighbourLookup[0b1001] = new Vector2(0, 1);
-        neighbourLookup[0b0010] = new Vector2(0, 2);
-        neighbourLookup[0b0000] = new Vector2(0, 3);
-
-        neighbourLookup[0b1010] = new Vector2(1, 0);
-        neighbourLookup[0b1110] = new Vector2(1, 1);
-        neighbourLookup[0b0011] = new Vector2(1, 2);
-        neighbourLookup[0b1000] = new Vector2(1, 3);
-
-        neighbourLookup[0b1101] = new Vector2(2, 0);
-        neighbourLookup[0b1111] = new Vector2(2, 1);
-        neighbourLookup[0b1011] = new Vector2(2, 2);
-        neighbourLookup[0b0110] = new Vector2(2, 3);
-
-        neighbourLookup[0b1100] = new Vector2(3, 0);
-        neighbourLookup[0b0111] = new Vector2(3, 1);
-        neighbourLookup[0b0101] = new Vector2(3, 2);
-        neighbourLookup[0b0001] = new Vector2(3, 3);
-
-        var gid = 0;
-        foreach (var mapTileset in map.Tilesets)
-        {
-            if (mapTileset.source == rlTileset.source)
-            {
-                gid = mapTileset.firstgid;
-                break;
-            }
-        }
-        Debug.Assert(gid != 0);
-        gid += 6;
-
-        var neighbourIndex = 0;
-        for (var i = 0; i < dualGridOffsets.Length; i++)
-        {
-            var tile_id = GetTileAt(layer, x + (int)dualGridOffsets[i].X, y + (int)dualGridOffsets[i].Y);
-
-            if (tile_id == gid || tile_id == 0)
-            {
-                neighbourIndex += (1 << i);
-            }
-        }
-
-        var rect = new Rectangle(
-            neighbourLookup[neighbourIndex].X * rlTileset.tileset.TileWidth,
-            neighbourLookup[neighbourIndex].Y * rlTileset.tileset.TileHeight,
-            rlTileset.tileset.TileWidth,
-            rlTileset.tileset.TileHeight
-        );
-
-        var tileX = (x + 0.5f) * map.TileWidth;
-        var tileY = (y + 0.5f) * map.TileHeight;
-        Raylib.DrawTexturePro(rlTileset.texture, rect, new Rectangle(tileX, tileY, map.TileWidth, map.TileHeight), Vector2.Zero, 0, Raylib.WHITE);
-    }
-
-    public void Draw()
-    {
-        foreach (var layer in map.Layers)
-        {
-            if (layer.type != TiledLayerType.TileLayer) continue;
-            for (var y = -1; y < layer.height+1; y++)
-            {
-                for (var x = -1; x < layer.width+1; x++)
-                {
-                    var gid = GetTileAt(layer, x, y);
-                    if (gid == 0)
-                    {
-                        for (var i = 0; i < dualGridOffsets.Length; i++)
-                        {
-                            var nx = x + (int)dualGridOffsets[i].X;
-                            var ny = y + (int)dualGridOffsets[i].Y;
-                            var ngid = GetTileAt(layer, nx, ny);
-                            if (ngid == 0) continue;
-
-                            var mapTileset = map.GetTiledMapTileset(ngid);
-                            var rlTileset = rlTilesets[mapTileset.firstgid];
-                            if (rlTileset.GetBoolProperty("dual-grid", false))
-                            {
-                                DrawDualLayerTile(rlTileset, layer, map, x, y);
-                            }
-                        }
-                    } else
-                    {
-                        var mapTileset = map.GetTiledMapTileset(gid);
-                        var rlTileset = rlTilesets[mapTileset.firstgid];
-
-                        if (rlTileset.GetBoolProperty("dual-grid", false))
-                        {
-                            DrawDualLayerTile(rlTileset, layer, map, x, y);
-                        }
-                        else
-                        {
-                            var tileX = x * map.TileWidth;
-                            var tileY = y * map.TileHeight;
-                            var rect = map.GetSourceRect(mapTileset, rlTileset.tileset, gid);
-                            var rlRect = new Rectangle(rect.x, rect.y, rect.width, rect.height);
-
-                            Raylib.DrawTexturePro(rlTileset.texture, rlRect, new Rectangle(tileX, tileY, map.TileWidth, map.TileHeight), Vector2.Zero, 0, Raylib.WHITE);
-                        }
-                    }
-
-                }
-            }
-        }
-    }
-}
-
 internal class Program
 {
+    static float tileSize = 32;
+    static Vector2 canvasSize = new Vector2(320 * 3, 180 * 3);
+
     public static float DivMultipleFloor(float a, float b)
     {
         return (float)Math.Floor(a / b) * b;
@@ -269,6 +82,20 @@ internal class Program
         ));
     }
 
+    public static Rectangle GetVisibleRectInWorld(Camera2D camera)
+    {
+        var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+        var canvasSizeOnScreen = canvasSize * camera.zoom;
+        var unusedSpace = screenSize - canvasSizeOnScreen;
+
+        return GetRectScreenToWorld(camera, new Rectangle(
+            unusedSpace.X/2,
+            unusedSpace.Y/2,
+            canvasSizeOnScreen.X,
+            canvasSizeOnScreen.Y
+        ));
+    }
+
     public static void CoverOffscreenArea(Camera2D camera, Vector2 canvasSize, Color color)
     {
         var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
@@ -300,11 +127,30 @@ internal class Program
         }
     }
 
+    public static Vector2? GetTileUnderMouse(Camera2D camera, Vector2 canvasSize)
+    {
+        var mouse = Raylib.GetMousePosition();
+        var worldMouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
+        if (!Utils.IsInsideRect(worldMouse, GetVisibleRectInWorld(camera))) return null;
+
+        return new Vector2(
+            (float)Math.Floor(worldMouse.X / tileSize),
+            (float)Math.Floor(worldMouse.Y / tileSize)
+        );
+    }
+
+    static void DrawLine(List<Vector2> points, Color color)
+    {
+        if (points.Count < 2) return;
+
+        for (var i = 0; i < points.Count - 1; i++)
+        {
+            Raylib.DrawLineV(points[i], points[i+1], color);
+        }
+    }
+
     public static void Main(string[] args)
     {
-        var tileSize = 32;
-        var canvasSize = new Vector2(320*3, 180*3);
-        //Console.WriteLine($"{canvasSize.X} {canvasSize.Y}");
         Raylib.SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE);
         Raylib.InitWindow(1920, 1080, "GMTK2024");
         Raylib.SetWindowMinSize((int)canvasSize.X, (int)canvasSize.Y);
@@ -316,6 +162,37 @@ internal class Program
         camera.rotation = 0;
         camera.target = canvasSize / 2;
 
+        var path = new List<Vector2>();
+
+        var pathLayer = rlTilemap.GetLayer("path", TiledLayerType.ObjectLayer);
+        Debug.Assert(pathLayer != null);
+        Array.Sort(pathLayer.objects, Comparer<TiledObject>.Create((a, b) => a.name.CompareTo(b.name)));
+
+        foreach (var obj in pathLayer.objects)
+        {
+            if (obj.point == null) continue;
+
+            path.Add(new Vector2(obj.x, obj.y));
+        }
+
+        var markersLayer = rlTilemap.GetLayer("markers", TiledLayerType.ObjectLayer);
+        Debug.Assert(markersLayer != null);
+        var baseMarker = RaylibTilemap.GetObject(markersLayer, "base");
+        Debug.Assert(baseMarker != null);
+
+        var basePosition = new Vector2(baseMarker.x, baseMarker.y);
+
+        path.Add(basePosition);
+
+        var enemies = new List<Enemy>();
+        enemies.Add(new Enemy
+        {
+            position = path[0]
+        });
+
+        var maxHealth = 100;
+        var health = maxHealth;
+
         // Main game loop
         while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
         {
@@ -324,6 +201,8 @@ internal class Program
 
             camera.offset = screenSize / 2;
             camera.zoom = Math.Min(screenSize.X / canvasSize.X, screenSize.Y / canvasSize.Y);
+
+            var mouseTile = GetTileUnderMouse(camera, canvasSize);
 
             { // Camera controls
                 var dx = 0;
@@ -356,6 +235,42 @@ internal class Program
             {
                 DrawGrid(GetScreenRectInWorld(camera), tileSize, Raylib.WHITE);
                 rlTilemap.Draw();
+
+                foreach (var enemy in enemies)
+                {
+                    if (Vector2.Distance(path[enemy.targetEndpoint], enemy.position) < 8 && enemy.targetEndpoint < path.Count-1)
+                    {
+                        enemy.targetEndpoint += 1;
+                    }
+                    
+                    var enemySpeed = 32* 5;
+
+                    var targetPosition = path[enemy.targetEndpoint];
+                    var distanceToTarget = Vector2.Distance(targetPosition, enemy.position);
+         
+                    if (distanceToTarget > 0)
+                    {
+                        var velocity = Vector2.Normalize(targetPosition - enemy.position) * enemySpeed;
+                        var step = velocity * dt;
+                        if (step.Length() > distanceToTarget)
+                        {
+                            step = Vector2.Normalize(step) * distanceToTarget;
+                        }
+                        enemy.position += step;
+                    }
+
+                    var size = new Vector2(16, 16);
+                    Raylib.DrawRectangleV(enemy.position - size / 2, size, Raylib.PURPLE);
+                }
+
+                if (mouseTile != null)
+                {
+                    Raylib.DrawRectangleLinesEx(new Rectangle(mouseTile.Value.X * tileSize, mouseTile.Value.Y * tileSize, tileSize, tileSize), 1, Raylib.RED);
+                }
+
+                DrawLine(path, Raylib.RED);
+
+                Raylib.DrawCircleLines((int)basePosition.X, (int)basePosition.Y, tileSize/3, Raylib.YELLOW);
             }
             Raylib.EndMode2D();
 
