@@ -316,7 +316,7 @@ internal class Program
         var revolverAse = AsepriteFileLoader.FromFile("assets/revolver.aseprite");
         var revolver = Utils.FlattenToAnimation(revolverAse);
 
-        var slimeAse = AsepriteFileLoader.FromFile("assets/slime.aseprite");
+        var slimeAse = AsepriteFileLoader.FromFile("assets/slime2.aseprite");
         var slime = Utils.FlattenTagToAnimation(slimeAse, "jump");
 
         var towers = new List<Tower>();
