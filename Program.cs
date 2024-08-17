@@ -1,5 +1,9 @@
 ﻿using Raylib_CsLo;
+using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
+using TiledCS;
 
 namespace GMTK2024;
 
@@ -135,6 +139,16 @@ internal class Program
         );
     }
 
+    static void DrawLine(List<Vector2> points, Color color)
+    {
+        if (points.Count < 2) return;
+
+        for (var i = 0; i < points.Count - 1; i++)
+        {
+            Raylib.DrawLineV(points[i], points[i+1], color);
+        }
+    }
+
     public static void Main(string[] args)
     {
         Raylib.SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE);
@@ -147,6 +161,29 @@ internal class Program
         var camera = new Camera2D();
         camera.rotation = 0;
         camera.target = canvasSize / 2;
+
+        var path = new List<Vector2>();
+
+        var pathLayer = rlTilemap.GetLayer("path", TiledLayerType.ObjectLayer);
+        if (pathLayer != null)
+        {
+            Debug.Assert(pathLayer.objects != null);
+            Array.Sort(pathLayer.objects, Comparer<TiledObject>.Create((a, b) => a.name.CompareTo(b.name)));
+
+            foreach (var obj in pathLayer.objects)
+            {
+                if (obj.point == null) continue;
+
+                path.Add(new Vector2(obj.x, obj.y));
+            }
+        }
+
+
+        var enemies = new List<Enemy>();
+        enemies.Add(new Enemy
+        {
+            position = path[0]
+        });
 
 
         // Main game loop
@@ -192,10 +229,40 @@ internal class Program
                 DrawGrid(GetScreenRectInWorld(camera), tileSize, Raylib.WHITE);
                 rlTilemap.Draw();
 
+                foreach (var enemy in enemies)
+                {
+                    if (Vector2.Distance(path[enemy.targetEndpoint], enemy.position) < 8 && enemy.targetEndpoint < path.Count-1)
+                    {
+                        enemy.targetEndpoint += 1;
+                    }
+                    
+                    var enemySpeed = 32* 5;
+
+                    var targetPosition = path[enemy.targetEndpoint];
+                    var distanceToTarget = Vector2.Distance(targetPosition, enemy.position);
+         
+                    if (distanceToTarget > 0)
+                    {
+                        var velocity = Vector2.Normalize(targetPosition - enemy.position) * enemySpeed;
+                        var step = velocity * dt;
+                        if (step.Length() > distanceToTarget)
+                        {
+                            step = Vector2.Normalize(step) * distanceToTarget;
+                        }
+                        enemy.position += step;
+                    }
+                   
+
+                    var size = new Vector2(16, 16);
+                    Raylib.DrawRectangleV(enemy.position - size / 2, size, Raylib.PURPLE);
+                }
+
                 if (mouseTile != null)
                 {
                     Raylib.DrawRectangleLinesEx(new Rectangle(mouseTile.Value.X * tileSize, mouseTile.Value.Y * tileSize, tileSize, tileSize), 1, Raylib.RED);
                 }
+
+                DrawLine(path, Raylib.RED);
             }
             Raylib.EndMode2D();
 

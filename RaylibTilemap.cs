@@ -152,4 +152,22 @@ class RaylibTilemap
             }
         }
     }
+
+    public TiledLayer? GetLayer(string name, TiledLayerType? type = null)
+    {
+        foreach (var layer in map.Layers)
+        {
+            if (type != null)
+            {
+                if (layer.type != type) continue;
+            }
+
+            if (layer.name == name)
+            {
+                return layer;
+            }
+        }
+
+        return null;
+    }
 }
