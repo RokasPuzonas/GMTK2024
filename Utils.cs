@@ -4,6 +4,7 @@ using AsepriteDotNet.Common;
 using Raylib_CsLo;
 using System.Diagnostics;
 using System.Numerics;
+using System.Xml.Linq;
 
 namespace GMTK2024;
 
@@ -94,15 +95,21 @@ static class Utils
         return image;
     }
 
-    public static Texture FlattenLayerToTexture(AsepriteFrame frame, string name)
+    public static Texture RGBAToTexture(Rgba32 []rgba, int width, int height)
     {
-        var rgba = FlattenLayer(frame, name);
-        var image = LoadImageFromRgba(rgba, frame.Size.Width, frame.Size.Height);
+        var image = LoadImageFromRgba(rgba, width, height);
 
         var texture = Raylib.LoadTextureFromImage(image);
         Raylib.UnloadImage(image);
 
         return texture;
+    }
+
+    public static Texture FlattenLayerToTexture(AsepriteFrame frame, string layer)
+    {
+        var rgba = FlattenLayer(frame, layer);
+
+        return RGBAToTexture(rgba, frame.Size.Width, frame.Size.Height);
     }
 
     public static RaylibAnimation FlattenLayerToAnimation(AsepriteFile ase, string layerName)
@@ -111,9 +118,30 @@ static class Utils
 
         foreach (var frame in ase.Frames)
         {
+            var rgba = FlattenLayer(frame, layerName);
             frames.Add(new RaylibAnimationFrame
             {
-                texture = FlattenLayerToTexture(frame, layerName),
+                texture = RGBAToTexture(rgba, frame.Size.Width, frame.Size.Height),
+                duration = (float)frame.Duration.TotalSeconds
+            });
+        }
+
+        return new RaylibAnimation
+        {
+            frames = frames
+        };
+    }
+
+    public static RaylibAnimation FlattenToAnimation(AsepriteFile ase)
+    {
+        var frames = new List<RaylibAnimationFrame>();
+
+        foreach (var frame in ase.Frames)
+        {
+            var rgba = frame.FlattenFrame();
+            frames.Add(new RaylibAnimationFrame
+            {
+                texture = RGBAToTexture(rgba, frame.Size.Width, frame.Size.Height),
                 duration = (float)frame.Duration.TotalSeconds
             });
         }
@@ -169,7 +197,7 @@ static class Utils
         }
 
         var lineAngle = LineAngle(dir, new Vector2(1, 0));
-        return (-2*lineAngle + 3*(float)Math.PI) % (float)(2*Math.PI);
+        return (2*lineAngle + (float)Math.PI) % (float)(2*Math.PI);
     }
 
     public static float AngleDifference(float a, float b)
