@@ -1,8 +1,11 @@
-﻿using Raylib_CsLo;
+﻿using AsepriteDotNet.Aseprite.Types;
+using AsepriteDotNet.IO;
+using Raylib_CsLo;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Numerics;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.InteropServices.JavaScript;
 using TiledCS;
 
 namespace GMTK2024;
@@ -84,44 +87,52 @@ internal class Program
 
     public static Rectangle GetVisibleRectInWorld(Camera2D camera)
     {
-        var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
-        var canvasSizeOnScreen = canvasSize * camera.zoom;
-        var unusedSpace = screenSize - canvasSizeOnScreen;
-
-        return GetRectScreenToWorld(camera, new Rectangle(
-            unusedSpace.X/2,
-            unusedSpace.Y/2,
-            canvasSizeOnScreen.X,
-            canvasSizeOnScreen.Y
-        ));
+        return GetRectScreenToWorld(camera, GetOnscreenArea(camera));
     }
 
-    public static void CoverOffscreenArea(Camera2D camera, Vector2 canvasSize, Color color)
+    public static Rectangle GetOnscreenArea(Camera2D camera)
     {
         var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
         var canvasSizeOnScreen = canvasSize * camera.zoom;
         var unusedSpace = screenSize - canvasSizeOnScreen;
 
-        if (unusedSpace.X > 0)
+        return new Rectangle(
+            unusedSpace.X / 2,
+            unusedSpace.Y / 2,
+            canvasSizeOnScreen.X,
+            canvasSizeOnScreen.Y
+        );
+    }
+
+    public static void CoverOffscreenArea(Camera2D camera, Color color)
+    {
+        var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+        var onscreenArea = GetOnscreenArea(camera);
+
+        if (onscreenArea.X > 0)
         {
+            var rightEdge = onscreenArea.X + onscreenArea.width;
+
             Raylib.DrawRectangleRec(
-                new Rectangle(0, 0, unusedSpace.X / 2, screenSize.Y),
+                new Rectangle(0, 0, onscreenArea.X, screenSize.X),
                 color
             );
             Raylib.DrawRectangleRec(
-                new Rectangle(canvasSizeOnScreen.X + unusedSpace.X / 2, 0, unusedSpace.X / 2, screenSize.Y),
+                new Rectangle(rightEdge, 0, screenSize.X - rightEdge, screenSize.Y),
                 color
             );
         }
 
-        if (unusedSpace.Y > 0)
+        if (onscreenArea.Y > 0)
         {
+            var bottomEdge = onscreenArea.Y + onscreenArea.height;
+
             Raylib.DrawRectangleRec(
-                new Rectangle(0, 0, screenSize.X, unusedSpace.Y / 2),
+                new Rectangle(0, 0, screenSize.X, onscreenArea.Y),
                 color
             );
             Raylib.DrawRectangleRec(
-                new Rectangle(0, canvasSizeOnScreen.Y + unusedSpace.Y / 2, screenSize.X, unusedSpace.Y / 2),
+                new Rectangle(0, bottomEdge, screenSize.X, screenSize.Y - bottomEdge),
                 color
             );
         }
@@ -184,13 +195,18 @@ internal class Program
 
         path.Add(basePosition);
 
-        var enemies = new List<Enemy>();
-        enemies.Add(new Enemy
-        {
-            position = path[0]
-        });
+        var currentWave = new EnemyWave();
+        var waveSpawnTimer = 0f;
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.1f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.5f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.5f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.5f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 1.0f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 1.0f, type = EnemyType.Slime });
 
-        var maxHealth = 100;
+        var enemies = new List<Enemy>();
+
+        var maxHealth = 100f;
         var health = maxHealth;
 
         // Main game loop
@@ -228,6 +244,19 @@ internal class Program
                 camera.target += new Vector2(dx, dy) * dt * tileSize * 2;
             }
 
+            waveSpawnTimer += dt;
+            while (currentWave.spawns.Count > 0 && waveSpawnTimer > currentWave.spawns[0].delay)
+            {
+                enemies.Add(new Enemy
+                {
+                    position = path[0],
+                    type = currentWave.spawns[0].type
+                });
+                waveSpawnTimer -= currentWave.spawns[0].delay;
+
+                currentWave.spawns.RemoveAt(0);
+            }
+
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Raylib.GetColor(0x232323ff));
             
@@ -238,9 +267,17 @@ internal class Program
 
                 foreach (var enemy in enemies)
                 {
-                    if (Vector2.Distance(path[enemy.targetEndpoint], enemy.position) < 8 && enemy.targetEndpoint < path.Count-1)
+                    if (Vector2.Distance(path[enemy.targetEndpoint], enemy.position) < 8)
                     {
-                        enemy.targetEndpoint += 1;
+                        if (enemy.targetEndpoint < path.Count - 1)
+                        {
+                            enemy.targetEndpoint += 1;
+                        }
+                        else
+                        {
+                            enemy.alive = false;
+                            health = Math.Max(health - 10, 0);
+                        }
                     }
                     
                     var enemySpeed = 32* 5;
@@ -263,6 +300,15 @@ internal class Program
                     Raylib.DrawRectangleV(enemy.position - size / 2, size, Raylib.PURPLE);
                 }
 
+                for (int i = 0; i < enemies.Count; i++)
+                {
+                    if (!enemies[i].alive)
+                    {
+                        enemies.RemoveAt(i);
+                        i--;
+                    }
+                }
+
                 if (mouseTile != null)
                 {
                     Raylib.DrawRectangleLinesEx(new Rectangle(mouseTile.Value.X * tileSize, mouseTile.Value.Y * tileSize, tileSize, tileSize), 1, Raylib.RED);
@@ -272,11 +318,38 @@ internal class Program
 
                 Raylib.DrawCircleLines((int)basePosition.X, (int)basePosition.Y, tileSize/3, Raylib.YELLOW);
             }
+
             Raylib.EndMode2D();
 
-            CoverOffscreenArea(camera, canvasSize, Raylib.GetColor(0x232323ff));
+            { // UI
+                RlGl.rlPushMatrix();
+                var onscreenArea = GetOnscreenArea(camera);
+                RlGl.rlTranslatef(onscreenArea.x, onscreenArea.y, 0);
+                RlGl.rlScalef(camera.zoom, camera.zoom, 1);
 
-            Raylib.DrawFPS(10, 10);
+                Raylib.DrawFPS(10, 10);
+
+                var healthbarWidth = canvasSize.X * 0.75f;
+                var healthbarContainer = new Rectangle(
+                    (canvasSize.X - healthbarWidth) / 2,
+                    10,
+                    healthbarWidth,
+                    32
+                );
+                Raylib.DrawRectangleRec(healthbarContainer, Raylib.GRAY);
+
+                var maxHealthbarRect = Utils.ShrinkRect(healthbarContainer, 8);
+                Raylib.DrawRectangleRec(maxHealthbarRect, Raylib.DARKGRAY);
+
+                var healtbarRect = maxHealthbarRect;
+                healtbarRect.width *= (health / maxHealth);
+                Raylib.DrawRectangleRec(healtbarRect, Raylib.GREEN);
+
+                RlGl.rlPopMatrix();
+            }
+
+            CoverOffscreenArea(camera, Raylib.GetColor(0x232323ff));
+
             Raylib.EndDrawing();
         }
         Raylib.CloseWindow();

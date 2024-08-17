@@ -5,9 +5,11 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AsepriteDotNet" Version="1.8.3" />
     <PackageReference Include="Raylib-CsLo" Version="4.2.0.9" />
     <PackageReference Include="TiledCS" Version="3.3.3" />
   </ItemGroup>
@@ -15,6 +17,9 @@
   <ItemGroup>
     <None Update="assets\grass_path_tileset.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\grass_tower_base_tilemap.aseprite">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="assets\main.tmx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -14,4 +14,14 @@ static class Utils
     {
         return (rect.x <= point.X && point.X <= rect.x + rect.width) && (rect.y <= point.Y && point.Y <= rect.y + rect.height);
     }
+
+    public static Rectangle ShrinkRect(Rectangle rect, float amount)
+    {
+        return new Rectangle(
+            rect.x + amount,
+            rect.y + amount,
+            rect.width - 2*amount,
+            rect.height - 2*amount
+        );
+    }
 }
