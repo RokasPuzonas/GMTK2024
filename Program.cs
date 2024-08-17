@@ -140,16 +140,13 @@ internal class Program
         }
     }
 
-    public static Vector2? GetTileUnderMouse(Camera2D camera, Vector2 canvasSize)
+    public static Vector2? GetMouseInWorld(Camera2D camera, Vector2 canvasSize)
     {
         var mouse = Raylib.GetMousePosition();
         var worldMouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
         if (!Utils.IsInsideRect(worldMouse, GetVisibleRectInWorld(camera))) return null;
 
-        return new Vector2(
-            (float)Math.Floor(worldMouse.X / tileSize),
-            (float)Math.Floor(worldMouse.Y / tileSize)
-        );
+        return worldMouse;
     }
 
     static void DrawLine(List<Vector2> points, Color color)
@@ -159,6 +156,77 @@ internal class Program
         for (var i = 0; i < points.Count - 1; i++)
         {
             Raylib.DrawLineV(points[i], points[i+1], color);
+        }
+    }
+
+    static Tower? GetTowerAt(List<Tower> towers, Vector2 position)
+    {
+        foreach (var tower in towers)
+        {
+            if (Utils.IsInsideRect(position, tower.GetRect()))
+            {
+                return tower;
+            }
+        }
+
+        return null;
+    }
+
+    static void CheckMergingTowers(List<Tower> towers, Vector2 position)
+    {
+        var offsets = new Vector2[]
+        {
+            new Vector2(0, 0),
+            new Vector2(0, -1),
+            new Vector2(-1, 0),
+            new Vector2(-1, -1),
+        };
+
+        foreach (var offset in offsets)
+        {
+            var foundTowers = new List<Tower>();
+            for (int oy = 0; oy < 2; oy++)
+            {
+                for (int ox = 0; ox < 2; ox++)
+                {
+                    var tower = GetTowerAt(towers, position + (new Vector2(ox + 0.5f, oy + 0.5f) + offset) * tileSize);
+                    if (tower == null) continue;
+                    if (tower.size.X > tileSize || tower.size.Y > tileSize) continue;
+
+                    foundTowers.Add(tower);
+                }
+            }
+
+            if (foundTowers.Count == 4)
+            {
+                var topLeft     = foundTowers[0].position;
+                var bottomRight = foundTowers[0].position + foundTowers[0].size;
+                foreach (var tower in foundTowers)
+                {
+                    var towerTopLeft = tower.position;
+                    var towerBottomRight = tower.position + tower.size;
+
+                    topLeft = Vector2.Min(topLeft, towerTopLeft);
+                    bottomRight = Vector2.Max(bottomRight, towerBottomRight);
+                }
+
+                var size = bottomRight - topLeft;
+
+                if (size.X == size.Y)
+                {
+                    foreach (var tower in foundTowers)
+                    {
+                        towers.Remove(tower);
+                    }
+
+                    towers.Add(new Tower
+                    {
+                        position = topLeft,
+                        size = size,
+                        type = TowerType.Revolver
+                    });
+                }
+            }
         }
     }
 
@@ -223,6 +291,8 @@ internal class Program
             new Vector2(tileSize, tileSize)
         );
 
+        var towers = new List<Tower>();
+
         // Main game loop
         while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
         {
@@ -232,7 +302,7 @@ internal class Program
             camera.offset = screenSize / 2;
             camera.zoom = Math.Min(screenSize.X / canvasSize.X, screenSize.Y / canvasSize.Y);
 
-            var mouseTile = GetTileUnderMouse(camera, canvasSize);
+            var mouse = GetMouseInWorld(camera, canvasSize);
 
             { // Camera controls
                 var dx = 0;
@@ -269,6 +339,29 @@ internal class Program
                 waveSpawnTimer -= currentWave.spawns[0].delay;
 
                 currentWave.spawns.RemoveAt(0);
+            }
+
+            if (mouse != null)
+            {
+                var mouseTile = new Vector2(
+                    DivMultipleFloor(mouse.Value.X, tileSize),
+                    DivMultipleFloor(mouse.Value.Y, tileSize)
+                );
+
+                if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    var existingTower = GetTowerAt(towers, mouseTile + new Vector2(tileSize, tileSize) / 2);
+                    if (existingTower == null)
+                    {
+                        towers.Add(new Tower
+                        {
+                            position = mouseTile,
+                            size = new Vector2(tileSize, tileSize)
+                        });
+
+                        CheckMergingTowers(towers, mouseTile);
+                    }
+                }
             }
 
             Raylib.BeginDrawing();
@@ -323,9 +416,18 @@ internal class Program
                     }
                 }
 
-                if (mouseTile != null)
+                foreach (var tower in towers)
                 {
-                    Raylib.DrawRectangleLinesEx(new Rectangle(mouseTile.Value.X * tileSize, mouseTile.Value.Y * tileSize, tileSize, tileSize), 1, Raylib.RED);
+                    var towerRect = tower.GetRect();
+                    dualGridTowerBase.DrawRectangle(towerRect, Raylib.GetColor(0x5f5f5fFF));
+                    dualGridTowerFoliage.DrawRectangle(towerRect, Raylib.WHITE);
+                }
+
+                if (mouse != null)
+                {
+                    var tileX = DivMultipleFloor(mouse.Value.X, tileSize);
+                    var tileY = DivMultipleFloor(mouse.Value.Y, tileSize);
+                    Raylib.DrawRectangleLinesEx(new Rectangle(tileX, tileY, tileSize, tileSize), 1, Raylib.RED);
                 }
 
                 DrawLine(path, Raylib.RED);
@@ -359,12 +461,6 @@ internal class Program
                 healtbarRect.width *= (health / maxHealth);
                 Raylib.DrawRectangleRec(healtbarRect, Raylib.GREEN);
 
-
-                var foo = new Rectangle(32, 32, tileSize*3, tileSize*3);
-                dualGridTowerBase.DrawRectangle(foo, Raylib.GetColor(0x5f5f5fFF));
-                dualGridTowerFoliage.DrawRectangle(foo, Raylib.WHITE);
-
-                Raylib.DrawRectangleLinesEx(foo, 1, Raylib.RED);
                 RlGl.rlPopMatrix();
             }
 
