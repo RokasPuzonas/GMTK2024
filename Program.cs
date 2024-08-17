@@ -505,7 +505,6 @@ internal class Program
                         }
                     }
 
-
                     var targetPosition = path[enemy.targetEndpoint];
                     enemy.targetAim = Utils.GetAimAngle(enemy.position, targetPosition);
                     enemy.aim = Utils.ApproachAngle(enemy.aim, enemy.targetAim, dt * 3);
@@ -513,7 +512,7 @@ internal class Program
                     if (enemy.type == EnemyType.Slime)
                     {
                         enemy.jumpCooldown = Math.Max(enemy.jumpCooldown - dt, 0);
-                        slime.UpdateAnimation(dt, ref enemy.animationTimer, ref enemy.animationIndex);
+                        slime.UpdateAnimation(dt, ref enemy.animationTimer, ref enemy.animationIndex, false);
 
                         if (enemy.jumpCooldown == 0)
                         {
@@ -521,6 +520,7 @@ internal class Program
 
                             var jumpPower = rng.NextSingle() * 100 + 100;
                             enemy.velocity = Vector2.Normalize(targetPosition - enemy.position) * jumpPower;
+                            enemy.animationIndex = 0;
                         }
                     }
 

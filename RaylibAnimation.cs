@@ -22,13 +22,19 @@ internal class RaylibAnimation
         return duration;
     }
 
-    public void UpdateAnimation(float dt, ref float animationTimer, ref int animationIndex)
+    public void UpdateAnimation(float dt, ref float animationTimer, ref int animationIndex, bool loop = true)
     {
         animationTimer += dt;
         while (animationTimer > frames[animationIndex].duration)
         {
             animationTimer -= frames[animationIndex].duration;
-            animationIndex = (animationIndex + 1) % frames.Count;
+            if (loop == true)
+            {
+                animationIndex = (animationIndex + 1) % frames.Count;
+            } else
+            {
+                animationIndex = Math.Min(animationIndex + 1, frames.Count - 1);
+            }
         }
     }
 }
