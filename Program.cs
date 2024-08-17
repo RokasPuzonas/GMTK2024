@@ -314,10 +314,10 @@ internal class Program
         );
 
         var revolverAse = AsepriteFileLoader.FromFile("assets/revolver.aseprite");
-        var revolverBase = Utils.FlattenLayerToAnimation(revolverAse, "underbelly");
-        var revolverHead = Utils.FlattenLayerToAnimation(revolverAse, "gub");
+        var revolver = Utils.FlattenToAnimation(revolverAse);
 
         var towers = new List<Tower>();
+        var bullets = new List<Bullet>();
 
         // Main game loop
         while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
@@ -406,10 +406,10 @@ internal class Program
                 if (tower.state == TowerState.Shoot)
                 {
                     tower.animationTimer += dt;
-                    while (tower.animationTimer > revolverBase.frames[tower.animationIndex].duration)
+                    while (tower.animationTimer > revolver.frames[tower.animationIndex].duration)
                     {
-                        tower.animationTimer -= revolverBase.frames[tower.animationIndex].duration;
-                        tower.animationIndex = (tower.animationIndex + 1) % revolverBase.frames.Count;
+                        tower.animationTimer -= revolver.frames[tower.animationIndex].duration;
+                        tower.animationIndex = (tower.animationIndex + 1) % revolver.frames.Count;
                     }
 
                 } else {
@@ -436,7 +436,13 @@ internal class Program
                     if (tower.target != null && Math.Abs(Utils.AngleDifference(tower.targetAim, tower.aim)) < 0.01)
                     {
                         tower.state = TowerState.Shoot;
-                        tower.shootCooldown = revolverBase.GetDuration();
+                        tower.shootCooldown = revolver.GetDuration();
+                        bullets.Add(new Bullet
+                        {
+                            position = tower.Center(),
+                            speed = 100,
+                            direction = new Vector2((float)Math.Cos(tower.aim), (float)Math.Sin(tower.aim))
+                        });
                     }
                 }
 
@@ -444,6 +450,21 @@ internal class Program
                 if (Math.Abs(aimDiff) > 0.01)
                 {
                     tower.aim += Math.Sign(aimDiff) * Math.Min(dt * tower.aimSpeed, Math.Abs(aimDiff));
+                }
+            }
+
+            foreach (var bullet in bullets)
+            {
+                bullet.position += bullet.direction * dt * bullet.speed;
+
+            }
+
+            for (int i = 0; i < bullets.Count; i++)
+            {
+                if (bullets[i].dead)
+                {
+                    bullets.RemoveAt(i);
+                    i--;
                 }
             }
 
@@ -499,6 +520,11 @@ internal class Program
                     }
                 }
 
+                foreach (var bullet in bullets)
+                {
+                    Raylib.DrawCircleV(bullet.position, 5, Raylib.RED);
+                }
+
                 foreach (var tower in towers)
                 {
                     var middle = tower.position + tower.size / 2;
@@ -508,10 +534,10 @@ internal class Program
 
                     if (tower.type == TowerType.Revolver)
                     {
-                        var rotation = Utils.ToDegrees(tower.aim) - 90;
-                        Utils.DrawTextureCentered(revolverBase.frames[tower.animationIndex].texture, middle, -rotation, 1, Raylib.WHITE);
-                        Utils.DrawTextureCentered(revolverHead.frames[tower.animationIndex].texture, middle, -rotation, 1, Raylib.WHITE);
+                        var rotation = Utils.ToDegrees(tower.aim) + 90;
+                        Utils.DrawTextureCentered(revolver.frames[tower.animationIndex].texture, middle, rotation, 1, Raylib.WHITE);
                         Raylib.DrawCircleLines((int)middle.X, (int)middle.Y, tower.range, Raylib.RED);
+                        Raylib.DrawLineV(middle, middle + new Vector2((float)Math.Cos(tower.aim), (float)Math.Sin(tower.aim)) * 100, Raylib.GREEN);
                     }
                 }
 
