@@ -487,8 +487,6 @@ internal class Program
 
                 foreach (var enemy in enemies)
                 {
-                    slime.UpdateAnimation(dt, ref enemy.animationTimer, ref enemy.animationIndex);
-
                     if (enemy.health == 0)
                     {
                         enemy.dead = true;
@@ -507,25 +505,34 @@ internal class Program
                         }
                     }
 
-                    var enemySpeed = tileSize / 2;
 
                     var targetPosition = path[enemy.targetEndpoint];
-                    var distanceToTarget = Vector2.Distance(targetPosition, enemy.position);
-
                     enemy.targetAim = Utils.GetAimAngle(enemy.position, targetPosition);
+                    enemy.aim = Utils.ApproachAngle(enemy.aim, enemy.targetAim, dt * 3);
 
-                    if (distanceToTarget > 0)
+                    if (enemy.type == EnemyType.Slime)
                     {
-                        var velocity = Vector2.Normalize(targetPosition - enemy.position) * enemySpeed;
-                        var step = velocity * dt;
-                        if (step.Length() > distanceToTarget)
+                        enemy.jumpCooldown = Math.Max(enemy.jumpCooldown - dt, 0);
+                        slime.UpdateAnimation(dt, ref enemy.animationTimer, ref enemy.animationIndex);
+
+                        if (enemy.jumpCooldown == 0)
                         {
-                            step = Vector2.Normalize(step) * distanceToTarget;
+                            enemy.jumpCooldown = rng.NextSingle() * 0.5f + 0.75f;
+
+                            var jumpPower = rng.NextSingle() * 100 + 100;
+                            enemy.velocity = Vector2.Normalize(targetPosition - enemy.position) * jumpPower;
                         }
-                        enemy.position += step;
                     }
 
-                    enemy.aim = Utils.ApproachAngle(enemy.aim, enemy.targetAim, dt * 3);
+                    enemy.velocity = Vector2.Normalize(enemy.velocity) * enemy.velocity.Length() * (1 - enemy.friction);
+
+                    var step = enemy.velocity * dt;
+                    var distanceToTarget = Vector2.Distance(targetPosition, enemy.position);
+                    if (step.Length() > distanceToTarget)
+                    {
+                        step = Vector2.Normalize(step) * distanceToTarget;
+                    }
+                    enemy.position += step;
                 }
 
                 for (int i = 0; i < enemies.Count; i++)
