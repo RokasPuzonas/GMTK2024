@@ -195,14 +195,19 @@ internal class Program
 
         path.Add(basePosition);
 
+        var currentWave = new EnemyWave();
+        var waveSpawnTimer = 0f;
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.1f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.5f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.5f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.5f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 1.0f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 1.0f, type = EnemyType.Slime });
+
         var enemies = new List<Enemy>();
-        enemies.Add(new Enemy
-        {
-            position = path[0]
-        });
 
         var maxHealth = 100f;
-        var health = maxHealth/2;
+        var health = maxHealth;
 
         // Main game loop
         while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
@@ -237,6 +242,19 @@ internal class Program
                 }
 
                 camera.target += new Vector2(dx, dy) * dt * tileSize * 2;
+            }
+
+            waveSpawnTimer += dt;
+            while (currentWave.spawns.Count > 0 && waveSpawnTimer > currentWave.spawns[0].delay)
+            {
+                enemies.Add(new Enemy
+                {
+                    position = path[0],
+                    type = currentWave.spawns[0].type
+                });
+                waveSpawnTimer -= currentWave.spawns[0].delay;
+
+                currentWave.spawns.RemoveAt(0);
             }
 
             Raylib.BeginDrawing();
