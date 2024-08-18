@@ -484,7 +484,7 @@ internal class Level
                             speed = 200,
                             direction = new Vector2((float)Math.Cos(tower.aim), (float)Math.Sin(tower.aim))
                         });
-                        Raylib.PlaySound(Program.gunshot);
+                        Raylib.PlaySoundMulti(Program.gunshot);
                     }
                 }
 
