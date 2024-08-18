@@ -9,24 +9,20 @@ class RaylibTileset
     public TiledTileset tileset;
     public Texture texture;
 
-    public RaylibTileset(string dir, string source)
+    public RaylibTileset(Assets assets, string name)
     {
-        var path = Path.Join(dir, source);
-        this.source = source;
-        tileset = new TiledTileset(path);
+        this.source = name;
+        tileset = new TiledTileset(assets.LoadStream(name));
 
-        var imagePath = Path.Join(Path.GetDirectoryName(path), tileset.Image.source);
-        texture = Raylib.LoadTexture(imagePath);
+        texture = assets.LoadTexture(tileset.Image.source);
     }
 
-    public static Dictionary<string, RaylibTileset> LoadAllInFolder(string dir)
+    public static Dictionary<string, RaylibTileset> LoadAll(Assets assets)
     {
         var tilesets = new Dictionary<string, RaylibTileset>();
-        foreach (var filename in Directory.GetFiles(dir))
+        foreach (var filename in assets.ListNames(".tsx"))
         {
-            if (!filename.EndsWith(".tsx")) continue;
-
-            var rlTileset = new RaylibTileset(dir, Path.GetFileName(filename));
+            var rlTileset = new RaylibTileset(assets, Path.GetFileName(filename));
             tilesets.Add(rlTileset.source, rlTileset);
         }
 

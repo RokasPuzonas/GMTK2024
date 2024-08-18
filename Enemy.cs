@@ -28,7 +28,7 @@ internal class Enemy
 
     public float jumpCooldown = 0;
     public float collisionRadius = 0;
-    public float goldValues = 10;
+    public float goldValue = 10;
 
     public Rectangle GetRect()
     {

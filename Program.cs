@@ -2,6 +2,7 @@
 using Raylib_CsLo;
 using System.Diagnostics;
 using System.Numerics;
+using System.Reflection;
 using TiledCS;
 
 namespace GMTK2024;
@@ -247,13 +248,15 @@ internal class Program
 
     public static void Main(string[] args)
     {
+        var assets = new Assets();
+
         Raylib.SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE);
         Raylib.InitWindow(1920, 1080, "GMTK2024");
         Raylib.SetWindowMinSize((int)canvasSize.X, (int)canvasSize.Y);
         Raylib.SetTargetFPS(60);
 
-        var rlTilesets = RaylibTileset.LoadAllInFolder("./assets");
-        var rlTilemap = new RaylibTilemap(rlTilesets, "./assets/main.tmx");
+        var rlTilesets = RaylibTileset.LoadAll(assets);
+        var rlTilemap = new RaylibTilemap(rlTilesets, assets.LoadStream("main.tmx"));
         var camera = new Camera2D();
         camera.rotation = 0;
         camera.target = canvasSize / 2;
@@ -291,13 +294,13 @@ internal class Program
         currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
         currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
         currentWave.spawns.Add(new EnemyWaveSpawn { delay = 3.0f, type = EnemyType.Slime });
-        
+
         var enemies = new List<Enemy>();
 
         var maxHealth = 100f;
         var health = maxHealth;
 
-        var towerBaseTileset = AsepriteFileLoader.FromFile("assets/grass_tower_base_tileset.aseprite");
+        var towerBaseTileset = assets.LoadAseprite("grass_tower_base_tileset.aseprite");
 
         var dualGridTowerBase = new DualGridTileset(
             Utils.FlattenLayerToTexture(towerBaseTileset.Frames[0], "tower_base"),
@@ -309,10 +312,10 @@ internal class Program
             new Vector2(tileSize, tileSize)
         );
 
-        var revolverAse = AsepriteFileLoader.FromFile("assets/revolver.aseprite");
+        var revolverAse = assets.LoadAseprite("revolver.aseprite");
         var revolver = Utils.FlattenToAnimation(revolverAse);
 
-        var slimeAse = AsepriteFileLoader.FromFile("assets/slime2.aseprite");
+        var slimeAse = assets.LoadAseprite("slime2.aseprite");
         var slime = Utils.FlattenTagToAnimation(slimeAse, "jump");
 
         var towers = new List<Tower>();
@@ -652,6 +655,7 @@ internal class Program
 
             Raylib.EndDrawing();
         }
+
         Raylib.CloseWindow();
     }
 }

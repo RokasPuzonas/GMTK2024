@@ -18,9 +18,9 @@ class RaylibTilemap
         new Vector2(1, 1)  // Bottom right
     };
 
-    public RaylibTilemap(Dictionary<string, RaylibTileset> tilesets, string tilemap)
+    public RaylibTilemap(Dictionary<string, RaylibTileset> tilesets, Stream stream)
     {
-        map = new TiledMap(tilemap);
+        map = new TiledMap(stream);
 
         rlTilesets = new Dictionary<int, RaylibTileset>();
         foreach (var mapTileset in map.Tilesets)
