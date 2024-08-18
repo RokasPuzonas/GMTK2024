@@ -1,4 +1,5 @@
 ﻿using Raylib_CsLo;
+using System;
 using System.Numerics;
 
 namespace GMTK2024;
@@ -24,19 +25,36 @@ internal class RaylibAnimation
         return duration;
     }
 
-    public void UpdateAnimation(float dt, ref float animationTimer, ref int animationIndex, bool loop = true)
+    public void UpdateLooped(float dt, ref float animationTimer, ref int animationIndex)
     {
         animationTimer += dt;
         while (animationTimer > frames[animationIndex].duration)
         {
             animationTimer -= frames[animationIndex].duration;
-            if (loop == true)
-            {
-                animationIndex = (animationIndex + 1) % frames.Count;
-            } else
-            {
-                animationIndex = Math.Min(animationIndex + 1, frames.Count - 1);
-            }
+            animationIndex = (animationIndex + 1) % frames.Count;
         }
+    }
+
+    public bool UpdateOnce(float dt, ref float animationTimer, ref int animationIndex)
+    {
+        animationTimer += dt;
+        while (animationTimer > frames[animationIndex].duration)
+        {
+            animationTimer -= frames[animationIndex].duration;
+
+            if (animationIndex == frames.Count - 1)
+            {
+                return true;
+            }
+
+            animationIndex++;
+        }
+
+        return false;
+    }
+
+    public void DrawCentered(int frameIndex, Vector2 position, float rotation, float scale, Color tint)
+    {
+        Utils.DrawTextureCentered(frames[frameIndex].texture, position, rotation, scale, tint);
     }
 }

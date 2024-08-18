@@ -8,6 +8,13 @@ enum EnemyType
     Slime
 };
 
+enum EnemyState
+{
+    SlimeWindup,
+    SlimeJump,
+    SlimeCooldown
+}
+
 internal class Enemy
 {
     public bool dead = false;
@@ -16,6 +23,7 @@ internal class Enemy
     public Vector2 velocity = Vector2.Zero;
     public Vector2 position = Vector2.Zero;
     public EnemyType type;
+    public EnemyState state;
     public Vector2 size = new Vector2(16, 16);
     public int health;
     public int maxHealth;
@@ -29,6 +37,7 @@ internal class Enemy
     public float jumpCooldown = 0;
     public float collisionRadius = 0;
     public float goldValue = 10;
+
 
     public Rectangle GetRect()
     {

@@ -310,7 +310,6 @@ internal class Level
         var canvasSize = Program.canvasSize;
         var tileSize = Program.tileSize;
 
-
         var dt = Raylib.GetFrameTime();
         var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
 
@@ -383,7 +382,7 @@ internal class Level
 
                 if (tower.state == TowerState.Shoot)
                 {
-                    Program.revolver.UpdateAnimation(dt, ref tower.animationTimer, ref tower.animationIndex);
+                    Program.revolver.UpdateLooped(dt, ref tower.animationTimer, ref tower.animationIndex);
                 }
                 else
                 {
@@ -465,9 +464,10 @@ internal class Level
                 enemies.Add(new Enemy
                 {
                     position = enemyPath[0],
-                    targetEndpoint = 1,
+                    targetEndpoint = 0,
                     type = currentWave.spawns[0].type,
-                    size = Program.slime.size,
+                    state = EnemyState.SlimeCooldown,
+                    size = Program.slimeJump.size,
                     maxHealth = enemyHealth,
                     health = enemyHealth,
                     collisionRadius = 10
@@ -524,16 +524,35 @@ internal class Level
                 if (enemy.type == EnemyType.Slime)
                 {
                     enemy.jumpCooldown = Math.Max(enemy.jumpCooldown - dt, 0);
-                    Program.slime.UpdateAnimation(dt, ref enemy.animationTimer, ref enemy.animationIndex, false);
 
-                    if (enemy.jumpCooldown == 0)
+                    if (enemy.state == EnemyState.SlimeCooldown)
                     {
-                        enemy.jumpCooldown = rng.NextSingle() * 0.5f + 0.75f;
-
-                        var jumpPower = rng.NextSingle() * 100 + 100;
-                        enemy.velocity += Vector2.Normalize(targetPosition - enemy.position) * jumpPower;
-                        enemy.animationIndex = 0;
+                        if (enemy.jumpCooldown == 0)
+                        {
+                            enemy.state = EnemyState.SlimeWindup;
+                        }
                     }
+                    else if (enemy.state == EnemyState.SlimeJump)
+                    {
+                        if (Program.slimeJump.UpdateOnce(dt, ref enemy.animationTimer, ref enemy.animationIndex))
+                        {
+                            enemy.animationIndex = 0;
+                            enemy.state = EnemyState.SlimeCooldown;
+                        }
+                    }
+                    else if (enemy.state == EnemyState.SlimeWindup)
+                    {
+                        if (Program.slimeWindup.UpdateOnce(dt, ref enemy.animationTimer, ref enemy.animationIndex))
+                        {
+                            enemy.jumpCooldown = rng.NextSingle() * 0.5f + 0.75f;
+
+                            var jumpPower = rng.NextSingle() * 100 + 100;
+                            enemy.velocity += Vector2.Normalize(targetPosition - enemy.position) * jumpPower;
+                            enemy.animationIndex = 0;
+                            enemy.state = EnemyState.SlimeJump;
+                        }
+                    }
+                    
                 }
 
                 foreach (var otherEnemy in enemies)
@@ -546,7 +565,10 @@ internal class Level
                     }
                 }
 
-                enemy.velocity = Vector2.Normalize(enemy.velocity) * enemy.velocity.Length() * (1 - enemy.friction);
+                if (enemy.velocity.X != 0 || enemy.velocity.Y != 0)
+                {
+                    enemy.velocity = Vector2.Normalize(enemy.velocity) * enemy.velocity.Length() * (1 - enemy.friction);
+                }
                 enemy.position += enemy.velocity * dt;
             }
 
@@ -570,9 +592,24 @@ internal class Level
 
             foreach (var enemy in enemies)
             {
-                var rotation = Utils.ToDegrees(enemy.aim) - 90;
-                Utils.DrawTextureCentered(Program.slime.frames[enemy.animationIndex].texture, enemy.position, rotation, 1, Raylib.WHITE);
-                Raylib.DrawCircleLines((int)enemy.position.X, (int)enemy.position.Y, enemy.collisionRadius, Raylib.RED);
+                if (enemy.type == EnemyType.Slime)
+                {
+                    var rotation = Utils.ToDegrees(enemy.aim) - 90;
+                    if (enemy.state == EnemyState.SlimeWindup)
+                    {
+                        Program.slimeWindup.DrawCentered(enemy.animationIndex, enemy.position, rotation, 1, Raylib.WHITE); 
+                    }
+                    else if (enemy.state == EnemyState.SlimeJump)
+                    {
+                        Program.slimeJump.DrawCentered(enemy.animationIndex, enemy.position, rotation, 1, Raylib.WHITE);
+                    }
+                    else if (enemy.state == EnemyState.SlimeCooldown)
+                    {
+                        Program.slimeWindup.DrawCentered(0, enemy.position, rotation, 1, Raylib.WHITE);
+                    }
+                }
+
+                Raylib.DrawCircleLines((int)enemy.position.X, (int)enemy.position.Y, enemy.collisionRadius, Raylib.GREEN);
                 //Raylib.DrawRectangleRec(enemy.GetRect(), Raylib.RED);
                 //Raylib.DrawCircleV(enemy.position, 1, Raylib.BLUE);
                 //Raylib.DrawLineV(enemy.position, enemy.position + new Vector2((float)Math.Cos(enemy.aim), (float)Math.Sin(enemy.aim)) * 100, Raylib.GREEN);
@@ -624,6 +661,8 @@ internal class Level
             RlGl.rlScalef(camera.zoom, camera.zoom, 1);
 
             Raylib.DrawFPS(10, 10);
+
+            Raylib.DrawText($"Enemies: {enemies.Count}", 10, 30, 10, Raylib.WHITE);
 
             var healthbarWidth = canvasSize.X * 0.75f;
             var healthbarContainer = new Rectangle(

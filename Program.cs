@@ -13,7 +13,8 @@ internal class Program
     public static DualGridTileset towerPlatformMain;
     public static DualGridTileset towerPlatformFoliage;
     public static RaylibAnimation revolver;
-    public static RaylibAnimation slime;
+    public static RaylibAnimation slimeJump;
+    public static RaylibAnimation slimeWindup;
 
     public static void Main(string[] args)
     {
@@ -42,7 +43,8 @@ internal class Program
         revolver = Utils.FlattenToAnimation(revolverAse);
 
         var slimeAse = assets.LoadAseprite("slime2.aseprite");
-        slime = Utils.FlattenTagToAnimation(slimeAse, "jump");
+        slimeWindup = Utils.FlattenTagToAnimation(slimeAse, "windup");
+        slimeJump = Utils.FlattenTagToAnimation(slimeAse, "jump");
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));
         var currentLevel = new Level(tilemap);
