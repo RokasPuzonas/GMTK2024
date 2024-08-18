@@ -10,10 +10,12 @@ internal class Program
     public static float tileSize = 32;
     public static Vector2 canvasSize = new Vector2(320 * 3, 180 * 3);
 
-    public static int startingGold = 100;
+    public static int startingGold = 1000;
     public static float playerHealth = 100;
 
     public static int revolverCost = 25;
+    public static float revolverBulletSpeed = 200;
+    public static float bigRevolverBulletSpeed = 400;
     public static int slimeGoldDrop = 5;
 
     public static Assets assets;
@@ -21,6 +23,14 @@ internal class Program
     public static DualGridTileset towerPlatformMain;
     public static DualGridTileset towerPlatformFoliage;
     public static RaylibAnimation revolver;
+    public static RaylibAnimation bigRevolverUnderbelly;
+    public static RaylibAnimation bigRevolverAmmoRack;
+    public static RaylibAnimation bigRevolverLeftGun;
+    public static RaylibAnimation bigRevolverRightGun;
+    public static RaylibAnimation bigRevolverLeftAmmo;
+    public static RaylibAnimation bigRevolverRightAmmo;
+    public static Vector2 bigRevolverLeftPivot;
+    public static Vector2 bigRevolverRightPivot;
     public static RaylibAnimation slimeJump;
     public static RaylibAnimation slimeWindup;
     public static RaylibAnimation homeCrystal;
@@ -73,12 +83,21 @@ internal class Program
             var homeCrystalAse = assets.LoadAseprite("end.aseprite");
             homeCrystal = Utils.FlattenToAnimation(homeCrystalAse);
 
+            var bigRevolverAse = assets.LoadAseprite("big_revolver.aseprite");
+            bigRevolverLeftGun    = Utils.FlattenLayerToAnimation(bigRevolverAse, "left gub");
+            bigRevolverRightGun   = Utils.FlattenLayerToAnimation(bigRevolverAse, "right gub");
+            bigRevolverLeftAmmo   = Utils.FlattenLayerToAnimation(bigRevolverAse, "ammo left");
+            bigRevolverRightAmmo  = Utils.FlattenLayerToAnimation(bigRevolverAse, "ammo right");
+            bigRevolverAmmoRack   = Utils.FlattenLayerToAnimation(bigRevolverAse, "ammo rack");
+            bigRevolverUnderbelly = Utils.FlattenLayerToAnimation(bigRevolverAse, "underbelly");
+            bigRevolverLeftPivot  = Utils.GetSlicePivot(bigRevolverAse, "left gub pivot");
+            bigRevolverRightPivot = Utils.GetSlicePivot(bigRevolverAse, "right gun pivot");
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));
         var currentLevel = new Level(tilemap);
 
-        var mainmenu = true;
+        var mainmenu = false;
         var ui = new UI();
 
         while (!Raylib.WindowShouldClose() && running) 
@@ -115,6 +134,7 @@ internal class Program
             }
         }
 
+        Raylib.CloseAudioDevice();
         Raylib.CloseWindow();
     }
 }

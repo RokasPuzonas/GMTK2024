@@ -59,8 +59,30 @@ internal class RaylibAnimation
         return false;
     }
 
+    public void PlayOnce(float dt, ref AnimationState state, ref bool played)
+    {
+        if (!played)
+        {
+            played = UpdateOnce(dt, ref state);
+        }
+        else
+        {
+            state.frame = 0;
+        }
+    }
+
     public void DrawCentered(int frameIndex, Vector2 position, float rotation, float scale, Color tint)
     {
         Utils.DrawTextureCentered(frames[frameIndex].texture, position, rotation, scale, tint);
+    }
+
+
+    public void Draw(int frameIndex, Vector2 position, Vector2 origin, float rotation, float scale, Color tint)
+    {
+        var texture = frames[frameIndex].texture;
+
+        var source = new Rectangle(0, 0, texture.width, texture.height);
+        var dest = new Rectangle(position.X, position.Y, texture.width * scale, texture.height * scale);
+        Raylib.DrawTexturePro(texture, source, dest, origin, rotation, tint);
     }
 }
