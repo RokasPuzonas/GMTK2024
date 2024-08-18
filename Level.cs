@@ -8,6 +8,10 @@ namespace GMTK2024;
 
 internal class Level
 {
+    static bool debugShowPath = false;
+    static bool debugAimAtMouse = false;
+    static bool debugTowerInfo = false;
+
     RaylibTilemap tilemap;
     Random rng = new Random();
     List<Tower> towers = new List<Tower>();
@@ -26,6 +30,7 @@ internal class Level
     int currentWaveIndex = 0;
 
     float waveSpawnTimer = 0f;
+    Vector2? worldMouse = null;
 
     float maxHealth = Program.playerHealth;
     float health = Program.playerHealth;
@@ -341,14 +346,18 @@ internal class Level
         }
     }
 
-    public static Enemy? GetNearestEnemy(List<Enemy> enemies, Vector2 position)
+    public static Enemy? GetNearestEnemy(List<Enemy> enemies, Vector2 position, float minRange, float maxRange)
     {
         if (enemies.Count == 0) return null;
 
-        var nearestEnemy = enemies[0];
+        Enemy? nearestEnemy = null;
         foreach (var enemy in enemies)
         {
-            if (Vector2.DistanceSquared(nearestEnemy.position, position) > Vector2.DistanceSquared(enemy.position, position))
+            var distance = Vector2.Distance(enemy.position, position);
+            if (distance <= minRange) continue;
+            if (distance >= maxRange) continue;
+
+            if (nearestEnemy == null || Vector2.Distance(nearestEnemy.position, position) > distance)
             {
                 nearestEnemy = enemy;
             }
@@ -426,9 +435,183 @@ internal class Level
         {
             Program.mortarReload.Draw(tower.animation, middle, Program.mortarPivot, aimDegress, 1, Raylib.WHITE);
         }
+        
+        if (debugTowerInfo)
+        {
+            Raylib.DrawCircleLines((int)middle.X, (int)middle.Y, tower.maxRange, Raylib.RED);
+            Raylib.DrawCircleLines((int)middle.X, (int)middle.Y, tower.minRange, Raylib.BLUE);
+            Raylib.DrawLineV(middle, middle + Utils.GetAngledVector2(tower.aim, 100), Raylib.GREEN);
+        }
+    }
 
-        Raylib.DrawCircleLines((int)middle.X, (int)middle.Y, tower.range, Raylib.RED);
-        Raylib.DrawLineV(middle, middle + new Vector2((float)Math.Cos(tower.aim), (float)Math.Sin(tower.aim)) * 100, Raylib.GREEN);
+    public void TryShootingBullet(Tower tower)
+    {
+        if (tower.type == TowerType.Revolver)
+        {
+            if (tower.shootCooldown == 0)
+            {
+                tower.reloaded = false;
+                tower.shootCooldown = Program.revolver.GetDuration() * 1.1f;
+                bullets.Add(new Bullet
+                {
+                    position = tower.Center(),
+                    speed = Program.revolverBulletSpeed,
+                    damage = Program.revolverBulletDamage,
+                    direction = Utils.GetAngledVector2(tower.aim)
+                });
+                Raylib.PlaySoundMulti(Program.revolverGunshot);
+            }
+        }
+        else if (tower.type == TowerType.Mortar)
+        {
+            if (tower.shootCooldown == 0)
+            {
+                tower.fired = true;
+                tower.reloaded = false;
+                tower.shootCooldown = (Program.mortarReload.GetDuration() + Program.mortarFire.GetDuration()) * 1.1f;
+                bullets.Add(new Bullet
+                {
+                    position = tower.Center(),
+                    speed = Program.revolverBulletSpeed,
+                    damage = Program.revolverBulletDamage,
+                    direction = Utils.GetAngledVector2(tower.aim)
+                });
+                Raylib.PlaySoundMulti(Program.mortarGunshot);
+            }
+        }
+        else if (tower.type == TowerType.BigRevolver)
+        {
+            var bigRevolverCooldown = Program.bigRevolverLeftGun.GetDuration() * 1.1f;
+
+            if (Utils.IsAngleClose(tower.leftTargetAim, tower.leftAim) && tower.leftShootCooldown == 0)
+            {
+                tower.leftReloaded = false;
+                tower.leftShootCooldown = bigRevolverCooldown;
+                bullets.Add(new Bullet
+                {
+                    position = tower.GetLeftGunCenter(),
+                    speed = Program.bigRevolverBulletSpeed,
+                    damage = Program.bigRevolverBulletDamage,
+                    direction = Utils.GetAngledVector2(tower.aim + tower.leftAim)
+                });
+                Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
+            }
+
+            if (Utils.IsAngleClose(tower.leftTargetAim, tower.leftAim) && tower.rightShootCooldown == 0 && tower.leftShootCooldown < bigRevolverCooldown / 2)
+            {
+                tower.rightReloaded = false;
+                tower.rightShootCooldown = bigRevolverCooldown;
+                bullets.Add(new Bullet
+                {
+                    position = tower.GetRightGunCenter(),
+                    speed = Program.bigRevolverBulletSpeed,
+                    damage = Program.bigRevolverBulletDamage,
+                    direction = Utils.GetAngledVector2(tower.aim + tower.rightAim)
+                });
+                Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
+            }
+        }
+    }
+
+    public void UpdateTower(Tower tower, float dt)
+    {
+        // Update animations
+        {
+            tower.shootCooldown = Math.Max(tower.shootCooldown - dt, 0);
+            tower.leftShootCooldown = Math.Max(tower.leftShootCooldown - dt, 0);
+            tower.rightShootCooldown = Math.Max(tower.rightShootCooldown - dt, 0);
+
+            if (tower.type == TowerType.Revolver)
+            {
+                Program.revolver.PlayOnce(dt, ref tower.animation, ref tower.reloaded);
+            }
+            else if (tower.type == TowerType.BigRevolver)
+            {
+                Program.revolver.PlayOnce(dt, ref tower.leftGunAnimation, ref tower.leftReloaded);
+                Program.revolver.PlayOnce(dt, ref tower.rightGunAnimation, ref tower.rightReloaded);
+            }
+            else if (tower.type == TowerType.Mortar)
+            {
+                if (tower.fired)
+                {
+                    if (Program.mortarFire.UpdateOnce(dt, ref tower.animation))
+                    {
+                        tower.fired = false;
+                    }
+                } else
+                {
+                    Program.mortarReload.PlayOnce(dt, ref tower.animation, ref tower.reloaded);
+                }
+            }
+        }
+
+
+        // Find target
+        {
+            tower.targetPosition = null;
+            var nearestEnemy = GetNearestEnemy(enemies, tower.position, tower.minRange, tower.maxRange);
+            if (nearestEnemy != null)
+            {
+                tower.targetPosition = nearestEnemy.position;
+            }
+
+            if (debugAimAtMouse && worldMouse != null)
+            {
+                tower.targetPosition = worldMouse.Value;
+            }
+
+            if (tower.targetPosition != null)
+            {
+                var targetPosition = tower.targetPosition.Value;
+                tower.targetAim = Utils.GetAimAngle(tower.Center(), targetPosition);
+
+                if (tower.type == TowerType.BigRevolver && Utils.IsAngleClose(tower.targetAim, tower.aim))
+                {
+                    tower.leftTargetAim = Utils.GetAimAngle(tower.GetLeftGunCenter(), targetPosition) - tower.aim;
+                    tower.rightTargetAim = Utils.GetAimAngle(tower.GetRightGunCenter(), targetPosition) - tower.aim;
+                }
+            }
+            else
+            {
+                var seed = Raylib.GetTime() + tower.createdAt;
+                tower.targetAim += (float)Math.Sin(seed) / (2 * (float)Math.PI) / 10;
+
+                if (tower.type == TowerType.BigRevolver)
+                {
+                    tower.leftTargetAim += (float)Math.Sin(seed + 100) / (2 * (float)Math.PI) / 20;
+                    tower.rightTargetAim -= (float)Math.Sin(seed + 200) / (2 * (float)Math.PI) / 20;
+                }
+            }
+        }
+
+        if (tower.targetPosition != null && Utils.IsAngleClose(tower.targetAim, tower.aim))
+        {
+            TryShootingBullet(tower);
+        }
+
+        bool canAim = false;
+        if (tower.type == TowerType.Revolver)
+        {
+            canAim = tower.shootCooldown == 0;
+        }
+        else if (tower.type == TowerType.BigRevolver)
+        {
+            canAim = tower.leftShootCooldown == 0 || tower.rightShootCooldown == 0;
+        }
+        else if (tower.type == TowerType.Mortar)
+        {
+            canAim = tower.reloaded;
+        }
+
+        if (canAim)
+        {
+            tower.aim = Utils.ApproachAngle(tower.aim, tower.targetAim, dt * tower.aimSpeed);
+            if (tower.type == TowerType.BigRevolver)
+            {
+                tower.leftAim = Utils.ApproachAngle(tower.leftAim, tower.leftTargetAim, dt * tower.aimSpeed);
+                tower.rightAim = Utils.ApproachAngle(tower.rightAim, tower.rightTargetAim, dt * tower.aimSpeed);
+            }
+        }
     }
     
     public void Tick()
@@ -492,19 +675,19 @@ internal class Level
             ui.End();
         }
 
-        Vector2? mouse = null;
+        worldMouse = null;
         if (!ui.hot)
         {
-            mouse = GetMouseInWorld(camera);
+            worldMouse = GetMouseInWorld(camera);
         }
 
         // Towers
         {
-            if (mouse != null)
+            if (worldMouse != null)
             {
                 var mouseTile = new Vector2(
-                    DivMultipleFloor(mouse.Value.X, tileSize),
-                    DivMultipleFloor(mouse.Value.Y, tileSize)
+                    DivMultipleFloor(worldMouse.Value.X, tileSize),
+                    DivMultipleFloor(worldMouse.Value.Y, tileSize)
                 );
                 var towerCost = Tower.GetCost(selectedTower);
 
@@ -525,120 +708,7 @@ internal class Level
 
             foreach (var tower in towers)
             {
-                tower.shootCooldown = Math.Max(tower.shootCooldown - dt, 0);
-                tower.leftShootCooldown = Math.Max(tower.leftShootCooldown - dt, 0);
-                tower.rightShootCooldown = Math.Max(tower.rightShootCooldown - dt, 0);
-
-                if (tower.type == TowerType.Revolver)
-                {
-                    Program.revolver.PlayOnce(dt, ref tower.animation, ref tower.reloaded);
-                }
-                else if (tower.type == TowerType.BigRevolver)
-                {
-                    Program.revolver.PlayOnce(dt, ref tower.leftGunAnimation, ref tower.leftReloaded);
-                    Program.revolver.PlayOnce(dt, ref tower.rightGunAnimation, ref tower.rightReloaded);
-                }
-
-                var nearestEnemy = GetNearestEnemy(enemies, tower.position);
-                if (nearestEnemy != null && Vector2.Distance(nearestEnemy.position, tower.position) < tower.range)
-                {
-                    tower.targetPosition = nearestEnemy.position;
-                }
-                else
-                {
-                    tower.targetPosition = null;
-                }
-
-                if (tower.targetPosition != null)
-                {
-                    var targetPosition = tower.targetPosition.Value;
-                    tower.targetAim = Utils.GetAimAngle(tower.Center(), targetPosition);
-
-                    if (tower.type == TowerType.BigRevolver && Utils.IsAngleClose(tower.targetAim, tower.aim))
-                    {
-                        tower.leftTargetAim = Utils.GetAimAngle(tower.GetLeftGunCenter(), targetPosition) - tower.aim;
-                        tower.rightTargetAim = Utils.GetAimAngle(tower.GetRightGunCenter(), targetPosition) - tower.aim;
-                    }
-                } else
-                {
-                    var seed = Raylib.GetTime() + tower.createdAt;
-                    tower.targetAim += (float)Math.Sin(seed) / (2 * (float)Math.PI) / 10;
-
-                    if (tower.type == TowerType.BigRevolver)
-                    {
-                        tower.leftTargetAim += (float)Math.Sin(seed + 100) / (2 * (float)Math.PI) / 20;
-                        tower.rightTargetAim -= (float)Math.Sin(seed + 200) / (2 * (float)Math.PI) / 20;
-                    }
-                }
-
-                if (tower.targetPosition != null && Utils.IsAngleClose(tower.targetAim, tower.aim))
-                {
-                    if (tower.type == TowerType.Revolver)
-                    {
-                        if (tower.shootCooldown == 0)
-                        {
-                            tower.reloaded = false;
-                            tower.shootCooldown = Program.revolver.GetDuration() * 1.1f;
-                            bullets.Add(new Bullet
-                            {
-                                position = tower.Center(),
-                                speed = Program.revolverBulletSpeed,
-                                direction = Utils.GetAngledVector2(tower.aim)
-                            });
-                            Raylib.PlaySoundMulti(Program.revolverGunshot);
-                        }
-                    }
-                    else if (tower.type == TowerType.BigRevolver)
-                    {
-                        var bigRevolverCooldown = Program.bigRevolverLeftGun.GetDuration() * 1.1f;
-
-                        if (Utils.IsAngleClose(tower.leftTargetAim, tower.leftAim) && tower.leftShootCooldown == 0)
-                        {
-                            tower.leftReloaded = false;
-                            tower.leftShootCooldown = bigRevolverCooldown;
-                            bullets.Add(new Bullet
-                            {
-                                position = tower.GetLeftGunCenter(),
-                                speed = Program.bigRevolverBulletSpeed,
-                                direction = Utils.GetAngledVector2(tower.aim + tower.leftAim)
-                            });
-                            Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
-                        }
-
-                        if (Utils.IsAngleClose(tower.leftTargetAim, tower.leftAim) && tower.rightShootCooldown == 0 && tower.leftShootCooldown < bigRevolverCooldown/2)
-                        {
-                            tower.rightReloaded = false;
-                            tower.rightShootCooldown = bigRevolverCooldown;
-                            bullets.Add(new Bullet
-                            {
-                                position = tower.GetRightGunCenter(),
-                                speed = Program.bigRevolverBulletSpeed,
-                                direction = Utils.GetAngledVector2(tower.aim + tower.rightAim)
-                            });
-                            Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
-                        }
-                    }
-
-                }
-
-                bool canAim = false;
-                if (tower.type == TowerType.Revolver)
-                {
-                    canAim = tower.shootCooldown == 0;
-                } else
-                {
-                    canAim = tower.leftShootCooldown == 0 || tower.rightShootCooldown == 0;
-                }
-
-                if (canAim)
-                {
-                    tower.aim = Utils.ApproachAngle(tower.aim, tower.targetAim, dt * tower.aimSpeed);
-                    if (tower.type == TowerType.BigRevolver)
-                    {
-                        tower.leftAim = Utils.ApproachAngle(tower.leftAim, tower.leftTargetAim, dt * tower.aimSpeed);
-                        tower.rightAim = Utils.ApproachAngle(tower.rightAim, tower.rightTargetAim, dt * tower.aimSpeed);
-                    }
-                }
+                UpdateTower(tower, dt);
             }
         }
 
@@ -859,21 +929,24 @@ internal class Level
                 DrawTower(tower);
             }
 
-            if (mouse != null)
+            if (worldMouse != null)
             {
-                var tileX = DivMultipleFloor(mouse.Value.X, tileSize);
-                var tileY = DivMultipleFloor(mouse.Value.Y, tileSize);
-                var color = IsTowerPlaceable(mouse.Value) ? Raylib.GREEN : Raylib.RED;
+                var tileX = DivMultipleFloor(worldMouse.Value.X, tileSize);
+                var tileY = DivMultipleFloor(worldMouse.Value.Y, tileSize);
+                var color = IsTowerPlaceable(worldMouse.Value) ? Raylib.GREEN : Raylib.RED;
                 Raylib.DrawRectangleLinesEx(new Rectangle(tileX, tileY, tileSize, tileSize), 1, color);
             }
 
-            DrawLine(enemyPath, Raylib.RED);
-            foreach (var point in enemyPath)
+            if (debugShowPath)
             {
-                Raylib.DrawCircleV(point, 2, Raylib.RED);
-            }
+                DrawLine(enemyPath, Raylib.RED);
+                foreach (var point in enemyPath)
+                {
+                    Raylib.DrawCircleV(point, 2, Raylib.RED);
+                }
 
-            Raylib.DrawCircleLines((int)basePosition.X, (int)basePosition.Y, tileSize / 3, Raylib.YELLOW);
+                Raylib.DrawCircleLines((int)basePosition.X, (int)basePosition.Y, tileSize / 3, Raylib.YELLOW);
+            }
         }
         Raylib.EndMode2D();
 

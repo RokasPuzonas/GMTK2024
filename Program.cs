@@ -16,15 +16,20 @@ internal class Program
     public static int revolverCost = 25;
     public static float revolverAimSpeed = (float)Math.PI;
     public static float revolverBulletSpeed = 200;
-    public static float revolverRange = 200f;
+    public static int revolverBulletDamage = 50;
+    public static float revolverMinRange = 10f;
+    public static float revolverMaxRange = 200f;
     
     public static float bigRevolverAimSpeed = (float)Math.PI / 2;
     public static float bigRevolverBulletSpeed = 400;
-    public static float bigRevolverRange = 350f;
+    public static int bigRevolverBulletDamage = 100;
+    public static float bigRevolverMinRange = 50f;
+    public static float bigRevolverMaxRange = 350f;
 
     public static float mortarAimSpeed = (float)Math.PI / 3;
     public static int mortarCost = 50;
-    public static float mortarRange = 400f;
+    public static float mortarMinRange = 75f;
+    public static float mortarMaxRange = 400f;
 
     public static int slimeGoldDrop = 5;
 
@@ -51,6 +56,7 @@ internal class Program
     public static Texture coin;
     public static Sound revolverGunshot;
     public static Sound bigRevolverGunshot;
+    public static Sound mortarGunshot;
 
     public static void Main(string[] args)
     {
@@ -93,6 +99,9 @@ internal class Program
 
             bigRevolverGunshot = assets.LoadSound("big_gunshot.wav");
             Raylib.SetSoundVolume(bigRevolverGunshot, 0.25f);
+
+            mortarGunshot = assets.LoadSound("mortar_gunshot.wav");
+            Raylib.SetSoundVolume(mortarGunshot, 0.25f);
 
             var spawnerAse = assets.LoadAseprite("spawner.aseprite");
             enemySpawner = Utils.FrameToTexture(spawnerAse.Frames[0]);

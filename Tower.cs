@@ -25,7 +25,8 @@ internal class Tower
     public float targetAim = 0;
     public float aimSpeed = (float)Math.PI;
     public float aim = 0;
-    public float range = 200f;
+    public float maxRange = 200f;
+    public float minRange = 20f;
 
     public AnimationState animation = new AnimationState();
 
@@ -72,7 +73,8 @@ internal class Tower
             aim = aim,
 
             aimSpeed = Program.revolverAimSpeed,
-            range = Program.revolverRange
+            minRange = Program.revolverMinRange,
+            maxRange = Program.revolverMaxRange
         };
     }
 
@@ -88,7 +90,8 @@ internal class Tower
             aim = aim,
 
             aimSpeed = Program.bigRevolverAimSpeed,
-            range = Program.bigRevolverRange
+            minRange = Program.bigRevolverMinRange,
+            maxRange = Program.bigRevolverMaxRange
         };
     }
 
@@ -104,7 +107,8 @@ internal class Tower
             aim = aim,
 
             aimSpeed = Program.mortarAimSpeed,
-            range = Program.mortarRange
+            minRange = Program.mortarMinRange,
+            maxRange = Program.mortarMaxRange
         };
     }
 
