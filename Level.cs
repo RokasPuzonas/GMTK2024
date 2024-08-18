@@ -465,6 +465,8 @@ internal class Level
                     damage = Program.revolverBulletDamage,
                     pierce = Program.revolverBulletPierce,
                     knockback = Program.revolverBulletKnockback,
+                    type = TowerType.Revolver,
+                    smearLength = Program.revolverBulletSmear,
                     direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.revolverGunshot);
@@ -489,6 +491,7 @@ internal class Level
                     explosionRadius = Program.mortarBulletRadius,
                     shotFrom = tower.Center(),
                     maxDistance = Vector2.Distance(tower.Center(), tower.targetPosition.Value),
+                    type = TowerType.Mortar,
                     explodes = true,
                     direction = aimDirection
                 });
@@ -513,6 +516,8 @@ internal class Level
                     damage = Program.bigRevolverBulletDamage,
                     pierce = Program.bigRevolverBulletPierce,
                     knockback = Program.bigRevolverBulletKnockback,
+                    type = TowerType.BigRevolver,
+                    smearLength = Program.bigRevolverBulletSmear,
                     direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
@@ -532,6 +537,8 @@ internal class Level
                     damage = Program.bigRevolverBulletDamage,
                     knockback = Program.bigRevolverBulletKnockback,
                     pierce = Program.bigRevolverBulletPierce,
+                    type = TowerType.BigRevolver,
+                    smearLength = Program.bigRevolverBulletSmear,
                     direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
@@ -776,6 +783,15 @@ internal class Level
             {
                 bullet.position += bullet.direction * dt * bullet.speed;
 
+                if (bullet.smearLength > 0)
+                {
+                    bullet.smear.Add(bullet.position);
+                    if (bullet.smear.Count > bullet.smearLength)
+                    {
+                        bullet.smear.RemoveAt(0);
+                    }
+                }
+
                 if (bullet.explodes)
                 {
                     if (Vector2.Distance(bullet.position, bullet.shotFrom) > bullet.maxDistance)
@@ -792,12 +808,14 @@ internal class Level
 
                         bullet.dead = true;
                     }
-                } else {
+                }
+                else
+                {
                     foreach (var enemy in enemies)
                     {
                         if (enemy.dead) continue;
                         if (bullet.hitEnemies.Contains(enemy)) continue;
-                        if (!Raylib.CheckCollisionCircles(bullet.position, 3, enemy.position, enemy.collisionRadius)) continue;
+                        if (!Raylib.CheckCollisionCircles(bullet.position, Program.bulletColliderRadius, enemy.position, enemy.collisionRadius)) continue;
                     
                         enemy.health = Math.Max(enemy.health - bullet.damage, 0);
                         enemy.velocity += bullet.direction * bullet.knockback;
@@ -927,7 +945,6 @@ internal class Level
                             enemy.state = EnemyState.SlimeJump;
                         }
                     }
-
                 }
 
                 foreach (var otherEnemy in enemies)
@@ -1013,11 +1030,33 @@ internal class Level
 
             foreach (var bullet in bullets)
             {
-                Raylib.DrawCircleV(bullet.position, 3, Raylib.RED);
+                var rotation = Utils.ToDegrees((float)Math.Atan2(bullet.direction.Y, bullet.direction.X)) + 90;
+
+                Texture? texture = null;
+                if (bullet.type == TowerType.Revolver)
+                {
+                    texture = Program.revolverBullet;
+                } else if (bullet.type == TowerType.BigRevolver)
+                {
+                    texture = Program.bigRevolverBullet;
+                }
+
+                if (texture != null)
+                {
+                    for (int i = 0; i < bullet.smear.Count; i++)
+                    {
+                        Utils.DrawTextureCentered(texture.Value, bullet.smear[i], rotation, 1, Raylib.ColorAlpha(Raylib.WHITE, (i + 0.5f) / bullet.smear.Count));
+                    }
+                    Utils.DrawTextureCentered(texture.Value, bullet.position, rotation, 1, Raylib.WHITE);
+                } else
+                {
+                    Raylib.DrawCircleV(bullet.position, Program.bulletColliderRadius, Raylib.RED);
+                }
 
                 if (debugBulletInfo)
                 {
                     Raylib.DrawLineV(bullet.position, bullet.position + bullet.direction * 100, Raylib.GREEN);
+                    Raylib.DrawCircleLines((int)bullet.position.X, (int)bullet.position.Y, Program.bulletColliderRadius, Raylib.RED);
 
                     if (bullet.explodes)
                     {

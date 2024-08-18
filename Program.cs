@@ -12,12 +12,14 @@ internal class Program
 
     public static int   startingGold = 1000;
     public static float playerHealth = 100;
+    public static float bulletColliderRadius = 3;
 
     public static int   revolverCost = 25;
     public static float revolverAimSpeed = (float)Math.PI;
     public static float revolverBulletSpeed = 200;
     public static int   revolverBulletDamage = 50;
     public static int   revolverBulletPierce = 2;
+    public static int   revolverBulletSmear = 5;
     public static float revolverBulletKnockback = 150f;
     public static float revolverMinRange = 10f;
     public static float revolverMaxRange = 200f;
@@ -27,6 +29,7 @@ internal class Program
     public static int   bigRevolverBulletDamage = 100;
     public static int   bigRevolverBulletPierce = 10;
     public static float bigRevolverBulletKnockback = 50f;
+    public static int   bigRevolverBulletSmear = 10;
     public static float bigRevolverMinRange = 50f;
     public static float bigRevolverMaxRange = 350f;
 
@@ -51,6 +54,7 @@ internal class Program
     public static DualGridTileset towerPlatformMain;
     public static DualGridTileset towerPlatformFoliage;
     public static RaylibAnimation revolver;
+    public static Texture         revolverBullet;
     public static RaylibAnimation bigRevolverUnderbelly;
     public static RaylibAnimation bigRevolverAmmoRack;
     public static RaylibAnimation bigRevolverLeftGun;
@@ -59,6 +63,7 @@ internal class Program
     public static RaylibAnimation bigRevolverRightAmmo;
     public static Vector2 bigRevolverLeftPivot;
     public static Vector2 bigRevolverRightPivot;
+    public static Texture bigRevolverBullet;
     public static RaylibAnimation mortarReload;
     public static RaylibAnimation mortarFire;
     public static RaylibAnimation slimeJump;
@@ -136,6 +141,12 @@ internal class Program
             mortarFire   = Utils.FlattenTagToAnimation(mortarAse, "fire");
             mortarReload = Utils.FlattenTagToAnimation(mortarAse, "reload");
             mortarPivot = Utils.GetSlicePivot(mortarAse, "gun pivot point");
+
+            var revolverBulletAse = assets.LoadAseprite("revolver_bullet.aseprite");
+            revolverBullet = Utils.FrameToTexture(revolverBulletAse.Frames[0]);
+
+            var bigRevolverBulletAse = assets.LoadAseprite("big_revolver_bullet.aseprite");
+            bigRevolverBullet = Utils.FrameToTexture(bigRevolverBulletAse.Frames[0]);
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));
