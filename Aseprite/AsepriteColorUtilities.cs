@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GMTK2024;
+namespace GMTK2024.Aseprite;
 
 internal static class AsepriteColorUtilities
 {
@@ -52,7 +52,7 @@ internal static class AsepriteColorUtilities
             byte g;
             byte b;
             byte a;
-            byte r = (g = (b = (a = 0)));
+            byte r = g = b = a = 0;
             switch (depth)
             {
                 case AsepriteColorDepth.RGBA:
@@ -62,7 +62,7 @@ internal static class AsepriteColorUtilities
                     a = pixels[num3 + 3];
                     break;
                 case AsepriteColorDepth.Grayscale:
-                    r = (g = (b = pixels[num3]));
+                    r = g = b = pixels[num3];
                     a = pixels[num3 + 1];
                     break;
                 case AsepriteColorDepth.Indexed:
@@ -79,7 +79,7 @@ internal static class AsepriteColorUtilities
                     throw new InvalidOperationException($"Unknown Color Depth: {depth}");
             }
 
-            array[num2] = (preMultiplyAlpha ? Rgba32.FromNonPreMultiplied(r, g, b, a) : new Rgba32(r, g, b, a));
+            array[num2] = preMultiplyAlpha ? Rgba32.FromNonPreMultiplied(r, g, b, a) : new Rgba32(r, g, b, a);
             num2++;
             num3 += num;
         }
@@ -161,7 +161,7 @@ internal static class AsepriteColorUtilities
         }
         else
         {
-            reference3 = (reference2 = 0.0);
+            reference3 = reference2 = 0.0;
         }
 
         reference = 0.0;
@@ -441,10 +441,10 @@ internal static class AsepriteColorUtilities
         return Normal(backdrop, source, opacity);
         static int softlight(int _b, int _s)
         {
-            double num = (double)_b / 255.0;
-            double num2 = (double)_s / 255.0;
-            double num3 = ((!(num <= 0.25)) ? Math.Sqrt(num) : (((16.0 * num - 12.0) * num + 4.0) * num));
-            double num4 = ((!(num2 <= 0.5)) ? (num + (2.0 * num2 - 1.0) * (num3 - num)) : (num - (1.0 - 2.0 * num2) * num * (1.0 - num)));
+            double num = _b / 255.0;
+            double num2 = _s / 255.0;
+            double num3 = !(num <= 0.25) ? Math.Sqrt(num) : ((16.0 * num - 12.0) * num + 4.0) * num;
+            double num4 = !(num2 <= 0.5) ? num + (2.0 * num2 - 1.0) * (num3 - num) : num - (1.0 - 2.0 * num2) * num * (1.0 - num);
             return (int)(num4 * 255.0 + 0.5);
         }
     }
@@ -471,14 +471,14 @@ internal static class AsepriteColorUtilities
 
     private static Rgba32 HslHue(Rgba32 backdrop, Rgba32 source, int opacity)
     {
-        double r = (double)(int)backdrop.R / 255.0;
-        double g = (double)(int)backdrop.G / 255.0;
-        double b = (double)(int)backdrop.B / 255.0;
+        double r = backdrop.R / 255.0;
+        double g = backdrop.G / 255.0;
+        double b = backdrop.B / 255.0;
         double s = CalculateSaturation(r, g, b);
         double l = CalculateLuminance(r, g, b);
-        r = (double)(int)source.R / 255.0;
-        g = (double)(int)source.G / 255.0;
-        b = (double)(int)source.B / 255.0;
+        r = source.R / 255.0;
+        g = source.G / 255.0;
+        b = source.B / 255.0;
         AdjustSaturation(ref r, ref g, ref b, s);
         AdjustLumanice(ref r, ref g, ref b, l);
         source.R = (byte)(r * 255.0);
@@ -489,13 +489,13 @@ internal static class AsepriteColorUtilities
 
     private static Rgba32 HslSaturation(Rgba32 backdrop, Rgba32 source, int opacity)
     {
-        double r = (double)(int)source.R / 255.0;
-        double g = (double)(int)source.G / 255.0;
-        double b = (double)(int)source.B / 255.0;
+        double r = source.R / 255.0;
+        double g = source.G / 255.0;
+        double b = source.B / 255.0;
         double s = CalculateSaturation(r, g, b);
-        r = (double)(int)backdrop.R / 255.0;
-        g = (double)(int)backdrop.G / 255.0;
-        b = (double)(int)backdrop.B / 255.0;
+        r = backdrop.R / 255.0;
+        g = backdrop.G / 255.0;
+        b = backdrop.B / 255.0;
         double l = CalculateLuminance(r, g, b);
         AdjustSaturation(ref r, ref g, ref b, s);
         AdjustLumanice(ref r, ref g, ref b, l);
@@ -507,13 +507,13 @@ internal static class AsepriteColorUtilities
 
     private static Rgba32 HslColor(Rgba32 backdrop, Rgba32 source, int opacity)
     {
-        double r = (double)(int)backdrop.R / 255.0;
-        double g = (double)(int)backdrop.G / 255.0;
-        double b = (double)(int)backdrop.B / 255.0;
+        double r = backdrop.R / 255.0;
+        double g = backdrop.G / 255.0;
+        double b = backdrop.B / 255.0;
         double l = CalculateLuminance(r, g, b);
-        r = (double)(int)source.R / 255.0;
-        g = (double)(int)source.G / 255.0;
-        b = (double)(int)source.B / 255.0;
+        r = source.R / 255.0;
+        g = source.G / 255.0;
+        b = source.B / 255.0;
         AdjustLumanice(ref r, ref g, ref b, l);
         source.R = (byte)(r * 255.0);
         source.G = (byte)(g * 255.0);
@@ -523,13 +523,13 @@ internal static class AsepriteColorUtilities
 
     private static Rgba32 HslLuminosity(Rgba32 backdrop, Rgba32 source, int opacity)
     {
-        double r = (double)(int)source.R / 255.0;
-        double g = (double)(int)source.G / 255.0;
-        double b = (double)(int)source.B / 255.0;
+        double r = source.R / 255.0;
+        double g = source.G / 255.0;
+        double b = source.B / 255.0;
         double l = CalculateLuminance(r, g, b);
-        r = (double)(int)backdrop.R / 255.0;
-        g = (double)(int)backdrop.G / 255.0;
-        b = (double)(int)backdrop.B / 255.0;
+        r = backdrop.R / 255.0;
+        g = backdrop.G / 255.0;
+        b = backdrop.B / 255.0;
         AdjustLumanice(ref r, ref g, ref b, l);
         source.R = (byte)(r * 255.0);
         source.G = (byte)(g * 255.0);

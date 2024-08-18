@@ -32,8 +32,7 @@ internal class Tower
     public float range = 200f;
 
     public TowerState state = TowerState.Idle;
-    public int animationIndex = 0;
-    public float animationTimer = 0;
+    public AnimationState animation = new AnimationState();
 
     public float shootCooldown = 0.0f;
 

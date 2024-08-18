@@ -5,6 +5,8 @@ namespace GMTK2024;
 
 internal class Program
 {
+    public static bool running = true;
+
     public static float tileSize = 32;
     public static Vector2 canvasSize = new Vector2(320 * 3, 180 * 3);
 
@@ -14,7 +16,6 @@ internal class Program
     public static int revolverCost = 25;
     public static int slimeGoldDrop = 5;
 
-
     public static Assets assets;
     public static Dictionary<string, RaylibTileset> tilesets;
     public static DualGridTileset towerPlatformMain;
@@ -22,6 +23,8 @@ internal class Program
     public static RaylibAnimation revolver;
     public static RaylibAnimation slimeJump;
     public static RaylibAnimation slimeWindup;
+    public static RaylibAnimation homeCrystal;
+    public static Texture enemySpawner;
     public static Texture coin;
     public static Sound gunshot;
 
@@ -62,14 +65,54 @@ internal class Program
             coin = Utils.FrameToTexture(coinAse.Frames[0]);
 
             gunshot = assets.LoadSound("hard_gunshot.wav");
+            Raylib.SetSoundVolume(gunshot, 0.45f);
+
+            var spawnerAse = assets.LoadAseprite("spawner.aseprite");
+            enemySpawner = Utils.FrameToTexture(spawnerAse.Frames[0]);
+
+            var homeCrystalAse = assets.LoadAseprite("end.aseprite");
+            homeCrystal = Utils.FlattenToAnimation(homeCrystalAse);
+
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));
         var currentLevel = new Level(tilemap);
 
-        while (!Raylib.WindowShouldClose()) 
+        var mainmenu = true;
+        var ui = new UI();
+
+        while (!Raylib.WindowShouldClose() && running) 
         {
-            currentLevel.Tick();
+            if (mainmenu)
+            {
+                var font = Raylib.GetFontDefault();
+
+                Raylib.BeginDrawing();
+                Raylib.ClearBackground(Raylib.GetColor(0x232323ff));
+
+                var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+                {
+                    ui.Begin(Utils.GetMaxRectInContainer(screenSize, canvasSize), canvasSize);
+
+                    var center = canvasSize / 2;
+                    Utils.DrawTextCentered(font, "GMTK2024", center, 20, 1, Raylib.WHITE);
+                
+                    if (ui.ShowButton(Utils.GetCenteredRect(center + new Vector2(0, 50), new(100, 20)), "Play"))
+                    {
+                        mainmenu = false;
+                    }
+
+                    ui.End();
+                }
+
+                ui.Draw();
+
+
+                Raylib.EndDrawing();
+            } else
+            {
+                currentLevel.Tick();
+            }
         }
 
         Raylib.CloseWindow();

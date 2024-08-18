@@ -1,4 +1,4 @@
-﻿namespace GMTK2024;
+﻿namespace GMTK2024.Aseprite;
 
 internal static class Calc
 {

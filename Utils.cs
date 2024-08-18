@@ -2,6 +2,7 @@
 using AsepriteDotNet.Aseprite;
 using AsepriteDotNet.Aseprite.Types;
 using AsepriteDotNet.Common;
+using GMTK2024.Aseprite;
 using Raylib_CsLo;
 using System.Diagnostics;
 using System.Drawing;
@@ -27,6 +28,16 @@ static class Utils
     public static Vector2 GetRectCenter(Raylib_CsLo.Rectangle rect)
     {
         return new Vector2(rect.x + rect.width/2, rect.y + rect.height/2);
+    }
+
+    public static Raylib_CsLo.Rectangle GetCenteredRect(Vector2 position, Vector2 size)
+    {
+        return new Raylib_CsLo.Rectangle(
+            position.X - size.X/2,
+            position.Y - size.Y/2,
+            size.X,
+            size.Y
+        );
     }
 
     public static Raylib_CsLo.Rectangle ShrinkRect(Raylib_CsLo.Rectangle rect, float amount)
@@ -276,5 +287,18 @@ static class Utils
         var size = Raylib.MeasureTextEx(font, text, fontSize, spacing);
 
         Raylib.DrawTextEx(font, text, position - size / 2, fontSize, spacing, tint);
+    }
+
+    public static Raylib_CsLo.Rectangle GetMaxRectInContainer(Vector2 containerSize, Vector2 itemSize)
+    {
+        var maxScale = Math.Min(containerSize.X / itemSize.X, containerSize.Y / itemSize.Y); ;
+        var scaledSize = itemSize * maxScale;
+
+        return new Raylib_CsLo.Rectangle(
+            (containerSize.X - scaledSize.X) / 2,
+            (containerSize.Y - scaledSize.Y) / 2,
+            scaledSize.X,
+            scaledSize.Y
+        );
     }
 }

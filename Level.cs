@@ -16,6 +16,11 @@ internal class Level
     Camera2D camera = new Camera2D();
     List<Vector2> enemyPath;
     Vector2 basePosition;
+    Vector2 enemySpawn;
+
+    AnimationState homeCrystalAnimation = new AnimationState();
+    float homeCrystalRotation = 0;
+    float enemySpawnRotation = 0;
 
     List<EnemyWave> waves = new List<EnemyWave>();
     int currentWaveIndex = 0;
@@ -28,27 +33,38 @@ internal class Level
 
     bool won = false;
 
+    UI ui = new UI();
+
     public Level(RaylibTilemap tilemap)
     {
         this.tilemap = tilemap;
+
+        var baseMarker = GetMarker("base");
+        basePosition = new Vector2(baseMarker.x, baseMarker.y);
+        basePosition.X = DivMultipleFloor(basePosition.X, Program.tileSize) + Program.tileSize / 2;
+        basePosition.Y = DivMultipleFloor(basePosition.Y, Program.tileSize) + Program.tileSize / 2;
+        homeCrystalRotation = baseMarker.rotation;
+
+        var spawnMarker = GetMarker("spawn");
+        enemySpawn = new Vector2(spawnMarker.x, spawnMarker.y);
+        enemySpawn.X = DivMultipleFloor(enemySpawn.X, Program.tileSize) + Program.tileSize / 2;
+        enemySpawn.Y = DivMultipleFloor(enemySpawn.Y, Program.tileSize) + Program.tileSize / 2;
+        enemySpawnRotation = spawnMarker.rotation;
 
         camera.rotation = 0;
         camera.target = Program.canvasSize / 2;
 
         currentWaveIndex = 0;
-        waves.Add(
-            new EnemyWave([
-                new() { delay = 0.1f, type = EnemyType.Slime },
-                new() { delay = 0.1f, type = EnemyType.Slime },
-                new() { delay = 0.1f, type = EnemyType.Slime },
-                new() { delay = 0.1f, type = EnemyType.Slime },
-                //new() { delay = 2.0f, type = EnemyType.Slime },
-                //new() { delay = 2.0f, type = EnemyType.Slime },
-                //new() { delay = 2.0f, type = EnemyType.Slime },
-                //new() { delay = 2.0f, type = EnemyType.Slime },
-                //new() { delay = 3.0f, type = EnemyType.Slime },
-            ])
-        );
+        waves.Add(new EnemyWave([
+            new() { delay = 0.1f, type = EnemyType.Slime },
+            new() { delay = 0.1f, type = EnemyType.Slime },
+        ]));
+        waves.Add(new EnemyWave([
+            new() { delay = 0.1f, type = EnemyType.Slime },
+            new() { delay = 0.5f, type = EnemyType.Slime },
+            new() { delay = 0.5f, type = EnemyType.Slime },
+            new() { delay = 0.5f, type = EnemyType.Slime },
+        ]));
 
         enemyPath = new List<Vector2>();
 
@@ -63,13 +79,25 @@ internal class Level
             enemyPath.Add(new Vector2(obj.x, obj.y));
         }
 
+        enemyPath.Insert(0, enemySpawn);
+        enemyPath.Add(basePosition);
+    }
+
+    public Vector2 GetMarkerPosition(string name)
+    {
+        var marker = GetMarker(name);
+
+        return new Vector2(marker.x, marker.y);
+    }
+
+    public TiledObject GetMarker(string name)
+    {
         var markersLayer = tilemap.GetLayer("markers", TiledLayerType.ObjectLayer);
         Debug.Assert(markersLayer != null);
-        var baseMarker = RaylibTilemap.GetObject(markersLayer, "base");
-        Debug.Assert(baseMarker != null);
+        var marker = RaylibTilemap.GetObject(markersLayer, name);
+        Debug.Assert(marker != null);
 
-        basePosition = new Vector2(baseMarker.x, baseMarker.y);
-        enemyPath.Add(basePosition);
+        return marker;
     }
 
     public static float DivMultipleFloor(float a, float b)
@@ -142,12 +170,12 @@ internal class Level
         ));
     }
 
-    public static Rectangle GetVisibleRectInWorld(Camera2D camera)
+    public Rectangle GetVisibleRectInWorld(Camera2D camera)
     {
-        return GetRectScreenToWorld(camera, GetOnscreenArea(camera));
+        return GetRectScreenToWorld(camera, GetOnscreenArea());
     }
 
-    public static Rectangle GetOnscreenArea(Camera2D camera)
+    public Rectangle GetOnscreenArea()
     {
         var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
         var canvasSizeOnScreen = Program.canvasSize * camera.zoom;
@@ -161,10 +189,10 @@ internal class Level
         );
     }
 
-    public static void CoverOffscreenArea(Camera2D camera, Color color)
+    public void CoverOffscreenArea(Color color)
     {
         var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
-        var onscreenArea = GetOnscreenArea(camera);
+        var onscreenArea = GetOnscreenArea();
 
         if (onscreenArea.X > 0)
         {
@@ -195,7 +223,7 @@ internal class Level
         }
     }
 
-    public static Vector2? GetMouseInWorld(Camera2D camera, Vector2 canvasSize)
+    public Vector2? GetMouseInWorld(Camera2D camera)
     {
         var mouse = Raylib.GetMousePosition();
         var worldMouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
@@ -343,30 +371,6 @@ internal class Level
         return true;
     }
 
-    public bool ShowButton(Rectangle rect, string text, float fontSize = 10)
-    {
-        var font = Raylib.GetFontDefault();
-
-        var hover = false;
-        var pressed = false;
-
-        var mouse = GetMouseInWorld(camera, Program.canvasSize);
-        if (mouse != null && Utils.IsInsideRect(mouse.Value, rect))
-        {
-            hover = true;
-            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-            {
-                pressed = true;
-            }
-        }
-
-        Raylib.DrawRectangleRec(rect, hover ? Raylib.GRAY : Raylib.DARKGRAY);
-
-        Utils.DrawTextCentered(font, text, Utils.GetRectCenter(rect), fontSize, fontSize/10, Raylib.WHITE);
-
-        return pressed;
-    }
-
     public bool IsWaveFinished()
     {
         return waves[currentWaveIndex].spawns.Count == 0;
@@ -382,8 +386,6 @@ internal class Level
 
         camera.offset = screenSize / 2;
         camera.zoom = Math.Min(screenSize.X / canvasSize.X, screenSize.Y / canvasSize.Y);
-
-        var mouse = GetMouseInWorld(camera, canvasSize);
 
         // Camera controls
         {
@@ -408,6 +410,62 @@ internal class Level
             }
 
             camera.target += new Vector2(dx, dy) * dt * tileSize * 2;
+        }
+
+        // UI
+        {
+            ui.Begin(GetOnscreenArea(), canvasSize);
+
+            Raylib.DrawFPS(10, 10);
+
+            if (!won)
+            {
+                Raylib.DrawText($"Enemies: {enemies.Count}", 10, 30, 10, Raylib.WHITE);
+                Raylib.DrawText($"Wave: {currentWaveIndex + 1}/{waves.Count}", 10, 40, 10, Raylib.WHITE);
+
+                Utils.DrawTextureCentered(Program.coin, new Vector2(20, 70), 0, 0.75f, Raylib.WHITE);
+                Raylib.DrawText($"{gold}", 30, 53, 30, Raylib.GOLD);
+
+                var healthbarWidth = canvasSize.X * 0.75f;
+                var healthbarContainer = new Rectangle(
+                    (canvasSize.X - healthbarWidth) / 2,
+                    10,
+                    healthbarWidth,
+                    32
+                );
+                Raylib.DrawRectangleRec(healthbarContainer, Raylib.GRAY);
+
+                var maxHealthbarRect = Utils.ShrinkRect(healthbarContainer, 8);
+                Raylib.DrawRectangleRec(maxHealthbarRect, Raylib.DARKGRAY);
+
+                var healtbarRect = maxHealthbarRect;
+                healtbarRect.width *= (health / maxHealth);
+                Raylib.DrawRectangleRec(healtbarRect, Raylib.GREEN);
+
+                if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ui.ShowButton(new Rectangle(10, canvasSize.Y - 20 - 10, 100, 20), "Next wave"))
+                {
+                    currentWaveIndex++;
+                }
+            }
+            else
+            {
+                var center = canvasSize / 2;
+                var font = Raylib.GetFontDefault();
+                Utils.DrawTextCentered(font, "You win!", center, 50, 5, Raylib.GREEN);
+
+                if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Exit"))
+                {
+                    Program.running = false;
+                }
+            }
+
+            ui.End();
+        }
+
+        Vector2? mouse = null;
+        if (!ui.hot)
+        {
+            mouse = GetMouseInWorld(camera);
         }
 
         // Towers
@@ -449,11 +507,11 @@ internal class Level
 
                 if (tower.state == TowerState.Shoot)
                 {
-                    Program.revolver.UpdateLooped(dt, ref tower.animationTimer, ref tower.animationIndex);
+                    Program.revolver.UpdateLooped(dt, ref tower.animation);
                 }
                 else
                 {
-                    tower.animationIndex = 0;
+                    tower.animation.frame = 0;
                 }
 
                 if (tower.state == TowerState.Idle)
@@ -608,21 +666,21 @@ internal class Level
                     }
                     else if (enemy.state == EnemyState.SlimeJump)
                     {
-                        if (Program.slimeJump.UpdateOnce(dt, ref enemy.animationTimer, ref enemy.animationIndex))
+                        if (Program.slimeJump.UpdateOnce(dt, ref enemy.animation))
                         {
-                            enemy.animationIndex = 0;
+                            enemy.animation.frame = 0;
                             enemy.state = EnemyState.SlimeCooldown;
                         }
                     }
                     else if (enemy.state == EnemyState.SlimeWindup)
                     {
-                        if (Program.slimeWindup.UpdateOnce(dt, ref enemy.animationTimer, ref enemy.animationIndex))
+                        if (Program.slimeWindup.UpdateOnce(dt, ref enemy.animation))
                         {
                             enemy.jumpCooldown = rng.NextSingle() * 0.5f + 0;
 
                             var jumpPower = rng.NextSingle() * 100 + 100;
                             enemy.velocity += Vector2.Normalize(targetPosition - enemy.position) * jumpPower;
-                            enemy.animationIndex = 0;
+                            enemy.animation.frame = 0;
                             enemy.state = EnemyState.SlimeJump;
                         }
                     }
@@ -656,11 +714,12 @@ internal class Level
             }
         }
 
-
         if (IsWaveFinished() && currentWaveIndex == waves.Count - 1 && enemies.Count == 0)
         {
             won = true;
-        } 
+        }
+
+        Program.homeCrystal.UpdateLooped(dt, ref homeCrystalAnimation);
 
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Raylib.GetColor(0x232323ff));
@@ -670,6 +729,9 @@ internal class Level
             DrawGrid(GetScreenRectInWorld(camera), tileSize, Raylib.WHITE);
             tilemap.Draw();
 
+            Utils.DrawTextureCentered(Program.enemySpawner, enemySpawn, enemySpawnRotation, 1, Raylib.WHITE);
+            Program.homeCrystal.DrawCentered(homeCrystalAnimation.frame, basePosition, homeCrystalRotation, 1, Raylib.WHITE);
+
             foreach (var enemy in enemies)
             {
                 if (enemy.type == EnemyType.Slime)
@@ -677,11 +739,11 @@ internal class Level
                     var rotation = Utils.ToDegrees(enemy.aim) - 90;
                     if (enemy.state == EnemyState.SlimeWindup)
                     {
-                        Program.slimeWindup.DrawCentered(enemy.animationIndex, enemy.position, rotation, 1, Raylib.WHITE);
+                        Program.slimeWindup.DrawCentered(enemy.animation.frame, enemy.position, rotation, 1, Raylib.WHITE);
                     }
                     else if (enemy.state == EnemyState.SlimeJump)
                     {
-                        Program.slimeJump.DrawCentered(enemy.animationIndex, enemy.position, rotation, 1, Raylib.WHITE);
+                        Program.slimeJump.DrawCentered(enemy.animation.frame, enemy.position, rotation, 1, Raylib.WHITE);
                     }
                     else if (enemy.state == EnemyState.SlimeCooldown)
                     {
@@ -710,7 +772,7 @@ internal class Level
                 if (tower.type == TowerType.Revolver)
                 {
                     var rotation = Utils.ToDegrees(tower.aim) + 90;
-                    Utils.DrawTextureCentered(Program.revolver.frames[tower.animationIndex].texture, middle, rotation, 1, Raylib.WHITE);
+                    Program.revolver.DrawCentered(tower.animation.frame, middle, rotation, 1, Raylib.WHITE);
                     Raylib.DrawCircleLines((int)middle.X, (int)middle.Y, tower.range, Raylib.RED);
                     Raylib.DrawLineV(middle, middle + new Vector2((float)Math.Cos(tower.aim), (float)Math.Sin(tower.aim)) * 100, Raylib.GREEN);
                 }
@@ -732,55 +794,11 @@ internal class Level
 
             Raylib.DrawCircleLines((int)basePosition.X, (int)basePosition.Y, tileSize / 3, Raylib.YELLOW);
         }
-
         Raylib.EndMode2D();
 
-        // UI
-        {
-            RlGl.rlPushMatrix();
-            var onscreenArea = GetOnscreenArea(camera);
-            RlGl.rlTranslatef(onscreenArea.x, onscreenArea.y, 0);
-            RlGl.rlScalef(camera.zoom, camera.zoom, 1);
+        ui.Draw();
 
-            Raylib.DrawFPS(10, 10);
-
-            if (!won)
-            {
-                Raylib.DrawText($"Enemies: {enemies.Count}", 10, 30, 10, Raylib.WHITE);
-                Raylib.DrawText($"Wave: {currentWaveIndex + 1}/{waves.Count}", 10, 40, 10, Raylib.WHITE);
-
-                Utils.DrawTextureCentered(Program.coin, new Vector2(20, 70), 0, 0.75f, Raylib.WHITE);
-                Raylib.DrawText($"{gold}", 30, 53, 30, Raylib.GOLD);
-
-                var healthbarWidth = canvasSize.X * 0.75f;
-                var healthbarContainer = new Rectangle(
-                    (canvasSize.X - healthbarWidth) / 2,
-                    10,
-                    healthbarWidth,
-                    32
-                );
-                Raylib.DrawRectangleRec(healthbarContainer, Raylib.GRAY);
-
-                var maxHealthbarRect = Utils.ShrinkRect(healthbarContainer, 8);
-                Raylib.DrawRectangleRec(maxHealthbarRect, Raylib.DARKGRAY);
-
-                var healtbarRect = maxHealthbarRect;
-                healtbarRect.width *= (health / maxHealth);
-                Raylib.DrawRectangleRec(healtbarRect, Raylib.GREEN);
-
-                if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ShowButton(new Rectangle(10, canvasSize.Y - 20 - 10, 100, 20), "Next wave"))
-                {
-                    Console.WriteLine("click");
-                }
-            } else
-            {
-
-            }
-
-            RlGl.rlPopMatrix();
-        }
-
-        CoverOffscreenArea(camera, Raylib.GetColor(0x232323ff));
+        CoverOffscreenArea(Raylib.GetColor(0x232323ff));
 
         Raylib.EndDrawing();
     }
