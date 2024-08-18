@@ -1,10 +1,12 @@
-﻿using AsepriteDotNet.Aseprite;
+﻿using AsepriteDotNet;
+using AsepriteDotNet.Aseprite;
 using AsepriteDotNet.Aseprite.Types;
 using AsepriteDotNet.Common;
 using Raylib_CsLo;
 using System.Diagnostics;
 using System.Numerics;
 using System.Xml.Linq;
+using TiledCS;
 
 namespace GMTK2024;
 
@@ -95,7 +97,7 @@ static class Utils
         return image;
     }
 
-    public static Texture RGBAToTexture(Rgba32 []rgba, int width, int height)
+    public static Raylib_CsLo.Texture RGBAToTexture(Rgba32 []rgba, int width, int height)
     {
         var image = LoadImageFromRgba(rgba, width, height);
 
@@ -105,9 +107,16 @@ static class Utils
         return texture;
     }
 
-    public static Texture FlattenLayerToTexture(AsepriteFrame frame, string layer)
+    public static Raylib_CsLo.Texture FlattenLayerToTexture(AsepriteFrame frame, string layer)
     {
         var rgba = FlattenLayer(frame, layer);
+
+        return RGBAToTexture(rgba, frame.Size.Width, frame.Size.Height);
+    }
+
+    public static Raylib_CsLo.Texture FrameToTexture(AsepriteFrame frame)
+    {
+        var rgba = frame.FlattenFrame();
 
         return RGBAToTexture(rgba, frame.Size.Width, frame.Size.Height);
     }
@@ -195,10 +204,10 @@ static class Utils
         }
     }
 
-    public static void DrawTextureCentered(Texture texture, Vector2 position, float rotation, float scale, Color tint)
+    public static void DrawTextureCentered(Raylib_CsLo.Texture texture, Vector2 position, float rotation, float scale, Color tint)
     {
         var source = new Raylib_CsLo.Rectangle(0, 0, texture.width, texture.height);
-        var dest = new Raylib_CsLo.Rectangle(position.X, position.Y, texture.width, texture.height);
+        var dest = new Raylib_CsLo.Rectangle(position.X, position.Y, texture.width * scale, texture.height * scale);
         Raylib.DrawTexturePro(texture, source, dest, new Vector2(texture.width, texture.height) / 2, rotation, tint);
     }
 
@@ -241,5 +250,18 @@ static class Utils
         }
 
         return angle;
+    }
+
+    public static bool GetBoolTiledProperty(TiledProperty[] props, string name, bool fallback)
+    {
+        foreach (var prop in props)
+        {
+            if (prop.type == TiledPropertyType.Bool)
+            {
+                return prop.value == "true";
+            }
+        }
+
+        return fallback;
     }
 }

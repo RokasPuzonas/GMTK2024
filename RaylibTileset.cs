@@ -29,16 +29,21 @@ class RaylibTileset
         return tilesets;
     }
 
-    public bool GetBoolProperty(string name, bool fallback)
+    public TiledTile? GetTile(int id)
     {
-        foreach (var prop in tileset.Properties)
+        foreach (var tile in tileset.Tiles)
         {
-            if (prop.type == TiledPropertyType.Bool)
+            if (tile.id == id)
             {
-                return prop.value == "true";
+                return tile;
             }
         }
 
-        return fallback;
+        return null;
+    }
+
+    public bool GetBoolProperty(string name, bool fallback)
+    {
+        return Utils.GetBoolTiledProperty(tileset.Properties, name, fallback);
     }
 }
