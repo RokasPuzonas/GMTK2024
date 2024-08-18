@@ -3,13 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace GMTK2024;
 
 enum TowerType {
-    Revolver
+    Revolver,
+    BigRevolver
 };
 
 enum TowerState
@@ -24,7 +26,7 @@ internal class Tower
     public Vector2 position;
     public Vector2 size;
     public TowerType type;
-    public Enemy? target;
+    public Vector2? targetPosition;
 
     public float targetAim = 0;
     public float aimSpeed = (float)Math.PI;
@@ -46,8 +48,19 @@ internal class Tower
         return position + size / 2;
     }
 
-    public bool IsShooting()
+    // Big revolver specific
+    public float leftTargetAim = 0;
+    public float leftAim = 0;
+    public float rightTargetAim;
+    public float rightAim = 0;
+
+    public Vector2 GetRightGunCenter()
     {
-        return target != null && Math.Abs(Utils.AngleDifference(targetAim, aim)) < 0.05f;
+        return Center() + Utils.Vector2Rotate(Program.bigRevolverRightPivot - size / 2, aim + (float)Math.PI/2);
+    }
+
+    public Vector2 GetLeftGunCenter()
+    {
+        return Center() + Utils.Vector2Rotate(Program.bigRevolverLeftPivot - size / 2, aim + (float)Math.PI / 2);
     }
 }

@@ -276,46 +276,68 @@ internal class Level
                 {
                     var tower = GetTowerAt(towers, position + (new Vector2(ox + 0.5f, oy + 0.5f) + offset) * tileSize);
                     if (tower == null) continue;
-                    if (tower.size.X > tileSize || tower.size.Y > tileSize) continue;
 
                     foundTowers.Add(tower);
                 }
             }
 
-            if (foundTowers.Count == 4)
-            {
-                var topLeft = foundTowers[0].position;
-                var bottomRight = foundTowers[0].position + foundTowers[0].size;
+            if (foundTowers.Count != 4) continue;
+
+            var towerType = foundTowers[0].type;
+            { // Check if all of the found towers are of the same type
+                var towerTypeMatches = true;
                 foreach (var tower in foundTowers)
                 {
-                    var towerTopLeft = tower.position;
-                    var towerBottomRight = tower.position + tower.size;
-
-                    topLeft = Vector2.Min(topLeft, towerTopLeft);
-                    bottomRight = Vector2.Max(bottomRight, towerBottomRight);
-                }
-
-                var size = bottomRight - topLeft;
-
-                if (size.X == size.Y)
-                {
-                    foreach (var tower in foundTowers)
+                    if (tower.type != towerType)
                     {
-                        towers.Remove(tower);
+                        towerTypeMatches = false;
+                        break;
                     }
-
-                    var aim = rng.NextSingle() * 2 * (float)Math.PI;
-                    towers.Add(new Tower
-                    {
-                        position = topLeft,
-                        size = size,
-                        type = TowerType.Revolver,
-                        createdAt = (float)Raylib.GetTime(),
-                        targetAim = aim,
-                        aim = aim
-                    });
                 }
+                if (!towerTypeMatches) continue;
             }
+
+            var topLeft = foundTowers[0].position;
+            var bottomRight = foundTowers[0].position + foundTowers[0].size;
+            foreach (var tower in foundTowers)
+            {
+                var towerTopLeft = tower.position;
+                var towerBottomRight = tower.position + tower.size;
+
+                topLeft = Vector2.Min(topLeft, towerTopLeft);
+                bottomRight = Vector2.Max(bottomRight, towerBottomRight);
+            }
+
+            var size = bottomRight - topLeft;
+
+            // If the found towers don't create a square shape, skip.
+            if (size.X != size.Y) continue;
+
+            var biggerTowerType = towerType;
+            if (towerType == TowerType.Revolver)
+            {
+                biggerTowerType = TowerType.BigRevolver;
+            } else
+            {
+                // Merging for this tower type is not supported
+                continue;
+            }
+
+            foreach (var tower in foundTowers)
+            {
+                towers.Remove(tower);
+            }
+
+            var aim = rng.NextSingle() * 2 * (float)Math.PI;
+            towers.Add(new Tower
+            {
+                position = topLeft,
+                size = size,
+                type = biggerTowerType,
+                createdAt = (float)Raylib.GetTime(),
+                targetAim = aim,
+                aim = aim
+            });
         }
     }
 
@@ -519,23 +541,39 @@ internal class Level
                     var nearestEnemy = GetNearestEnemy(enemies, tower.position);
                     if (nearestEnemy != null && Vector2.Distance(nearestEnemy.position, tower.position) < tower.range)
                     {
-                        tower.targetAim = Utils.GetAimAngle(tower.Center(), nearestEnemy.position);
-                        tower.target = nearestEnemy;
+                        tower.targetPosition = nearestEnemy.position;
                     }
                     else
                     {
-                        tower.target = null;
+                        tower.targetPosition = null;
                     }
 
-                    if (tower.target == null)
+                    if (tower.targetPosition != null)
                     {
-                        tower.targetAim += (float)Math.Sin(Raylib.GetTime() + tower.createdAt) / (2 * (float)Math.PI) / 10;
+                        var targetPosition = tower.targetPosition.Value;
+                        tower.targetAim = Utils.GetAimAngle(tower.Center(), targetPosition);
+
+                        if (tower.type == TowerType.BigRevolver && Math.Abs(Utils.AngleDifference(tower.targetAim, tower.aim)) < 0.01)
+                        {
+                            tower.leftTargetAim = Utils.GetAimAngle(tower.GetLeftGunCenter(), targetPosition) - tower.aim;
+                            tower.rightTargetAim = Utils.GetAimAngle(tower.GetRightGunCenter(), targetPosition) - tower.aim;
+                        }
+                    } else
+                    {
+                        var seed = Raylib.GetTime() + tower.createdAt;
+                        tower.targetAim += (float)Math.Sin(seed) / (2 * (float)Math.PI) / 10;
+
+                        if (tower.type == TowerType.BigRevolver)
+                        {
+                            tower.leftTargetAim += (float)Math.Sin(seed + 100) / (2 * (float)Math.PI) / 20;
+                            tower.rightTargetAim -= (float)Math.Sin(seed + 200) / (2 * (float)Math.PI) / 20;
+                        }
                     }
 
-                    if (tower.target != null && Math.Abs(Utils.AngleDifference(tower.targetAim, tower.aim)) < 0.01)
+                    if (tower.targetPosition != null && Math.Abs(Utils.AngleDifference(tower.targetAim, tower.aim)) < 0.01)
                     {
                         tower.state = TowerState.Shoot;
-                        tower.shootCooldown = Program.revolver.GetDuration();
+                        tower.shootCooldown = Program.revolver.GetDuration() * 1.1f;
                         bullets.Add(new Bullet
                         {
                             position = tower.Center(),
@@ -547,6 +585,11 @@ internal class Level
                 }
 
                 tower.aim = Utils.ApproachAngle(tower.aim, tower.targetAim, dt * tower.aimSpeed);
+                if (tower.type == TowerType.BigRevolver)
+                {
+                    tower.leftAim = Utils.ApproachAngle(tower.leftAim, tower.leftTargetAim, dt * tower.aimSpeed);
+                    tower.rightAim = Utils.ApproachAngle(tower.rightAim, tower.rightTargetAim, dt * tower.aimSpeed);
+                }
             }
         }
 
@@ -769,13 +812,26 @@ internal class Level
                 Program.towerPlatformMain.DrawRectangle(towerRect, Raylib.GetColor(0x5f5f5fFF));
                 Program.towerPlatformFoliage.DrawRectangle(towerRect, Raylib.WHITE);
 
+                var aim = tower.aim + (float)Math.PI / 2;
+                var rotation = Utils.ToDegrees(aim);
                 if (tower.type == TowerType.Revolver)
                 {
-                    var rotation = Utils.ToDegrees(tower.aim) + 90;
                     Program.revolver.DrawCentered(tower.animation.frame, middle, rotation, 1, Raylib.WHITE);
-                    Raylib.DrawCircleLines((int)middle.X, (int)middle.Y, tower.range, Raylib.RED);
-                    Raylib.DrawLineV(middle, middle + new Vector2((float)Math.Cos(tower.aim), (float)Math.Sin(tower.aim)) * 100, Raylib.GREEN);
                 }
+                else if (tower.type == TowerType.BigRevolver)
+                {
+                    Program.bigRevolverUnderbelly.DrawCentered(tower.animation.frame, middle, rotation, 1, Raylib.WHITE);
+                    Program.bigRevolverLeftAmmo.DrawCentered(tower.animation.frame, middle, rotation, 1, Raylib.WHITE);
+                    Program.bigRevolverRightAmmo.DrawCentered(tower.animation.frame, middle, rotation, 1, Raylib.WHITE);
+                    Program.bigRevolverAmmoRack.DrawCentered(tower.animation.frame, middle, rotation, 1, Raylib.WHITE);
+
+                    Program.bigRevolverRightGun.Draw(tower.animation.frame, tower.GetRightGunCenter(), Program.bigRevolverRightPivot, Utils.ToDegrees(aim + tower.rightAim), 1, Raylib.WHITE);
+                    Program.bigRevolverLeftGun.Draw(tower.animation.frame, tower.GetLeftGunCenter(), Program.bigRevolverLeftPivot, Utils.ToDegrees(aim + tower.leftAim), 1, Raylib.WHITE);
+                    
+                }
+
+                Raylib.DrawCircleLines((int)middle.X, (int)middle.Y, tower.range, Raylib.RED);
+                Raylib.DrawLineV(middle, middle + new Vector2((float)Math.Cos(tower.aim), (float)Math.Sin(tower.aim)) * 100, Raylib.GREEN);
             }
 
             if (mouse != null)

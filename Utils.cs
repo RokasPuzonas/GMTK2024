@@ -301,4 +301,42 @@ static class Utils
             scaledSize.Y
         );
     }
+
+    public static AsepriteSlice? GetSlice(AsepriteFile ase, string name)
+    {
+        foreach (var slice in ase.Slices)
+        {
+            if (slice.Name == name)
+            {
+                return slice;
+            }
+        }
+
+        return null;
+    }
+
+    public static Vector2 GetSlicePivot(AsepriteFile ase, string name)
+    {
+        var slice = GetSlice(ase, name);
+        Debug.Assert(slice != null);
+        Debug.Assert(slice.HasPivot);
+        
+        Debug.Assert(slice.Keys.Length == 1);
+        var key = slice.Keys[0];
+
+        return new Vector2(key.Bounds.X + key.Pivot.X, key.Bounds.Y + key.Pivot.Y);
+    }
+
+    public static Vector2 GetAngledVector2(float angle, float length = 1)
+    {
+        return new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * length;
+    }
+
+    public static Vector2 Vector2Rotate(Vector2 vec, float angle)
+    {
+        return new Vector2(
+            vec.X * (float)Math.Cos(angle) - vec.Y * (float)Math.Sin(angle),
+            vec.X * (float)Math.Sin(angle) + vec.Y * (float)Math.Cos(angle)
+        );
+    }
 }
