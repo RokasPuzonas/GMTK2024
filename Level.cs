@@ -77,7 +77,7 @@ internal class Level
 
         var pathLayer = tilemap.GetLayer("path", TiledLayerType.ObjectLayer);
         Debug.Assert(pathLayer != null);
-        Array.Sort(pathLayer.objects, Comparer<TiledObject>.Create((a, b) => a.name.CompareTo(b.name)));
+        Array.Sort(pathLayer.objects, Comparer<TiledObject>.Create((a, b) => int.Parse(a.name).CompareTo(int.Parse(b.name))));
 
         foreach (var obj in pathLayer.objects)
         {
