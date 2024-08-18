@@ -69,9 +69,41 @@ internal class Program
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));
         var currentLevel = new Level(tilemap);
 
+        var mainmenu = true;
+        var ui = new UI();
+
         while (!Raylib.WindowShouldClose() && running) 
         {
-            currentLevel.Tick();
+            if (mainmenu)
+            {
+                var font = Raylib.GetFontDefault();
+
+                Raylib.BeginDrawing();
+                Raylib.ClearBackground(Raylib.GetColor(0x232323ff));
+
+                var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+                {
+                    ui.Begin(Utils.GetMaxRectInContainer(screenSize, canvasSize), canvasSize);
+
+                    var center = canvasSize / 2;
+                    Utils.DrawTextCentered(font, "GMTK2024", center, 20, 1, Raylib.WHITE);
+                
+                    if (ui.ShowButton(Utils.GetCenteredRect(center + new Vector2(0, 50), new(100, 20)), "Play"))
+                    {
+                        mainmenu = false;
+                    }
+
+                    ui.End();
+                }
+
+                ui.Draw();
+
+
+                Raylib.EndDrawing();
+            } else
+            {
+                currentLevel.Tick();
+            }
         }
 
         Raylib.CloseWindow();
