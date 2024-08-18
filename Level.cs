@@ -427,13 +427,13 @@ internal class Level
             Program.bigRevolverRightAmmo.DrawCentered(tower.rightGunAnimation, middle, aimDegress, 1, Raylib.WHITE);
             Program.bigRevolverAmmoRack.DrawCentered(tower.animation, middle, aimDegress, 1, Raylib.WHITE);
 
-            Program.bigRevolverRightGun.Draw(tower.rightGunAnimation, tower.GetRightGunCenter(), Program.bigRevolverRightPivot, Utils.ToDegrees(aim + tower.rightAim), 1, Raylib.WHITE);
-            Program.bigRevolverLeftGun.Draw(tower.leftGunAnimation, tower.GetLeftGunCenter(), Program.bigRevolverLeftPivot, Utils.ToDegrees(aim + tower.leftAim), 1, Raylib.WHITE);
+            Program.bigRevolverRightGun.Draw(tower.rightGunAnimation, tower.GetRightGunCenter() + tower.rightRecoil, Program.bigRevolverRightPivot, Utils.ToDegrees(aim + tower.rightAim), 1, Raylib.WHITE);
+            Program.bigRevolverLeftGun.Draw(tower.leftGunAnimation, tower.GetLeftGunCenter() + tower.leftRecoil, Program.bigRevolverLeftPivot, Utils.ToDegrees(aim + tower.leftAim), 1, Raylib.WHITE);
 
         }
         else if (tower.type == TowerType.Mortar)
         {
-            Program.mortarReload.Draw(tower.animation, middle, Program.mortarPivot, aimDegress, 1, Raylib.WHITE);
+            Program.mortarReload.Draw(tower.animation, middle + tower.recoil, Program.mortarPivot, aimDegress, 1, Raylib.WHITE);
         }
         
         if (debugTowerInfo)
@@ -481,7 +481,7 @@ internal class Level
                     direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.mortarGunshot);
-                tower.recoil = -aimDirection;
+                tower.recoil = -aimDirection * 2;
             }
         }
         else if (tower.type == TowerType.BigRevolver)
@@ -490,6 +490,8 @@ internal class Level
 
             if (Utils.IsAngleClose(tower.leftTargetAim, tower.leftAim) && tower.leftShootCooldown == 0)
             {
+                var aimDirection = Utils.GetAngledVector2(tower.aim + tower.leftAim);
+
                 tower.leftReloaded = false;
                 tower.leftShootCooldown = bigRevolverCooldown;
                 bullets.Add(new Bullet
@@ -497,13 +499,16 @@ internal class Level
                     position = tower.GetLeftGunCenter(),
                     speed = Program.bigRevolverBulletSpeed,
                     damage = Program.bigRevolverBulletDamage,
-                    direction = Utils.GetAngledVector2(tower.aim + tower.leftAim)
+                    direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
+                tower.leftRecoil = -aimDirection * 16;
             }
 
             if (Utils.IsAngleClose(tower.leftTargetAim, tower.leftAim) && tower.rightShootCooldown == 0 && tower.leftShootCooldown < bigRevolverCooldown / 2)
             {
+                var aimDirection = Utils.GetAngledVector2(tower.aim + tower.rightAim);
+
                 tower.rightReloaded = false;
                 tower.rightShootCooldown = bigRevolverCooldown;
                 bullets.Add(new Bullet
@@ -511,10 +516,23 @@ internal class Level
                     position = tower.GetRightGunCenter(),
                     speed = Program.bigRevolverBulletSpeed,
                     damage = Program.bigRevolverBulletDamage,
-                    direction = Utils.GetAngledVector2(tower.aim + tower.rightAim)
+                    direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
+                tower.rightRecoil = -aimDirection * 16;
             }
+        }
+    }
+
+    static void UpdateRecoil(ref Vector2 recoil, float dt, float speed)
+    {
+        if (recoil.Length() > 0.01)
+        {
+            recoil = Vector2.Normalize(recoil) * recoil.Length() * speed;
+        }
+        else
+        {
+            recoil = Vector2.Zero;
         }
     }
 
@@ -522,13 +540,7 @@ internal class Level
     {
         // Update animations
         {
-            if (tower.recoil.Length() > 0.01)
-            {
-                tower.recoil = Vector2.Normalize(tower.recoil) * tower.recoil.Length() * 0.8f;
-            } else
-            {
-                tower.recoil = Vector2.Zero;
-            }
+            UpdateRecoil(ref tower.recoil, dt, 0.8f);
 
             tower.shootCooldown = Math.Max(tower.shootCooldown - dt, 0);
             tower.leftShootCooldown = Math.Max(tower.leftShootCooldown - dt, 0);
@@ -540,6 +552,9 @@ internal class Level
             }
             else if (tower.type == TowerType.BigRevolver)
             {
+                UpdateRecoil(ref tower.leftRecoil, dt, 0.95f);
+                UpdateRecoil(ref tower.rightRecoil, dt, 0.95f);
+
                 Program.revolver.PlayOnce(dt, ref tower.leftGunAnimation, ref tower.leftReloaded);
                 Program.revolver.PlayOnce(dt, ref tower.rightGunAnimation, ref tower.rightReloaded);
             }

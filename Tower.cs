@@ -128,13 +128,15 @@ internal class Tower
     public bool fired = false;
 
     // Big revolver specific
-    public AnimationState rightGunAnimation = new AnimationState();
+    public AnimationState leftGunAnimation = new AnimationState();
+    public Vector2 leftRecoil = Vector2.Zero;
     public float leftTargetAim = 0;
     public float leftAim = 0;
     public float leftShootCooldown = 0;
     public bool leftReloaded = true;
 
-    public AnimationState leftGunAnimation = new AnimationState();
+    public AnimationState rightGunAnimation = new AnimationState();
+    public Vector2 rightRecoil = Vector2.Zero;
     public float rightTargetAim;
     public float rightAim = 0;
     public float rightShootCooldown = 0;
