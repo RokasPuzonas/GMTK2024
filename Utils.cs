@@ -2,6 +2,7 @@
 using AsepriteDotNet.Aseprite;
 using AsepriteDotNet.Aseprite.Types;
 using AsepriteDotNet.Common;
+using GMTK2024.Aseprite;
 using Raylib_CsLo;
 using System.Diagnostics;
 using System.Drawing;
