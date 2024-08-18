@@ -28,6 +28,8 @@ internal class Level
 
     bool won = false;
 
+    UI ui = new UI();
+
     public Level(RaylibTilemap tilemap)
     {
         this.tilemap = tilemap;
@@ -36,19 +38,16 @@ internal class Level
         camera.target = Program.canvasSize / 2;
 
         currentWaveIndex = 0;
-        waves.Add(
-            new EnemyWave([
-                new() { delay = 0.1f, type = EnemyType.Slime },
-                new() { delay = 0.1f, type = EnemyType.Slime },
-                new() { delay = 0.1f, type = EnemyType.Slime },
-                new() { delay = 0.1f, type = EnemyType.Slime },
-                //new() { delay = 2.0f, type = EnemyType.Slime },
-                //new() { delay = 2.0f, type = EnemyType.Slime },
-                //new() { delay = 2.0f, type = EnemyType.Slime },
-                //new() { delay = 2.0f, type = EnemyType.Slime },
-                //new() { delay = 3.0f, type = EnemyType.Slime },
-            ])
-        );
+        waves.Add(new EnemyWave([
+            new() { delay = 0.1f, type = EnemyType.Slime },
+            new() { delay = 0.1f, type = EnemyType.Slime },
+        ]));
+        waves.Add(new EnemyWave([
+            new() { delay = 0.1f, type = EnemyType.Slime },
+            new() { delay = 0.5f, type = EnemyType.Slime },
+            new() { delay = 0.5f, type = EnemyType.Slime },
+            new() { delay = 0.5f, type = EnemyType.Slime },
+        ]));
 
         enemyPath = new List<Vector2>();
 
@@ -142,12 +141,12 @@ internal class Level
         ));
     }
 
-    public static Rectangle GetVisibleRectInWorld(Camera2D camera)
+    public Rectangle GetVisibleRectInWorld(Camera2D camera)
     {
-        return GetRectScreenToWorld(camera, GetOnscreenArea(camera));
+        return GetRectScreenToWorld(camera, GetOnscreenArea());
     }
 
-    public static Rectangle GetOnscreenArea(Camera2D camera)
+    public Rectangle GetOnscreenArea()
     {
         var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
         var canvasSizeOnScreen = Program.canvasSize * camera.zoom;
@@ -161,10 +160,10 @@ internal class Level
         );
     }
 
-    public static void CoverOffscreenArea(Camera2D camera, Color color)
+    public void CoverOffscreenArea(Color color)
     {
         var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
-        var onscreenArea = GetOnscreenArea(camera);
+        var onscreenArea = GetOnscreenArea();
 
         if (onscreenArea.X > 0)
         {
@@ -195,7 +194,7 @@ internal class Level
         }
     }
 
-    public static Vector2? GetMouseInWorld(Camera2D camera, Vector2 canvasSize)
+    public Vector2? GetMouseInWorld(Camera2D camera)
     {
         var mouse = Raylib.GetMousePosition();
         var worldMouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
@@ -343,30 +342,6 @@ internal class Level
         return true;
     }
 
-    public bool ShowButton(Rectangle rect, string text, float fontSize = 10)
-    {
-        var font = Raylib.GetFontDefault();
-
-        var hover = false;
-        var pressed = false;
-
-        var mouse = GetMouseInWorld(camera, Program.canvasSize);
-        if (mouse != null && Utils.IsInsideRect(mouse.Value, rect))
-        {
-            hover = true;
-            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-            {
-                pressed = true;
-            }
-        }
-
-        Raylib.DrawRectangleRec(rect, hover ? Raylib.GRAY : Raylib.DARKGRAY);
-
-        Utils.DrawTextCentered(font, text, Utils.GetRectCenter(rect), fontSize, fontSize/10, Raylib.WHITE);
-
-        return pressed;
-    }
-
     public bool IsWaveFinished()
     {
         return waves[currentWaveIndex].spawns.Count == 0;
@@ -382,8 +357,6 @@ internal class Level
 
         camera.offset = screenSize / 2;
         camera.zoom = Math.Min(screenSize.X / canvasSize.X, screenSize.Y / canvasSize.Y);
-
-        var mouse = GetMouseInWorld(camera, canvasSize);
 
         // Camera controls
         {
@@ -408,6 +381,62 @@ internal class Level
             }
 
             camera.target += new Vector2(dx, dy) * dt * tileSize * 2;
+        }
+
+        // UI
+        {
+            ui.Begin(GetOnscreenArea(), canvasSize);
+
+            Raylib.DrawFPS(10, 10);
+
+            if (!won)
+            {
+                Raylib.DrawText($"Enemies: {enemies.Count}", 10, 30, 10, Raylib.WHITE);
+                Raylib.DrawText($"Wave: {currentWaveIndex + 1}/{waves.Count}", 10, 40, 10, Raylib.WHITE);
+
+                Utils.DrawTextureCentered(Program.coin, new Vector2(20, 70), 0, 0.75f, Raylib.WHITE);
+                Raylib.DrawText($"{gold}", 30, 53, 30, Raylib.GOLD);
+
+                var healthbarWidth = canvasSize.X * 0.75f;
+                var healthbarContainer = new Rectangle(
+                    (canvasSize.X - healthbarWidth) / 2,
+                    10,
+                    healthbarWidth,
+                    32
+                );
+                Raylib.DrawRectangleRec(healthbarContainer, Raylib.GRAY);
+
+                var maxHealthbarRect = Utils.ShrinkRect(healthbarContainer, 8);
+                Raylib.DrawRectangleRec(maxHealthbarRect, Raylib.DARKGRAY);
+
+                var healtbarRect = maxHealthbarRect;
+                healtbarRect.width *= (health / maxHealth);
+                Raylib.DrawRectangleRec(healtbarRect, Raylib.GREEN);
+
+                if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ui.ShowButton(new Rectangle(10, canvasSize.Y - 20 - 10, 100, 20), "Next wave"))
+                {
+                    currentWaveIndex++;
+                }
+            }
+            else
+            {
+                var center = canvasSize / 2;
+                var font = Raylib.GetFontDefault();
+                Utils.DrawTextCentered(font, "You win!", center, 50, 5, Raylib.GREEN);
+
+                if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Exit"))
+                {
+                    Program.running = false;
+                }
+            }
+
+            ui.End();
+        }
+
+        Vector2? mouse = null;
+        if (!ui.hot)
+        {
+            mouse = GetMouseInWorld(camera);
         }
 
         // Towers
@@ -656,7 +685,6 @@ internal class Level
             }
         }
 
-
         if (IsWaveFinished() && currentWaveIndex == waves.Count - 1 && enemies.Count == 0)
         {
             won = true;
@@ -732,55 +760,11 @@ internal class Level
 
             Raylib.DrawCircleLines((int)basePosition.X, (int)basePosition.Y, tileSize / 3, Raylib.YELLOW);
         }
-
         Raylib.EndMode2D();
 
-        // UI
-        {
-            RlGl.rlPushMatrix();
-            var onscreenArea = GetOnscreenArea(camera);
-            RlGl.rlTranslatef(onscreenArea.x, onscreenArea.y, 0);
-            RlGl.rlScalef(camera.zoom, camera.zoom, 1);
+        ui.Draw();
 
-            Raylib.DrawFPS(10, 10);
-
-            if (!won)
-            {
-                Raylib.DrawText($"Enemies: {enemies.Count}", 10, 30, 10, Raylib.WHITE);
-                Raylib.DrawText($"Wave: {currentWaveIndex + 1}/{waves.Count}", 10, 40, 10, Raylib.WHITE);
-
-                Utils.DrawTextureCentered(Program.coin, new Vector2(20, 70), 0, 0.75f, Raylib.WHITE);
-                Raylib.DrawText($"{gold}", 30, 53, 30, Raylib.GOLD);
-
-                var healthbarWidth = canvasSize.X * 0.75f;
-                var healthbarContainer = new Rectangle(
-                    (canvasSize.X - healthbarWidth) / 2,
-                    10,
-                    healthbarWidth,
-                    32
-                );
-                Raylib.DrawRectangleRec(healthbarContainer, Raylib.GRAY);
-
-                var maxHealthbarRect = Utils.ShrinkRect(healthbarContainer, 8);
-                Raylib.DrawRectangleRec(maxHealthbarRect, Raylib.DARKGRAY);
-
-                var healtbarRect = maxHealthbarRect;
-                healtbarRect.width *= (health / maxHealth);
-                Raylib.DrawRectangleRec(healtbarRect, Raylib.GREEN);
-
-                if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ShowButton(new Rectangle(10, canvasSize.Y - 20 - 10, 100, 20), "Next wave"))
-                {
-                    Console.WriteLine("click");
-                }
-            } else
-            {
-
-            }
-
-            RlGl.rlPopMatrix();
-        }
-
-        CoverOffscreenArea(camera, Raylib.GetColor(0x232323ff));
+        CoverOffscreenArea(Raylib.GetColor(0x232323ff));
 
         Raylib.EndDrawing();
     }
