@@ -35,7 +35,7 @@ internal class Level
     float maxHealth = Program.playerHealth;
     float health = Program.playerHealth;
     int gold = Program.startingGold;
-    TowerType selectedTower = TowerType.Mortar;
+    TowerType selectedTower = TowerType.Revolver;
 
     bool won = false;
 
@@ -418,7 +418,7 @@ internal class Level
         var aimDegress = Utils.ToDegrees(aim);
         if (tower.type == TowerType.Revolver)
         {
-            Program.revolver.DrawCentered(tower.animation, middle, aimDegress, 1, Raylib.WHITE);
+            Program.revolver.DrawCentered(tower.animation, middle + tower.recoil, aimDegress, 1, Raylib.WHITE);
         }
         else if (tower.type == TowerType.BigRevolver)
         {
@@ -446,10 +446,12 @@ internal class Level
 
     public void TryShootingBullet(Tower tower)
     {
+
         if (tower.type == TowerType.Revolver)
         {
             if (tower.shootCooldown == 0)
             {
+                var aimDirection = Utils.GetAngledVector2(tower.aim);
                 tower.reloaded = false;
                 tower.shootCooldown = Program.revolver.GetDuration() * 1.1f;
                 bullets.Add(new Bullet
@@ -457,15 +459,17 @@ internal class Level
                     position = tower.Center(),
                     speed = Program.revolverBulletSpeed,
                     damage = Program.revolverBulletDamage,
-                    direction = Utils.GetAngledVector2(tower.aim)
+                    direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.revolverGunshot);
+                tower.recoil = -aimDirection * 8;
             }
         }
         else if (tower.type == TowerType.Mortar)
         {
             if (tower.shootCooldown == 0)
             {
+                var aimDirection = Utils.GetAngledVector2(tower.aim);
                 tower.fired = true;
                 tower.reloaded = false;
                 tower.shootCooldown = (Program.mortarReload.GetDuration() + Program.mortarFire.GetDuration()) * 1.1f;
@@ -474,9 +478,10 @@ internal class Level
                     position = tower.Center(),
                     speed = Program.revolverBulletSpeed,
                     damage = Program.revolverBulletDamage,
-                    direction = Utils.GetAngledVector2(tower.aim)
+                    direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.mortarGunshot);
+                tower.recoil = -aimDirection;
             }
         }
         else if (tower.type == TowerType.BigRevolver)
@@ -517,6 +522,14 @@ internal class Level
     {
         // Update animations
         {
+            if (tower.recoil.Length() > 0.01)
+            {
+                tower.recoil = Vector2.Normalize(tower.recoil) * tower.recoil.Length() * 0.8f;
+            } else
+            {
+                tower.recoil = Vector2.Zero;
+            }
+
             tower.shootCooldown = Math.Max(tower.shootCooldown - dt, 0);
             tower.leftShootCooldown = Math.Max(tower.leftShootCooldown - dt, 0);
             tower.rightShootCooldown = Math.Max(tower.rightShootCooldown - dt, 0);

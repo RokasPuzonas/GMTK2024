@@ -28,6 +28,8 @@ internal class Tower
     public float maxRange = 200f;
     public float minRange = 20f;
 
+    public Vector2 recoil = Vector2.Zero;
+
     public AnimationState animation = new AnimationState();
 
     public float shootCooldown = 0.0f;
