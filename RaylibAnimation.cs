@@ -76,6 +76,10 @@ internal class RaylibAnimation
         Utils.DrawTextureCentered(frames[frameIndex].texture, position, rotation, scale, tint);
     }
 
+    public void DrawCentered(AnimationState state, Vector2 position, float rotation, float scale, Color tint)
+    {
+        DrawCentered(state.frame, position, rotation, scale, tint);
+    }
 
     public void Draw(int frameIndex, Vector2 position, Vector2 origin, float rotation, float scale, Color tint)
     {
@@ -84,5 +88,10 @@ internal class RaylibAnimation
         var source = new Rectangle(0, 0, texture.width, texture.height);
         var dest = new Rectangle(position.X, position.Y, texture.width * scale, texture.height * scale);
         Raylib.DrawTexturePro(texture, source, dest, origin, rotation, tint);
+    }
+
+    public void Draw(AnimationState state, Vector2 position, Vector2 origin, float rotation, float scale, Color tint)
+    {
+        Draw(state.frame, position, origin, rotation, scale, tint);
     }
 }

@@ -11,7 +11,8 @@ namespace GMTK2024;
 
 enum TowerType {
     Revolver,
-    BigRevolver
+    BigRevolver,
+    Mortar
 };
 internal class Tower
 {
@@ -31,6 +32,82 @@ internal class Tower
     public float shootCooldown = 0.0f;
     public bool reloaded = true;
 
+    public static Tower Create(TowerType type, Vector2 position, Vector2 size, float aim)
+    {
+        switch (type)
+        {
+            case TowerType.Revolver:
+                return CreateRevolver(position, size, aim);
+            case TowerType.BigRevolver:
+                return CreateBigRevolver(position, size, aim);
+            case TowerType.Mortar:
+                return CreateMortar(position, size, aim);
+            default:
+                throw new NotImplementedException();
+        }
+    }
+
+    public static int GetCost(TowerType type)
+    {
+        switch (type)
+        {
+            case TowerType.Revolver:
+                return Program.revolverCost;
+            case TowerType.Mortar:
+                return Program.mortarCost;
+            default:
+                throw new NotImplementedException();
+        }
+    }
+
+    public static Tower CreateRevolver(Vector2 position, Vector2 size, float aim)
+    {
+        return new Tower
+        {
+            position = position,
+            size = size,
+            type = TowerType.Revolver,
+            createdAt = (float)Raylib.GetTime(),
+            targetAim = aim,
+            aim = aim,
+
+            aimSpeed = Program.revolverAimSpeed,
+            range = Program.revolverRange
+        };
+    }
+
+    public static Tower CreateBigRevolver(Vector2 position, Vector2 size, float aim)
+    {
+        return new Tower
+        {
+            position = position,
+            size = size,
+            type = TowerType.BigRevolver,
+            createdAt = (float)Raylib.GetTime(),
+            targetAim = aim,
+            aim = aim,
+
+            aimSpeed = Program.bigRevolverAimSpeed,
+            range = Program.bigRevolverRange
+        };
+    }
+
+    public static Tower CreateMortar(Vector2 position, Vector2 size, float aim)
+    {
+        return new Tower
+        {
+            position = position,
+            size = size,
+            type = TowerType.Mortar,
+            createdAt = (float)Raylib.GetTime(),
+            targetAim = aim,
+            aim = aim,
+
+            aimSpeed = Program.mortarAimSpeed,
+            range = Program.mortarRange
+        };
+    }
+
     public Rectangle GetRect()
     {
         return new Rectangle(position.X, position.Y, size.X, size.Y);
@@ -40,6 +117,9 @@ internal class Tower
     {
         return position + size / 2;
     }
+
+    // Mortar specific
+    public bool fired = false;
 
     // Big revolver specific
     public AnimationState rightGunAnimation = new AnimationState();

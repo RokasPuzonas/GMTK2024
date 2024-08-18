@@ -14,8 +14,18 @@ internal class Program
     public static float playerHealth = 100;
 
     public static int revolverCost = 25;
+    public static float revolverAimSpeed = (float)Math.PI;
     public static float revolverBulletSpeed = 200;
+    public static float revolverRange = 200f;
+    
+    public static float bigRevolverAimSpeed = (float)Math.PI / 2;
     public static float bigRevolverBulletSpeed = 400;
+    public static float bigRevolverRange = 350f;
+
+    public static float mortarAimSpeed = (float)Math.PI / 3;
+    public static int mortarCost = 50;
+    public static float mortarRange = 400f;
+
     public static int slimeGoldDrop = 5;
 
     public static Assets assets;
@@ -31,12 +41,16 @@ internal class Program
     public static RaylibAnimation bigRevolverRightAmmo;
     public static Vector2 bigRevolverLeftPivot;
     public static Vector2 bigRevolverRightPivot;
+    public static RaylibAnimation mortarReload;
+    public static RaylibAnimation mortarFire;
     public static RaylibAnimation slimeJump;
+    public static Vector2 mortarPivot;
     public static RaylibAnimation slimeWindup;
     public static RaylibAnimation homeCrystal;
     public static Texture enemySpawner;
     public static Texture coin;
-    public static Sound gunshot;
+    public static Sound revolverGunshot;
+    public static Sound bigRevolverGunshot;
 
     public static void Main(string[] args)
     {
@@ -74,8 +88,11 @@ internal class Program
             var coinAse = assets.LoadAseprite("coin.aseprite");
             coin = Utils.FrameToTexture(coinAse.Frames[0]);
 
-            gunshot = assets.LoadSound("hard_gunshot.wav");
-            Raylib.SetSoundVolume(gunshot, 0.45f);
+            revolverGunshot = assets.LoadSound("hard_gunshot.wav");
+            Raylib.SetSoundVolume(revolverGunshot, 0.45f);
+
+            bigRevolverGunshot = assets.LoadSound("big_gunshot.wav");
+            Raylib.SetSoundVolume(bigRevolverGunshot, 0.25f);
 
             var spawnerAse = assets.LoadAseprite("spawner.aseprite");
             enemySpawner = Utils.FrameToTexture(spawnerAse.Frames[0]);
@@ -92,6 +109,11 @@ internal class Program
             bigRevolverUnderbelly = Utils.FlattenLayerToAnimation(bigRevolverAse, "underbelly");
             bigRevolverLeftPivot  = Utils.GetSlicePivot(bigRevolverAse, "left gub pivot");
             bigRevolverRightPivot = Utils.GetSlicePivot(bigRevolverAse, "right gun pivot");
+
+            var mortarAse = assets.LoadAseprite("mortar.aseprite");
+            mortarFire   = Utils.FlattenTagToAnimation(mortarAse, "fire");
+            mortarReload = Utils.FlattenTagToAnimation(mortarAse, "reload");
+            mortarPivot = Utils.GetSlicePivot(mortarAse, "gun pivot point");
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));
