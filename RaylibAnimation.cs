@@ -4,6 +4,12 @@ using System.Numerics;
 
 namespace GMTK2024;
 
+internal class AnimationState
+{
+    public int frame;
+    public float timer;
+}
+
 internal class RaylibAnimationFrame
 {
     public float duration;
@@ -25,29 +31,29 @@ internal class RaylibAnimation
         return duration;
     }
 
-    public void UpdateLooped(float dt, ref float animationTimer, ref int animationIndex)
+    public void UpdateLooped(float dt, ref AnimationState state)
     {
-        animationTimer += dt;
-        while (animationTimer > frames[animationIndex].duration)
+        state.timer += dt;
+        while (state.timer > frames[state.frame].duration)
         {
-            animationTimer -= frames[animationIndex].duration;
-            animationIndex = (animationIndex + 1) % frames.Count;
+            state.timer -= frames[state.frame].duration;
+            state.frame = (state.frame + 1) % frames.Count;
         }
     }
 
-    public bool UpdateOnce(float dt, ref float animationTimer, ref int animationIndex)
+    public bool UpdateOnce(float dt, ref AnimationState state)
     {
-        animationTimer += dt;
-        while (animationTimer > frames[animationIndex].duration)
+        state.timer += dt;
+        while (state.timer > frames[state.frame].duration)
         {
-            animationTimer -= frames[animationIndex].duration;
+            state.timer -= frames[state.frame].duration;
 
-            if (animationIndex == frames.Count - 1)
+            if (state.frame == frames.Count - 1)
             {
                 return true;
             }
 
-            animationIndex++;
+            state.frame++;
         }
 
         return false;

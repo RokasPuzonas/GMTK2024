@@ -1,6 +1,7 @@
 ﻿using Raylib_CsLo;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
@@ -10,6 +11,12 @@ using System.Threading.Tasks;
 
 namespace GMTK2024;
 
+struct ButtonResult
+{
+    public bool hover;
+    public bool pressed;
+};
+
 internal class UI
 {
     public Rectangle rect;
@@ -17,28 +24,33 @@ internal class UI
     public Vector2 mouse;
     public bool hot = false;
 
-    public bool ShowButton(Rectangle rect, string text, float fontSize = 10)
-    {
-        var font = Raylib.GetFontDefault();
 
-        var hover = false;
-        var pressed = false;
+    public ButtonResult ButtonLogic(Rectangle rect)
+    {
+        var result = new ButtonResult();
 
         if (Utils.IsInsideRect(mouse, rect))
         {
             this.hot = true;
-            hover = true;
+            result.hover = true;
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
             {
-                pressed = true;
+                result.pressed = true;
             }
         }
 
-        Raylib.DrawRectangleRec(rect, hover ? Raylib.GRAY : Raylib.DARKGRAY);
+        return result;
+    }
 
+    public bool ShowButton(Rectangle rect, string text, float fontSize = 10)
+    {
+        var result = ButtonLogic(rect);
+
+        var font = Raylib.GetFontDefault();
+        Raylib.DrawRectangleRec(rect, result.hover ? Raylib.GRAY : Raylib.DARKGRAY);
         Utils.DrawTextCentered(font, text, Utils.GetRectCenter(rect), fontSize, fontSize / 10, Raylib.WHITE);
 
-        return pressed;
+        return result.pressed;
     }
 
     public void Begin(Rectangle rect, Vector2 uiSize)

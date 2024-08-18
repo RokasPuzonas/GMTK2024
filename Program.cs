@@ -23,6 +23,8 @@ internal class Program
     public static RaylibAnimation revolver;
     public static RaylibAnimation slimeJump;
     public static RaylibAnimation slimeWindup;
+    public static RaylibAnimation homeCrystal;
+    public static Texture enemySpawner;
     public static Texture coin;
     public static Sound gunshot;
 
@@ -64,6 +66,13 @@ internal class Program
 
             gunshot = assets.LoadSound("hard_gunshot.wav");
             Raylib.SetSoundVolume(gunshot, 0.45f);
+
+            var spawnerAse = assets.LoadAseprite("spawner.aseprite");
+            enemySpawner = Utils.FrameToTexture(spawnerAse.Frames[0]);
+
+            var homeCrystalAse = assets.LoadAseprite("end.aseprite");
+            homeCrystal = Utils.FlattenToAnimation(homeCrystalAse);
+
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));

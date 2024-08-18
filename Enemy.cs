@@ -28,8 +28,7 @@ internal class Enemy
     public int health;
     public int maxHealth;
 
-    public int animationIndex;
-    public float animationTimer;
+    public AnimationState animation = new AnimationState();
 
     public float aim;
     public float targetAim;
