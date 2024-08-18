@@ -7,6 +7,7 @@ using Raylib_CsLo;
 using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
 using System.Xml.Linq;
 using TiledCS;
 using static System.Net.Mime.MediaTypeNames;
@@ -338,5 +339,10 @@ static class Utils
             vec.X * (float)Math.Cos(angle) - vec.Y * (float)Math.Sin(angle),
             vec.X * (float)Math.Sin(angle) + vec.Y * (float)Math.Cos(angle)
         );
+    }
+
+    public static bool IsAngleClose(float angle1, float angle2, float margin = 0.01f)
+    {
+        return Math.Abs(AngleDifference(angle1, angle2)) < margin;
     }
 }

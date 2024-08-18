@@ -14,6 +14,8 @@ internal class Program
     public static float playerHealth = 100;
 
     public static int revolverCost = 25;
+    public static float revolverBulletSpeed = 200;
+    public static float bigRevolverBulletSpeed = 400;
     public static int slimeGoldDrop = 5;
 
     public static Assets assets;
@@ -132,6 +134,7 @@ internal class Program
             }
         }
 
+        Raylib.CloseAudioDevice();
         Raylib.CloseWindow();
     }
 }

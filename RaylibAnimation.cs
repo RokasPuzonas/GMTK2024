@@ -59,6 +59,18 @@ internal class RaylibAnimation
         return false;
     }
 
+    public void PlayOnce(float dt, ref AnimationState state, ref bool played)
+    {
+        if (!played)
+        {
+            played = UpdateOnce(dt, ref state);
+        }
+        else
+        {
+            state.frame = 0;
+        }
+    }
+
     public void DrawCentered(int frameIndex, Vector2 position, float rotation, float scale, Color tint)
     {
         Utils.DrawTextureCentered(frames[frameIndex].texture, position, rotation, scale, tint);

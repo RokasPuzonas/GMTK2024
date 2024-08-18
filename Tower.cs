@@ -13,13 +13,6 @@ enum TowerType {
     Revolver,
     BigRevolver
 };
-
-enum TowerState
-{
-    Idle,
-    Shoot
-};
-
 internal class Tower
 {
     public float createdAt;
@@ -33,10 +26,10 @@ internal class Tower
     public float aim = 0;
     public float range = 200f;
 
-    public TowerState state = TowerState.Idle;
     public AnimationState animation = new AnimationState();
 
     public float shootCooldown = 0.0f;
+    public bool reloaded = true;
 
     public Rectangle GetRect()
     {
@@ -49,10 +42,17 @@ internal class Tower
     }
 
     // Big revolver specific
+    public AnimationState rightGunAnimation = new AnimationState();
     public float leftTargetAim = 0;
     public float leftAim = 0;
+    public float leftShootCooldown = 0;
+    public bool leftReloaded = true;
+
+    public AnimationState leftGunAnimation = new AnimationState();
     public float rightTargetAim;
     public float rightAim = 0;
+    public float rightShootCooldown = 0;
+    public bool rightReloaded = true;
 
     public Vector2 GetRightGunCenter()
     {
