@@ -1,14 +1,7 @@
-﻿using AsepriteDotNet.Aseprite.Types;
-using AsepriteDotNet.IO;
-using AsepriteDotNet.Processors;
+﻿using AsepriteDotNet.IO;
 using Raylib_CsLo;
-using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Net.Http.Headers;
 using System.Numerics;
-using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.InteropServices.JavaScript;
 using TiledCS;
 
 namespace GMTK2024;
@@ -290,6 +283,9 @@ internal class Program
         var currentWave = new EnemyWave();
         var waveSpawnTimer = 0f;
         currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.1f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.1f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.1f, type = EnemyType.Slime });
+        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.1f, type = EnemyType.Slime });
         currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
         currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
         currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
@@ -478,7 +474,8 @@ internal class Program
                         type = currentWave.spawns[0].type,
                         size = new Vector2(slimeAse.CanvasWidth, slimeAse.CanvasHeight),
                         maxHealth = enemyHealth,
-                        health = enemyHealth
+                        health = enemyHealth,
+                        collisionRadius = 10
                     });
                     waveSpawnTimer -= currentWave.spawns[0].delay;
 
@@ -492,16 +489,35 @@ internal class Program
                         enemy.dead = true;
                     }
 
-                    if (Vector2.Distance(path[enemy.targetEndpoint], enemy.position) < 0.01)
+                    bool gotoNextTarget = false;
+                    if (enemy.targetEndpoint > 0)
                     {
-                        if (enemy.targetEndpoint < path.Count - 1)
+                        var line = path[enemy.targetEndpoint] - path[enemy.targetEndpoint - 1];
+                        var enemyProgress = enemy.position - path[enemy.targetEndpoint - 1];
+
+                        var progress = Vector2.Dot(line, enemyProgress) / line.Length();
+                        if (progress > line.Length())
                         {
-                            enemy.targetEndpoint += 1;
+                            gotoNextTarget = true;
                         }
-                        else
+                    }
+                    else
+                    {
+                        if (Vector2.Distance(path[enemy.targetEndpoint], enemy.position) < 0.01)
+                        {
+                            gotoNextTarget = true;
+                        }
+                    }
+
+                    if (gotoNextTarget)
+                    {
+                        if (enemy.targetEndpoint == path.Count - 1)
                         {
                             enemy.dead = true;
                             health = Math.Max(health - 10, 0);
+                        } else
+                        {
+                            enemy.targetEndpoint += 1;
                         }
                     }
 
@@ -519,20 +535,23 @@ internal class Program
                             enemy.jumpCooldown = rng.NextSingle() * 0.5f + 0.75f;
 
                             var jumpPower = rng.NextSingle() * 100 + 100;
-                            enemy.velocity = Vector2.Normalize(targetPosition - enemy.position) * jumpPower;
+                            enemy.velocity += Vector2.Normalize(targetPosition - enemy.position) * jumpPower;
                             enemy.animationIndex = 0;
                         }
                     }
 
-                    enemy.velocity = Vector2.Normalize(enemy.velocity) * enemy.velocity.Length() * (1 - enemy.friction);
-
-                    var step = enemy.velocity * dt;
-                    var distanceToTarget = Vector2.Distance(targetPosition, enemy.position);
-                    if (step.Length() > distanceToTarget)
+                    foreach (var otherEnemy in enemies)
                     {
-                        step = Vector2.Normalize(step) * distanceToTarget;
+                        if (otherEnemy == enemy) continue;
+
+                        if (Vector2.Distance(otherEnemy.position, enemy.position) < otherEnemy.collisionRadius + enemy.collisionRadius)
+                        {
+                            enemy.velocity += (enemy.position - otherEnemy.position);
+                        }
                     }
-                    enemy.position += step;
+
+                    enemy.velocity = Vector2.Normalize(enemy.velocity) * enemy.velocity.Length() * (1 - enemy.friction);
+                    enemy.position += enemy.velocity * dt;
                 }
 
                 for (int i = 0; i < enemies.Count; i++)
@@ -557,6 +576,7 @@ internal class Program
                 {
                     var rotation = Utils.ToDegrees(enemy.aim) - 90;
                     Utils.DrawTextureCentered(slime.frames[enemy.animationIndex].texture, enemy.position, rotation, 1, Raylib.WHITE);
+                    Raylib.DrawCircleLines((int)enemy.position.X, (int)enemy.position.Y, enemy.collisionRadius, Raylib.RED);
                     //Raylib.DrawRectangleRec(enemy.GetRect(), Raylib.RED);
                     //Raylib.DrawCircleV(enemy.position, 1, Raylib.BLUE);
                     //Raylib.DrawLineV(enemy.position, enemy.position + new Vector2((float)Math.Cos(enemy.aim), (float)Math.Sin(enemy.aim)) * 100, Raylib.GREEN);
@@ -591,6 +611,10 @@ internal class Program
                 }
 
                 DrawLine(path, Raylib.RED);
+                foreach (var point in path)
+                {
+                    Raylib.DrawCircleV(point, 2, Raylib.RED);
+                }
 
                 Raylib.DrawCircleLines((int)basePosition.X, (int)basePosition.Y, tileSize/3, Raylib.YELLOW);
             }

@@ -1,5 +1,4 @@
 ﻿using Raylib_CsLo;
-using System;
 using System.Numerics;
 
 namespace GMTK2024;
@@ -28,6 +27,8 @@ internal class Enemy
     public float targetAim;
 
     public float jumpCooldown = 0;
+    public float collisionRadius = 0;
+    public float goldValues = 10;
 
     public Rectangle GetRect()
     {
