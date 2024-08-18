@@ -4,9 +4,11 @@ using AsepriteDotNet.Aseprite.Types;
 using AsepriteDotNet.Common;
 using Raylib_CsLo;
 using System.Diagnostics;
+using System.Drawing;
 using System.Numerics;
 using System.Xml.Linq;
 using TiledCS;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace GMTK2024;
 
@@ -20,6 +22,11 @@ static class Utils
     public static bool IsInsideRect(Vector2 point, Raylib_CsLo.Rectangle rect)
     {
         return (rect.x <= point.X && point.X <= rect.x + rect.width) && (rect.y <= point.Y && point.Y <= rect.y + rect.height);
+    }
+
+    public static Vector2 GetRectCenter(Raylib_CsLo.Rectangle rect)
+    {
+        return new Vector2(rect.x + rect.width/2, rect.y + rect.height/2);
     }
 
     public static Raylib_CsLo.Rectangle ShrinkRect(Raylib_CsLo.Rectangle rect, float amount)
@@ -77,7 +84,7 @@ static class Utils
         return array;
     }
 
-    public static Image LoadImageFromRgba(Rgba32[] rgba, int width, int height)
+    public static Raylib_CsLo.Image LoadImageFromRgba(Rgba32[] rgba, int width, int height)
     {
         Debug.Assert(rgba.Length == width * height);
         var image = Raylib.GenImageColor(width, height, Raylib.GetColor(0));
@@ -204,7 +211,7 @@ static class Utils
         }
     }
 
-    public static void DrawTextureCentered(Raylib_CsLo.Texture texture, Vector2 position, float rotation, float scale, Color tint)
+    public static void DrawTextureCentered(Raylib_CsLo.Texture texture, Vector2 position, float rotation, float scale, Raylib_CsLo.Color tint)
     {
         var source = new Raylib_CsLo.Rectangle(0, 0, texture.width, texture.height);
         var dest = new Raylib_CsLo.Rectangle(position.X, position.Y, texture.width * scale, texture.height * scale);
@@ -263,5 +270,11 @@ static class Utils
         }
 
         return fallback;
+    }
+    public static void DrawTextCentered(Raylib_CsLo.Font font, string text, Vector2 position, float fontSize, float spacing, Raylib_CsLo.Color tint)
+    {
+        var size = Raylib.MeasureTextEx(font, text, fontSize, spacing);
+
+        Raylib.DrawTextEx(font, text, position - size / 2, fontSize, spacing, tint);
     }
 }

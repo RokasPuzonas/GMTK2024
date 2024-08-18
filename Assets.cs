@@ -39,12 +39,7 @@ internal class Assets
         return stream;
     }
 
-    public AsepriteFile LoadAseprite(string name)
-    {
-        return AsepriteFileLoader.FromStream(name, LoadStream(name));
-    }
-
-    public Image LoadImage(string name)
+    public byte[] LoadBytes(string name)
     {
         var stream = LoadStream(name);
 
@@ -53,13 +48,23 @@ internal class Assets
 
         stream.ReadExactly(data, 0, dataSize);
 
-        var extension = Path.GetExtension(name);
+        return data;
+    }
 
+    public AsepriteFile LoadAseprite(string name)
+    {
+        return AsepriteFileLoader.FromStream(name, LoadStream(name));
+    }
+
+    public Image LoadImage(string name)
+    {
+        var extension = Path.GetExtension(name);
+        var data = LoadBytes(name);
         unsafe
         {
             fixed (byte* dataPtr = data)
             {
-                return Raylib.LoadImageFromMemory(extension, dataPtr, dataSize);
+                return Raylib.LoadImageFromMemory(extension, dataPtr, data.Length);
             }
         }
     }
@@ -70,5 +75,26 @@ internal class Assets
         var texture = Raylib.LoadTextureFromImage(image);
         Raylib.UnloadImage(image);
         return texture;
+    }
+
+    public Wave LoadWave(string name)
+    {
+        var data = LoadBytes(name);
+
+        unsafe
+        {
+            fixed (byte* dataPtr = data)
+            {
+                return Raylib.LoadWaveFromMemory(Path.GetExtension(name), dataPtr, data.Length);
+            }
+        }
+    }
+
+    public Sound LoadSound(string name)
+    {
+        var wave = LoadWave(name);
+        var sound = Raylib.LoadSoundFromWave(wave);
+        //Raylib.UnloadWave(wave);
+        return sound;
     }
 }

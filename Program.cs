@@ -11,7 +11,7 @@ internal class Program
     public static int startingGold = 100;
     public static float playerHealth = 100;
 
-    public static int revolverCost = 10;
+    public static int revolverCost = 25;
     public static int slimeGoldDrop = 5;
 
 
@@ -23,6 +23,7 @@ internal class Program
     public static RaylibAnimation slimeJump;
     public static RaylibAnimation slimeWindup;
     public static Texture coin;
+    public static Sound gunshot;
 
     public static void Main(string[] args)
     {
@@ -30,6 +31,7 @@ internal class Program
 
         Raylib.SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE);
         Raylib.InitWindow(1920, 1080, "GMTK2024");
+        Raylib.InitAudioDevice();
         Raylib.SetWindowMinSize((int)canvasSize.X, (int)canvasSize.Y);
         Raylib.SetTargetFPS(60);
 
@@ -58,6 +60,8 @@ internal class Program
 
             var coinAse = assets.LoadAseprite("coin.aseprite");
             coin = Utils.FrameToTexture(coinAse.Frames[0]);
+
+            gunshot = assets.LoadSound("hard_gunshot.wav");
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));
