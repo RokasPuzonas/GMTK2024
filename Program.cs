@@ -8,6 +8,13 @@ internal class Program
     public static float tileSize = 32;
     public static Vector2 canvasSize = new Vector2(320 * 3, 180 * 3);
 
+    public static int startingGold = 100;
+    public static float playerHealth = 100;
+
+    public static int revolverCost = 10;
+    public static int slimeGoldDrop = 5;
+
+
     public static Assets assets;
     public static Dictionary<string, RaylibTileset> tilesets;
     public static DualGridTileset towerPlatformMain;
@@ -15,6 +22,7 @@ internal class Program
     public static RaylibAnimation revolver;
     public static RaylibAnimation slimeJump;
     public static RaylibAnimation slimeWindup;
+    public static Texture coin;
 
     public static void Main(string[] args)
     {
@@ -25,26 +33,32 @@ internal class Program
         Raylib.SetWindowMinSize((int)canvasSize.X, (int)canvasSize.Y);
         Raylib.SetTargetFPS(60);
 
-        tilesets = RaylibTileset.LoadAll(assets);
+        // Load assets
+        {
+            tilesets = RaylibTileset.LoadAll(assets);
         
-        var towerBaseTileset = assets.LoadAseprite("grass_tower_base_tileset.aseprite");
+            var towerBaseTileset = assets.LoadAseprite("grass_tower_base_tileset.aseprite");
 
-        towerPlatformMain = new DualGridTileset(
-            Utils.FlattenLayerToTexture(towerBaseTileset.Frames[0], "tower_base"),
-            new Vector2(tileSize, tileSize)
-        );
+            towerPlatformMain = new DualGridTileset(
+                Utils.FlattenLayerToTexture(towerBaseTileset.Frames[0], "tower_base"),
+                new Vector2(tileSize, tileSize)
+            );
 
-        towerPlatformFoliage = new DualGridTileset(
-            Utils.FlattenLayerToTexture(towerBaseTileset.Frames[0], "foliage"),
-            new Vector2(tileSize, tileSize)
-        );
+            towerPlatformFoliage = new DualGridTileset(
+                Utils.FlattenLayerToTexture(towerBaseTileset.Frames[0], "foliage"),
+                new Vector2(tileSize, tileSize)
+            );
 
-        var revolverAse = assets.LoadAseprite("revolver.aseprite");
-        revolver = Utils.FlattenToAnimation(revolverAse);
+            var revolverAse = assets.LoadAseprite("revolver.aseprite");
+            revolver = Utils.FlattenToAnimation(revolverAse);
 
-        var slimeAse = assets.LoadAseprite("slime2.aseprite");
-        slimeWindup = Utils.FlattenTagToAnimation(slimeAse, "windup");
-        slimeJump = Utils.FlattenTagToAnimation(slimeAse, "jump");
+            var slimeAse = assets.LoadAseprite("slime2.aseprite");
+            slimeWindup = Utils.FlattenTagToAnimation(slimeAse, "windup");
+            slimeJump = Utils.FlattenTagToAnimation(slimeAse, "jump");
+
+            var coinAse = assets.LoadAseprite("coin.aseprite");
+            coin = Utils.FrameToTexture(coinAse.Frames[0]);
+        }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));
         var currentLevel = new Level(tilemap);

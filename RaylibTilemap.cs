@@ -7,8 +7,8 @@ namespace GMTK2024;
 
 class RaylibTilemap
 {
-    TiledMap map;
-    Dictionary<int, RaylibTileset> rlTilesets;
+    public TiledMap map;
+    public Dictionary<int, RaylibTileset> rlTilesets;
 
     static Vector2[] dualGridOffsets =
     {
@@ -29,7 +29,7 @@ class RaylibTilemap
         }
     }
 
-    static int GetTileAt(TiledLayer layer, int x, int y)
+    public static int GetTileAt(TiledLayer layer, int x, int y)
     {
         if (Utils.IsInside(new Vector2(x, y), new Vector2(layer.width, layer.height)))
         {

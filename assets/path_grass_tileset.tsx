@@ -4,4 +4,9 @@
   <property name="dual-grid" type="bool" value="true"/>
  </properties>
  <image source="grass_path_tileset.png" width="128" height="128"/>
+ <tile id="6">
+  <properties>
+   <property name="tower-placeable" type="bool" value="true"/>
+  </properties>
+ </tile>
 </tileset>

@@ -15,4 +15,9 @@ internal class EnemyWaveSpawn
 internal class EnemyWave
 {
     public List<EnemyWaveSpawn> spawns = new List<EnemyWaveSpawn>();
+
+    public EnemyWave(List<EnemyWaveSpawn> spawns)
+    {
+        this.spawns = spawns;
+    }
 }

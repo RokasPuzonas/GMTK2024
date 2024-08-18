@@ -6,8 +6,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using TiledCS;
 
 namespace GMTK2024;
@@ -26,27 +28,29 @@ internal class Level
     EnemyWave currentWave;
     float waveSpawnTimer = 0f;
 
-    float maxHealth = 100f;
-    float health = 0;
+    float maxHealth = Program.playerHealth;
+    float health = Program.playerHealth;
+    int gold = Program.startingGold;
 
     public Level(RaylibTilemap tilemap)
     {
         this.tilemap = tilemap;
-        health = maxHealth;
 
         camera.rotation = 0;
         camera.target = Program.canvasSize / 2;
 
-        currentWave = new EnemyWave();
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.1f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.1f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.1f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 0.1f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 2.0f, type = EnemyType.Slime });
-        currentWave.spawns.Add(new EnemyWaveSpawn { delay = 3.0f, type = EnemyType.Slime });
+        currentWave = new EnemyWave(
+        [
+            new() { delay = 0.1f, type = EnemyType.Slime },
+            new() { delay = 0.1f, type = EnemyType.Slime },
+            new() { delay = 0.1f, type = EnemyType.Slime },
+            new() { delay = 0.1f, type = EnemyType.Slime },
+            new() { delay = 2.0f, type = EnemyType.Slime },
+            new() { delay = 2.0f, type = EnemyType.Slime },
+            new() { delay = 2.0f, type = EnemyType.Slime },
+            new() { delay = 2.0f, type = EnemyType.Slime },
+            new() { delay = 3.0f, type = EnemyType.Slime },
+        ]);
 
         enemyPath = new List<Vector2>();
 
@@ -305,6 +309,42 @@ internal class Level
         return nearestEnemy;
     }
 
+    public bool IsTowerPlaceable(Vector2 position)
+    {
+        var ground = tilemap.GetLayer("ground", TiledLayerType.TileLayer);
+        Debug.Assert(ground != null);
+
+        var tileX = (int)(position.X / Program.tileSize);
+        var tileY = (int)(position.Y / Program.tileSize);
+        var gid = RaylibTilemap.GetTileAt(ground, tileX, tileY);
+        if (gid != 0)
+        {
+            var mapTileset = tilemap.map.GetTiledMapTileset(gid);
+            var rlTileset = tilemap.rlTilesets[mapTileset.firstgid];
+            var tile = rlTileset.GetTile(gid - mapTileset.firstgid);
+            if (tile == null)
+            {
+                return false;
+            }
+
+            if (!Utils.GetBoolTiledProperty(tile.properties, "tower-placeable", false))
+            {
+                return false;
+            }
+        }
+
+        var existingTower = GetTowerAt(
+            towers,
+            new Vector2(tileX + 0.5f, tileY + 0.5f) * Program.tileSize
+        );
+        if (existingTower != null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     public void Tick()
     {
         var canvasSize = Program.canvasSize;
@@ -351,23 +391,22 @@ internal class Level
                     DivMultipleFloor(mouse.Value.Y, tileSize)
                 );
 
-                if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT) && gold >= Program.revolverCost && IsTowerPlaceable(mouseTile))
                 {
-                    var existingTower = GetTowerAt(towers, mouseTile + new Vector2(tileSize, tileSize) / 2);
-                    if (existingTower == null)
+                    var aim = rng.NextSingle() * 2 * (float)Math.PI;
+                    towers.Add(new Tower
                     {
-                        var aim = rng.NextSingle() * 2 * (float)Math.PI;
-                        towers.Add(new Tower
-                        {
-                            position = mouseTile,
-                            size = new Vector2(tileSize, tileSize),
-                            createdAt = (float)Raylib.GetTime(),
-                            targetAim = aim,
-                            aim = aim
-                        });
+                        position = mouseTile,
+                        size = new Vector2(tileSize, tileSize),
+                        createdAt = (float)Raylib.GetTime(),
+                        targetAim = aim,
+                        type = TowerType.Revolver,
+                        aim = aim
+                    });
 
-                        CheckMergingTowers(towers, mouseTile);
-                    }
+                    CheckMergingTowers(towers, mouseTile);
+
+                    gold -= Program.revolverCost;
                 }
             }
 
@@ -432,9 +471,12 @@ internal class Level
 
                 foreach (var enemy in enemies)
                 {
+                    if (enemy.dead) continue;
+
                     if (Raylib.CheckCollisionCircleRec(bullet.position, 3, enemy.GetRect()))
                     {
                         enemy.health = Math.Max(enemy.health -= bullet.damage, 0);
+                        gold += enemy.goldValue;
                         bullet.dead = true;
                     }
                 }
@@ -458,7 +500,7 @@ internal class Level
         // Enemies
         {
             waveSpawnTimer += dt;
-            while (currentWave.spawns.Count > 0 && waveSpawnTimer > currentWave.spawns[0].delay)
+            while (currentWave.spawns.Count > 0 && (waveSpawnTimer > currentWave.spawns[0].delay || enemies.Count == 0))
             {
                 var enemyHealth = 100;
                 enemies.Add(new Enemy
@@ -466,13 +508,14 @@ internal class Level
                     position = enemyPath[0],
                     targetEndpoint = 0,
                     type = currentWave.spawns[0].type,
+                    goldValue = Program.slimeGoldDrop,
                     state = EnemyState.SlimeCooldown,
                     size = Program.slimeJump.size,
                     maxHealth = enemyHealth,
                     health = enemyHealth,
                     collisionRadius = 10
                 });
-                waveSpawnTimer -= currentWave.spawns[0].delay;
+                waveSpawnTimer = Math.Max(waveSpawnTimer - currentWave.spawns[0].delay, 0);
 
                 currentWave.spawns.RemoveAt(0);
             }
@@ -640,7 +683,8 @@ internal class Level
             {
                 var tileX = DivMultipleFloor(mouse.Value.X, tileSize);
                 var tileY = DivMultipleFloor(mouse.Value.Y, tileSize);
-                Raylib.DrawRectangleLinesEx(new Rectangle(tileX, tileY, tileSize, tileSize), 1, Raylib.RED);
+                var color = IsTowerPlaceable(mouse.Value) ? Raylib.GREEN : Raylib.RED;
+                Raylib.DrawRectangleLinesEx(new Rectangle(tileX, tileY, tileSize, tileSize), 1, color);
             }
 
             DrawLine(enemyPath, Raylib.RED);
@@ -663,6 +707,9 @@ internal class Level
             Raylib.DrawFPS(10, 10);
 
             Raylib.DrawText($"Enemies: {enemies.Count}", 10, 30, 10, Raylib.WHITE);
+
+            Utils.DrawTextureCentered(Program.coin, new Vector2(20, 60), 0, 0.75f, Raylib.WHITE);
+            Raylib.DrawText($"{gold}", 30, 43, 30, Raylib.GOLD);
 
             var healthbarWidth = canvasSize.X * 0.75f;
             var healthbarContainer = new Rectangle(
