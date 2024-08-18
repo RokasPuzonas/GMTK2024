@@ -1,4 +1,5 @@
 ﻿using Raylib_CsLo;
+using System;
 using System.Diagnostics;
 using System.Numerics;
 using System.Threading.Tasks.Dataflow;
@@ -13,6 +14,7 @@ internal class Level
     static bool debugAimAtMouse = false;
     static bool debugTowerInfo = false;
     static bool debugEnemyInfo = false;
+    static bool debugBulletInfo = false;
 
     RaylibTilemap tilemap;
     Random rng = new Random();
@@ -37,7 +39,7 @@ internal class Level
     float maxHealth = Program.playerHealth;
     float health = Program.playerHealth;
     int gold = Program.startingGold;
-    TowerType selectedTower = TowerType.Revolver;
+    TowerType selectedTower = TowerType.Mortar;
 
     bool won = false;
 
@@ -484,8 +486,10 @@ internal class Level
                     speed = Program.mortarBulletSpeed,
                     damage = Program.mortarBulletDamange,
                     knockback = Program.mortarBulletKnockback,
-                    radius = Program.mortarBulletRadius,
-                    maxDistance = Vector2.Distance(tower.position, tower.targetPosition.Value),
+                    explosionRadius = Program.mortarBulletRadius,
+                    shotFrom = tower.Center(),
+                    maxDistance = Vector2.Distance(tower.Center(), tower.targetPosition.Value),
+                    explodes = true,
                     direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.mortarGunshot);
@@ -758,22 +762,40 @@ internal class Level
             {
                 bullet.position += bullet.direction * dt * bullet.speed;
 
-                foreach (var enemy in enemies)
+                if (bullet.explodes)
                 {
-                    if (enemy.dead) continue;
-                    if (bullet.hitEnemies.Contains(enemy)) continue;
-                    if (!Raylib.CheckCollisionCircles(bullet.position, 3, enemy.position, enemy.collisionRadius)) continue;
-                    
-                    enemy.health = Math.Max(enemy.health -= bullet.damage, 0);
-                    enemy.velocity += bullet.direction * bullet.knockback;
-                    gold += enemy.goldValue;
+                    if (Vector2.Distance(bullet.position, bullet.shotFrom) > bullet.maxDistance)
+                    {
+                        foreach (var enemy in enemies)
+                        {
+                            if (enemy.dead) continue;
+                            if (!Raylib.CheckCollisionCircles(bullet.position, bullet.explosionRadius, enemy.position, enemy.collisionRadius)) continue;
 
-                    if (bullet.pierce > 0) {
-                        bullet.hitEnemies.Add(enemy);
-                        bullet.pierce -= 1;
-                    } else {
+                            enemy.health = Math.Max(enemy.health - bullet.damage, 0);
+                            enemy.velocity += Vector2.Normalize(enemy.position - bullet.position) * bullet.knockback;
+                            gold += enemy.goldValue;
+                        }
+
                         bullet.dead = true;
-                        break;
+                    }
+                } else {
+                    foreach (var enemy in enemies)
+                    {
+                        if (enemy.dead) continue;
+                        if (bullet.hitEnemies.Contains(enemy)) continue;
+                        if (!Raylib.CheckCollisionCircles(bullet.position, 3, enemy.position, enemy.collisionRadius)) continue;
+                    
+                        enemy.health = Math.Max(enemy.health - bullet.damage, 0);
+                        enemy.velocity += bullet.direction * bullet.knockback;
+                        gold += enemy.goldValue;
+
+                        if (bullet.pierce > 0) {
+                            bullet.hitEnemies.Add(enemy);
+                            bullet.pierce -= 1;
+                        } else {
+                            bullet.dead = true;
+                            break;
+                        }
                     }
                 }
 
@@ -781,6 +803,9 @@ internal class Level
                 {
                     bullet.dead = true;
                 }
+
+                
+                
             }
 
             for (int i = 0; i < bullets.Count; i++)
@@ -975,6 +1000,17 @@ internal class Level
             foreach (var bullet in bullets)
             {
                 Raylib.DrawCircleV(bullet.position, 3, Raylib.RED);
+
+                if (debugBulletInfo)
+                {
+                    Raylib.DrawLineV(bullet.position, bullet.position + bullet.direction * 100, Raylib.GREEN);
+
+                    if (bullet.explodes)
+                    {
+                        var explodesAt = bullet.shotFrom + bullet.direction * bullet.maxDistance;
+                        Raylib.DrawCircleLines((int)explodesAt.X, (int)explodesAt.Y, bullet.explosionRadius, Raylib.RED);
+                    }
+                }
             }
 
             foreach (var tower in towers)

@@ -33,9 +33,9 @@ internal class Program
     public static float mortarAimSpeed = (float)Math.PI / 3;
     public static int mortarCost = 50;
     public static float mortarBulletSpeed = 100;
-    public static int mortarBulletDamange = 50;
-    public static float mortarBulletKnockback = 50f;
-    public static float mortarBulletRadius = 30;
+    public static int mortarBulletDamange = 100;
+    public static float mortarBulletKnockback = 300f;
+    public static float mortarBulletRadius = 60;
     public static float mortarMinRange = 75f;
     public static float mortarMaxRange = 400f;
 
