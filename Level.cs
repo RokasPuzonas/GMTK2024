@@ -8,9 +8,11 @@ namespace GMTK2024;
 
 internal class Level
 {
+    static bool debugGrid = false;
     static bool debugShowPath = false;
     static bool debugAimAtMouse = false;
     static bool debugTowerInfo = false;
+    static bool debugEnemyInfo = false;
 
     RaylibTilemap tilemap;
     Random rng = new Random();
@@ -459,6 +461,8 @@ internal class Level
                     position = tower.Center(),
                     speed = Program.revolverBulletSpeed,
                     damage = Program.revolverBulletDamage,
+                    pierce = Program.revolverBulletPierce,
+                    knockback = Program.revolverBulletKnockback,
                     direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.revolverGunshot);
@@ -469,6 +473,7 @@ internal class Level
         {
             if (tower.shootCooldown == 0)
             {
+                Debug.Assert(tower.targetPosition != null);
                 var aimDirection = Utils.GetAngledVector2(tower.aim);
                 tower.fired = true;
                 tower.reloaded = false;
@@ -476,8 +481,11 @@ internal class Level
                 bullets.Add(new Bullet
                 {
                     position = tower.Center(),
-                    speed = Program.revolverBulletSpeed,
-                    damage = Program.revolverBulletDamage,
+                    speed = Program.mortarBulletSpeed,
+                    damage = Program.mortarBulletDamange,
+                    knockback = Program.mortarBulletKnockback,
+                    radius = Program.mortarBulletRadius,
+                    maxDistance = Vector2.Distance(tower.position, tower.targetPosition.Value),
                     direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.mortarGunshot);
@@ -499,6 +507,8 @@ internal class Level
                     position = tower.GetLeftGunCenter(),
                     speed = Program.bigRevolverBulletSpeed,
                     damage = Program.bigRevolverBulletDamage,
+                    pierce = Program.bigRevolverBulletPierce,
+                    knockback = Program.bigRevolverBulletKnockback,
                     direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
@@ -516,6 +526,8 @@ internal class Level
                     position = tower.GetRightGunCenter(),
                     speed = Program.bigRevolverBulletSpeed,
                     damage = Program.bigRevolverBulletDamage,
+                    knockback = Program.bigRevolverBulletKnockback,
+                    pierce = Program.bigRevolverBulletPierce,
                     direction = aimDirection
                 });
                 Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
@@ -602,12 +614,12 @@ internal class Level
             else
             {
                 var seed = Raylib.GetTime() + tower.createdAt;
-                tower.targetAim += (float)Math.Sin(seed) / (2 * (float)Math.PI) / 10;
+                tower.targetAim += (float)Math.Sin(seed) / 100;
 
                 if (tower.type == TowerType.BigRevolver)
                 {
-                    tower.leftTargetAim += (float)Math.Sin(seed + 100) / (2 * (float)Math.PI) / 20;
-                    tower.rightTargetAim -= (float)Math.Sin(seed + 200) / (2 * (float)Math.PI) / 20;
+                    tower.leftTargetAim = (float)Math.Sin(seed*3 + 12) / 10;
+                    tower.rightTargetAim = (float)Math.Sin(seed*3 + 3.5)  / 10;
                 }
             }
         }
@@ -749,12 +761,19 @@ internal class Level
                 foreach (var enemy in enemies)
                 {
                     if (enemy.dead) continue;
+                    if (bullet.hitEnemies.Contains(enemy)) continue;
+                    if (!Raylib.CheckCollisionCircles(bullet.position, 3, enemy.position, enemy.collisionRadius)) continue;
+                    
+                    enemy.health = Math.Max(enemy.health -= bullet.damage, 0);
+                    enemy.velocity += bullet.direction * bullet.knockback;
+                    gold += enemy.goldValue;
 
-                    if (Raylib.CheckCollisionCircleRec(bullet.position, 3, enemy.GetRect()))
-                    {
-                        enemy.health = Math.Max(enemy.health -= bullet.damage, 0);
-                        gold += enemy.goldValue;
+                    if (bullet.pierce > 0) {
+                        bullet.hitEnemies.Add(enemy);
+                        bullet.pierce -= 1;
+                    } else {
                         bullet.dead = true;
+                        break;
                     }
                 }
 
@@ -916,11 +935,15 @@ internal class Level
 
         Raylib.BeginMode2D(camera);
         {
-            //DrawGrid(GetScreenRectInWorld(camera), tileSize, Raylib.WHITE);
             tilemap.Draw();
 
             Utils.DrawTextureCentered(Program.enemySpawner, enemySpawn, enemySpawnRotation, 1, Raylib.WHITE);
             Program.homeCrystal.DrawCentered(homeCrystalAnimation.frame, basePosition, homeCrystalRotation, 1, Raylib.WHITE);
+            
+            if (debugGrid)
+            {
+                DrawGrid(GetScreenRectInWorld(camera), tileSize, Raylib.WHITE);
+            }
 
             foreach (var enemy in enemies)
             {
@@ -941,10 +964,12 @@ internal class Level
                     }
                 }
 
-                Raylib.DrawCircleLines((int)enemy.position.X, (int)enemy.position.Y, enemy.collisionRadius, Raylib.GREEN);
-                //Raylib.DrawRectangleRec(enemy.GetRect(), Raylib.RED);
-                //Raylib.DrawCircleV(enemy.position, 1, Raylib.BLUE);
-                //Raylib.DrawLineV(enemy.position, enemy.position + new Vector2((float)Math.Cos(enemy.aim), (float)Math.Sin(enemy.aim)) * 100, Raylib.GREEN);
+                if (debugEnemyInfo)
+                {
+                    Raylib.DrawCircleLines((int)enemy.position.X, (int)enemy.position.Y, enemy.collisionRadius, Raylib.RED);
+                    Raylib.DrawCircleV(enemy.position, 1, Raylib.BLUE);
+                    Raylib.DrawLineV(enemy.position, enemy.position + Utils.GetAngledVector2(enemy.aim, 100), Raylib.GREEN);
+                }
             }
 
             foreach (var bullet in bullets)

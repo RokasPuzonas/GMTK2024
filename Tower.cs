@@ -137,7 +137,7 @@ internal class Tower
 
     public AnimationState rightGunAnimation = new AnimationState();
     public Vector2 rightRecoil = Vector2.Zero;
-    public float rightTargetAim;
+    public float rightTargetAim = 0;
     public float rightAim = 0;
     public float rightShootCooldown = 0;
     public bool rightReloaded = true;

@@ -17,17 +17,25 @@ internal class Program
     public static float revolverAimSpeed = (float)Math.PI;
     public static float revolverBulletSpeed = 200;
     public static int revolverBulletDamage = 50;
+    public static int revolverBulletPierce = 2;
+    public static float revolverBulletKnockback = 50f;
     public static float revolverMinRange = 10f;
     public static float revolverMaxRange = 200f;
     
     public static float bigRevolverAimSpeed = (float)Math.PI / 2;
     public static float bigRevolverBulletSpeed = 400;
     public static int bigRevolverBulletDamage = 100;
+    public static int bigRevolverBulletPierce = 10;
+    public static float bigRevolverBulletKnockback = 50f;
     public static float bigRevolverMinRange = 50f;
     public static float bigRevolverMaxRange = 350f;
 
     public static float mortarAimSpeed = (float)Math.PI / 3;
     public static int mortarCost = 50;
+    public static float mortarBulletSpeed = 100;
+    public static int mortarBulletDamange = 50;
+    public static float mortarBulletKnockback = 50f;
+    public static float mortarBulletRadius = 30;
     public static float mortarMinRange = 75f;
     public static float mortarMaxRange = 400f;
 
