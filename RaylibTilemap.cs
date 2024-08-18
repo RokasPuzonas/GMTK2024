@@ -112,12 +112,25 @@ class RaylibTilemap
                         }
                         else
                         {
-                            var tileX = x * map.TileWidth;
-                            var tileY = y * map.TileHeight;
+                            var tileSize = new Vector2(map.TileWidth, map.TileHeight);
+                            var tileX = (x + 0.5f) * tileSize.X;
+                            var tileY = (y + 0.5f) * tileSize.Y;
                             var rect = map.GetSourceRect(mapTileset, rlTileset.tileset, gid);
-                            var rlRect = new Rectangle(rect.x, rect.y, rect.width, rect.height);
+                            
+                            var source = new Rectangle(rect.x, rect.y, rect.width, rect.height);
+                            var dest = new Rectangle(tileX, tileY, tileSize.X, tileSize.Y);
 
-                            Raylib.DrawTexturePro(rlTileset.texture, rlRect, new Rectangle(tileX, tileY, map.TileWidth, map.TileHeight), Vector2.Zero, 0, Raylib.WHITE);
+                            if (map.IsTileFlippedHorizontal(layer, x, y))
+                            {
+                                source.width *= -1;
+                            }
+
+                            if (map.IsTileFlippedVertical(layer, x, y))
+                            {
+                                source.height *= -1;
+                            }
+
+                            Raylib.DrawTexturePro(rlTileset.texture, source, dest, tileSize/2, 0, Raylib.WHITE);
                         }
                     }
 
