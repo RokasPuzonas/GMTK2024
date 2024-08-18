@@ -544,7 +544,7 @@ internal class Level
                     {
                         if (Program.slimeWindup.UpdateOnce(dt, ref enemy.animationTimer, ref enemy.animationIndex))
                         {
-                            enemy.jumpCooldown = rng.NextSingle() * 0.5f + 0.75f;
+                            enemy.jumpCooldown = rng.NextSingle() * 0.5f + 0;
 
                             var jumpPower = rng.NextSingle() * 100 + 100;
                             enemy.velocity += Vector2.Normalize(targetPosition - enemy.position) * jumpPower;
