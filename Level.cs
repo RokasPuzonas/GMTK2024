@@ -756,8 +756,8 @@ internal class Level
                 var enemyHealth = 100;
                 enemies.Add(new Enemy
                 {
-                    position = enemyPath[0],
-                    targetEndpoint = 0,
+                    position = enemyPath[0] + new Vector2(rng.NextSingle(), rng.NextSingle()) * 4,
+                    targetEndpoint = 1,
                     type = currentWave.spawns[0].type,
                     goldValue = Program.slimeGoldDrop,
                     state = EnemyState.SlimeCooldown,
