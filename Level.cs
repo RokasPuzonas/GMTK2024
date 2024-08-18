@@ -1,14 +1,13 @@
 ﻿using Raylib_CsLo;
-using System;
 using System.Diagnostics;
 using System.Numerics;
-using System.Threading.Tasks.Dataflow;
 using TiledCS;
 
 namespace GMTK2024;
 
 internal class Level
 {
+    static bool debugFPS = false;
     static bool debugGrid = false;
     static bool debugShowPath = false;
     static bool debugAimAtMouse = false;
@@ -39,9 +38,10 @@ internal class Level
     float maxHealth = Program.playerHealth;
     float health = Program.playerHealth;
     int gold = Program.startingGold;
-    TowerType selectedTower = TowerType.Mortar;
+    TowerType selectedTower = TowerType.Revolver;
 
     bool won = false;
+    bool lost = false;
 
     UI ui = new UI();
 
@@ -484,7 +484,7 @@ internal class Level
                 {
                     position = tower.Center(),
                     speed = Program.mortarBulletSpeed,
-                    damage = Program.mortarBulletDamange,
+                    damage = Program.mortarBulletDamage,
                     knockback = Program.mortarBulletKnockback,
                     explosionRadius = Program.mortarBulletRadius,
                     shotFrom = tower.Center(),
@@ -673,9 +673,29 @@ internal class Level
         {
             ui.Begin(GetOnscreenArea(), canvasSize);
 
-            Raylib.DrawFPS(10, 10);
+            if (won)
+            {
+                var center = canvasSize / 2;
+                var font = Raylib.GetFontDefault();
+                Utils.DrawTextCentered(font, "You win!", center, 50, 5, Raylib.GREEN);
 
-            if (!won)
+                if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Exit"))
+                {
+                    Program.running = false;
+                }
+            }
+            else if (lost)
+            {
+                var center = canvasSize / 2;
+                var font = Raylib.GetFontDefault();
+                Utils.DrawTextCentered(font, "You lost!", center, 50, 5, Raylib.RED);
+
+                if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Exit"))
+                {
+                    Program.running = false;
+                }
+            }
+            else
             {
                 Raylib.DrawText($"Enemies: {enemies.Count}", 10, 30, 10, Raylib.WHITE);
                 Raylib.DrawText($"Wave: {currentWaveIndex + 1}/{waves.Count}", 10, 40, 10, Raylib.WHITE);
@@ -704,23 +724,17 @@ internal class Level
                     currentWaveIndex++;
                 }
             }
-            else
-            {
-                var center = canvasSize / 2;
-                var font = Raylib.GetFontDefault();
-                Utils.DrawTextCentered(font, "You win!", center, 50, 5, Raylib.GREEN);
 
-                if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Exit"))
-                {
-                    Program.running = false;
-                }
+            if (debugFPS)
+            {
+                Raylib.DrawFPS(10, 10);
             }
 
             ui.End();
         }
 
         worldMouse = null;
-        if (!ui.hot)
+        if (!ui.hot && (!won || !lost))
         {
             worldMouse = GetMouseInWorld(camera);
         }
@@ -803,9 +817,6 @@ internal class Level
                 {
                     bullet.dead = true;
                 }
-
-                
-                
             }
 
             for (int i = 0; i < bullets.Count; i++)
@@ -825,7 +836,6 @@ internal class Level
             waveSpawnTimer += dt;
             while (currentWave.spawns.Count > 0 && (waveSpawnTimer > currentWave.spawns[0].delay || enemies.Count == 0))
             {
-                var enemyHealth = 100;
                 enemies.Add(new Enemy
                 {
                     position = enemyPath[0] + new Vector2(rng.NextSingle(), rng.NextSingle()) * 4,
@@ -834,9 +844,9 @@ internal class Level
                     goldValue = Program.slimeGoldDrop,
                     state = EnemyState.SlimeCooldown,
                     size = Program.slimeJump.size,
-                    maxHealth = enemyHealth,
-                    health = enemyHealth,
-                    collisionRadius = 10
+                    maxHealth = Program.slimeHealth,
+                    health = Program.slimeHealth,
+                    collisionRadius = Program.slimeCollisionRadius
                 });
                 waveSpawnTimer = Math.Max(waveSpawnTimer - currentWave.spawns[0].delay, 0);
 
@@ -875,7 +885,7 @@ internal class Level
                     if (enemy.targetEndpoint == enemyPath.Count - 1)
                     {
                         enemy.dead = true;
-                        health = Math.Max(health - 10, 0);
+                        health = Math.Max(health - Program.slimeDamage, 0);
                     }
                     else
                     {
@@ -910,10 +920,9 @@ internal class Level
                     {
                         if (Program.slimeWindup.UpdateOnce(dt, ref enemy.animation))
                         {
-                            enemy.jumpCooldown = rng.NextSingle() * 0.5f + 0;
+                            enemy.jumpCooldown = Program.slimeJumpCooldown(rng);
 
-                            var jumpPower = rng.NextSingle() * 100 + 100;
-                            enemy.velocity += Vector2.Normalize(targetPosition - enemy.position) * jumpPower;
+                            enemy.velocity += Vector2.Normalize(targetPosition - enemy.position) * Program.slimeJumpStrength(rng);
                             enemy.animation.frame = 0;
                             enemy.state = EnemyState.SlimeJump;
                         }
@@ -948,7 +957,12 @@ internal class Level
             }
         }
 
-        if (IsWaveFinished() && currentWaveIndex == waves.Count - 1 && enemies.Count == 0)
+        if (health == 0)
+        {
+            lost = true;
+        } 
+
+        if (!lost && IsWaveFinished() && currentWaveIndex == waves.Count - 1 && enemies.Count == 0)
         {
             won = true;
         }

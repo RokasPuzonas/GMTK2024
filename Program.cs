@@ -10,36 +10,41 @@ internal class Program
     public static float tileSize = 32;
     public static Vector2 canvasSize = new Vector2(320 * 3, 180 * 3);
 
-    public static int startingGold = 1000;
+    public static int   startingGold = 1000;
     public static float playerHealth = 100;
 
-    public static int revolverCost = 25;
+    public static int   revolverCost = 25;
     public static float revolverAimSpeed = (float)Math.PI;
     public static float revolverBulletSpeed = 200;
-    public static int revolverBulletDamage = 50;
-    public static int revolverBulletPierce = 2;
-    public static float revolverBulletKnockback = 50f;
+    public static int   revolverBulletDamage = 50;
+    public static int   revolverBulletPierce = 2;
+    public static float revolverBulletKnockback = 150f;
     public static float revolverMinRange = 10f;
     public static float revolverMaxRange = 200f;
     
     public static float bigRevolverAimSpeed = (float)Math.PI / 2;
     public static float bigRevolverBulletSpeed = 400;
-    public static int bigRevolverBulletDamage = 100;
-    public static int bigRevolverBulletPierce = 10;
+    public static int   bigRevolverBulletDamage = 100;
+    public static int   bigRevolverBulletPierce = 10;
     public static float bigRevolverBulletKnockback = 50f;
     public static float bigRevolverMinRange = 50f;
     public static float bigRevolverMaxRange = 350f;
 
+    public static int   mortarCost = 50;
     public static float mortarAimSpeed = (float)Math.PI / 3;
-    public static int mortarCost = 50;
     public static float mortarBulletSpeed = 100;
-    public static int mortarBulletDamange = 100;
+    public static int   mortarBulletDamage = 100;
     public static float mortarBulletKnockback = 300f;
     public static float mortarBulletRadius = 60;
     public static float mortarMinRange = 75f;
     public static float mortarMaxRange = 400f;
 
-    public static int slimeGoldDrop = 5;
+    public static int   slimeHealth = 100;
+    public static float slimeCollisionRadius = 10;
+    public static int   slimeGoldDrop = 5;
+    public static float slimeDamage = 10;
+    public static Func<Random, float> slimeJumpStrength = rng => rng.NextSingle() * 100 + 100;
+    public static Func<Random, float> slimeJumpCooldown = rng => rng.NextSingle() * 0.5f;
 
     public static Assets assets;
     public static Dictionary<string, RaylibTileset> tilesets;
