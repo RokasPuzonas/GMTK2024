@@ -1,4 +1,5 @@
 ﻿using Raylib_CsLo;
+using System.Numerics;
 
 namespace GMTK2024;
 
@@ -10,6 +11,7 @@ internal class RaylibAnimationFrame
 
 internal class RaylibAnimation
 {
+    public Vector2 size;
     public List<RaylibAnimationFrame> frames = new List<RaylibAnimationFrame>();
 
     public float GetDuration()

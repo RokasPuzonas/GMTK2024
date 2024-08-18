@@ -128,6 +128,7 @@ static class Utils
 
         return new RaylibAnimation
         {
+            size = new Vector2(ase.CanvasWidth, ase.CanvasHeight),
             frames = frames
         };
     }
@@ -149,6 +150,7 @@ static class Utils
 
         return new RaylibAnimation
         {
+            size = new Vector2(ase.CanvasWidth, ase.CanvasHeight),
             frames = frames
         };
     }
