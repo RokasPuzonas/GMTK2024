@@ -59,10 +59,23 @@ internal class Program
     public static int   slimeHealth = 100;
     public static float slimeCollisionRadius = 10;
     public static int   slimeGoldDrop = 5;
-    public static float slimeDamage = 10;
+    public static int   slimeDamage = 10;
     public static Func<Random, float> slimeJumpStrength = rng => Utils.RandRange(rng, 100, 200);
     public static Func<Random, float> slimeJumpCooldown = rng => Utils.RandRange(rng, 0, 0.5f);
 
+    public static int   bigSlimeHealth = 500;
+    public static float bigSlimeCollisionRadius = 25;
+    public static int   bigSlimeGoldDrop = 50;
+    public static int   bigSlimeDamage = 100;
+    public static Func<Random, float> bigSlimeJumpStrength = rng => Utils.RandRange(rng, 200, 300);
+    public static Func<Random, float> bigSlimeJumpCooldown = rng => Utils.RandRange(rng, 3f, 4f);
+
+    public static int   smallSlimeHealth = 10;
+    public static float smallSlimeCollisionRadius = 5;
+    public static int   smallSlimeGoldDrop = 1;
+    public static int   smallSlimeDamage = 5;
+    public static Func<Random, float> smallSlimeJumpStrength = rng => Utils.RandRange(rng, 300, 400);
+    public static Func<Random, float> smallSlimeJumpCooldown = rng => Utils.RandRange(rng, 0, 0.5f);
 
     public static Assets assets;
     public static Dictionary<string, RaylibTileset> tilesets;
@@ -107,6 +120,10 @@ internal class Program
     
     public static RaylibAnimation slimeJump;
     public static RaylibAnimation slimeWindup;
+    public static RaylibAnimation bigSlimeJump;
+    public static RaylibAnimation bigSlimeWindup;
+    public static RaylibAnimation smallSlimeJump;
+    public static RaylibAnimation smallSlimeWindup;
     public static Sound           slimeJumpSound;
 
     public static Texture         hansFace;
@@ -175,6 +192,14 @@ internal class Program
             var slimeAse = assets.LoadAseprite("slime2.aseprite");
             slimeWindup = Utils.FlattenTagToAnimation(slimeAse, "windup");
             slimeJump = Utils.FlattenTagToAnimation(slimeAse, "jump");
+
+            var bigSlimeAse = assets.LoadAseprite("chonk slime.aseprite");
+            bigSlimeWindup = Utils.FlattenTagToAnimation(bigSlimeAse, "windup");
+            bigSlimeJump = Utils.FlattenTagToAnimation(bigSlimeAse, "jump");
+
+            var smallSlimeAse = assets.LoadAseprite("mini slime.aseprite");
+            smallSlimeWindup = Utils.FlattenTagToAnimation(smallSlimeAse, "windup");
+            smallSlimeJump = Utils.FlattenTagToAnimation(smallSlimeAse, "jump");
 
             coin = assets.LoadAsepriteTexture("coin.aseprite");
             

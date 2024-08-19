@@ -56,13 +56,13 @@ internal class UI
         return result.pressed;
     }
 
-    public bool ShowImageButton(Vector2 center, Texture normal, Texture hover, Texture active)
+    public bool ShowImageToggleButton(bool enabled, Vector2 center, Texture normal, Texture hover, Texture active)
     {
         var rect = Utils.GetCenteredRect(center, new Vector2(normal.width, normal.height));
         var result = ButtonLogic(rect);
 
         Texture texture;
-        if (result.active)
+        if (result.active || enabled)
         {
             texture = active;
         }
