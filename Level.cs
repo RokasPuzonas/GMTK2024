@@ -854,6 +854,16 @@ internal class Level
                 healtbarRect.width *= (health / maxHealth);
                 Raylib.DrawRectangleRec(healtbarRect, Raylib.GREEN);
 
+                if (ui.ShowImageButton(new Vector2(900, 480), Program.revolverButtonNormal, Program.revolverButtonHover, Program.revolverButtonActive))
+                {
+                    selectedTower = TowerType.Revolver;
+                }
+
+                if (ui.ShowImageButton(new Vector2(900, 380), Program.mortarButtonNormal, Program.mortarButtonHover, Program.mortarButtonActive))
+                {
+                    selectedTower = TowerType.Mortar;
+                }
+
                 if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ui.ShowButton(new Rectangle(10, canvasSize.Y - 20 - 10, 100, 20), "Next wave"))
                 {
                     currentWaveIndex++;

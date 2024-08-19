@@ -103,6 +103,14 @@ internal class Program
     public static RaylibAnimation slimeWindup;
     public static Sound           slimeJumpSound;
 
+    public static Texture mortarButtonNormal;
+    public static Texture mortarButtonHover;
+    public static Texture mortarButtonActive;
+
+    public static Texture revolverButtonNormal;
+    public static Texture revolverButtonHover;
+    public static Texture revolverButtonActive;
+
     public static void Main(string[] args)
     {
         assets = new Assets();
@@ -185,6 +193,16 @@ internal class Program
             bigRevolverShell = assets.LoadAsepriteTexture("big_revolver_shell.aseprite");
 
             mortarShell = assets.LoadAsepriteTexture("mortar_shell.aseprite");
+
+            var mortarButtonAse = assets.LoadAseprite("mortar_button.aseprite");
+            mortarButtonNormal = Utils.FlattenTagToTexture(mortarButtonAse, "normal");
+            mortarButtonHover = Utils.FlattenTagToTexture(mortarButtonAse, "hover");
+            mortarButtonActive = Utils.FlattenTagToTexture(mortarButtonAse, "active");
+
+            var revolverButtonAse = assets.LoadAseprite("revolving_button.aseprite");
+            revolverButtonNormal = Utils.FlattenTagToTexture(revolverButtonAse, "normal");
+            revolverButtonHover = Utils.FlattenTagToTexture(revolverButtonAse, "hover");
+            revolverButtonActive = Utils.FlattenTagToTexture(revolverButtonAse, "active");
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));

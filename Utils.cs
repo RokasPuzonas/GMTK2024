@@ -204,6 +204,22 @@ static class Utils
         return FlattenRangeToAnimation(ase, foundTag.From, foundTag.To);
     }
 
+    public static Raylib_CsLo.Texture FlattenTagToTexture(AsepriteFile ase, string tagName)
+    {
+        AsepriteTag? foundTag = null;
+        foreach (var tag in ase.Tags)
+        {
+            if (tag.Name == tagName)
+            {
+                foundTag = tag;
+            }
+        }
+
+        Debug.Assert(foundTag != null);
+
+        return FrameToTexture(ase.Frames[foundTag.From]);
+    }
+
     private static void BlendCel(Span<Rgba32> backdrop, ReadOnlySpan<Rgba32> source, AsepriteBlendMode blendMode, AsepriteDotNet.Common.Rectangle bounds, int frameWidth, int celOpacity, int layerOpacity)
     {
         byte opacity = Calc.MultiplyUnsigned8Bit(celOpacity, layerOpacity);
