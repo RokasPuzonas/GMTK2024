@@ -28,14 +28,14 @@ static class Utils
 
     public static Vector2 GetRectCenter(Raylib_CsLo.Rectangle rect)
     {
-        return new Vector2(rect.x + rect.width/2, rect.y + rect.height/2);
+        return new Vector2(rect.x + rect.width / 2, rect.y + rect.height / 2);
     }
 
     public static Raylib_CsLo.Rectangle GetCenteredRect(Vector2 position, Vector2 size)
     {
         return new Raylib_CsLo.Rectangle(
-            position.X - size.X/2,
-            position.Y - size.Y/2,
+            position.X - size.X / 2,
+            position.Y - size.Y / 2,
             size.X,
             size.Y
         );
@@ -46,8 +46,8 @@ static class Utils
         return new Raylib_CsLo.Rectangle(
             rect.x + amount,
             rect.y + amount,
-            rect.width - 2*amount,
-            rect.height - 2*amount
+            rect.width - 2 * amount,
+            rect.height - 2 * amount
         );
     }
 
@@ -64,7 +64,7 @@ static class Utils
         return null;
     }
 
-    
+
     public static Rgba32[] FlattenLayer(AsepriteFrame frame, string name, bool onlyVisibleLayers = true, bool includeBackgroundLayer = false, bool includeTilemapCels = true)
     {
         ArgumentNullException.ThrowIfNull(frame, "frame");
@@ -116,7 +116,7 @@ static class Utils
         return image;
     }
 
-    public static Raylib_CsLo.Texture RGBAToTexture(Rgba32 []rgba, int width, int height)
+    public static Raylib_CsLo.Texture RGBAToTexture(Rgba32[] rgba, int width, int height)
     {
         var image = LoadImageFromRgba(rgba, width, height);
 
@@ -164,7 +164,7 @@ static class Utils
     public static RaylibAnimation FlattenRangeToAnimation(AsepriteFile ase, int from, int to)
     {
         var frames = new List<RaylibAnimationFrame>();
-        
+
         for (int i = from; i <= to; i++)
         {
             var frame = ase.Frames[i];
@@ -202,6 +202,22 @@ static class Utils
         Debug.Assert(foundTag != null);
 
         return FlattenRangeToAnimation(ase, foundTag.From, foundTag.To);
+    }
+
+    public static Raylib_CsLo.Texture FlattenTagToTexture(AsepriteFile ase, string tagName)
+    {
+        AsepriteTag? foundTag = null;
+        foreach (var tag in ase.Tags)
+        {
+            if (tag.Name == tagName)
+            {
+                foundTag = tag;
+            }
+        }
+
+        Debug.Assert(foundTag != null);
+
+        return FrameToTexture(ase.Frames[foundTag.From]);
     }
 
     private static void BlendCel(Span<Rgba32> backdrop, ReadOnlySpan<Rgba32> source, AsepriteBlendMode blendMode, AsepriteDotNet.Common.Rectangle bounds, int frameWidth, int celOpacity, int layerOpacity)
@@ -249,14 +265,14 @@ static class Utils
         }
 
         var lineAngle = LineAngle(dir, new Vector2(1, 0));
-        return (2*lineAngle + (float)Math.PI) % (float)(2*Math.PI);
+        return (2 * lineAngle + (float)Math.PI) % (float)(2 * Math.PI);
     }
 
     public static float AngleDifference(float a, float b)
     {
         var diff = a % (2 * Math.PI) - b % (2 * Math.PI);
-        if (diff >  Math.PI) diff -= 2*Math.PI;
-        if (diff < -Math.PI) diff += 2*Math.PI;
+        if (diff > Math.PI) diff -= 2 * Math.PI;
+        if (diff < -Math.PI) diff += 2 * Math.PI;
         return (float)diff;
     }
 
@@ -321,7 +337,7 @@ static class Utils
         var slice = GetSlice(ase, name);
         Debug.Assert(slice != null);
         Debug.Assert(slice.HasPivot);
-        
+
         Debug.Assert(slice.Keys.Length == 1);
         var key = slice.Keys[0];
 
@@ -349,5 +365,31 @@ static class Utils
     public static float Lerp(float x, float min, float max)
     {
         return min + x * (max - min);
+    }
+
+    public static float Remap(float x, float fromMin, float fromMax, float toMin, float toMax)
+    {
+        var t = (x - fromMin) / (fromMax - fromMin);
+        return Lerp(t, toMin, toMax);
+    }
+
+    public static float RandRange(Random rng, float from, float to)
+    {
+        return Lerp(rng.NextSingle(), from, to);
+    }
+
+    public static float RandRange(Random rng, Range range)
+    {
+        return RandRange(rng, range.from, range.to);
+    }
+
+    public static Vector2 RotateAroundPivot(Vector2 point, Vector2 pivot, float angle)
+    {
+        return pivot + Vector2Rotate(point - pivot, angle);
+    }
+
+    public static Vector2 TextureSize(Raylib_CsLo.Texture texture)
+    {
+        return new Vector2(texture.width, texture.height);
     }
 }

@@ -8,12 +8,14 @@ using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace GMTK2024;
 
 struct ButtonResult
 {
     public bool hover;
+    public bool active;
     public bool pressed;
 };
 
@@ -33,6 +35,7 @@ internal class UI
         {
             this.hot = true;
             result.hover = true;
+            result.active = Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT);
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
             {
                 result.pressed = true;
@@ -49,6 +52,30 @@ internal class UI
         var font = Raylib.GetFontDefault();
         Raylib.DrawRectangleRec(rect, result.hover ? Raylib.GRAY : Raylib.DARKGRAY);
         Utils.DrawTextCentered(font, text, Utils.GetRectCenter(rect), fontSize, fontSize / 10, Raylib.WHITE);
+
+        return result.pressed;
+    }
+
+    public bool ShowImageButton(Vector2 center, Texture normal, Texture hover, Texture active)
+    {
+        var rect = Utils.GetCenteredRect(center, new Vector2(normal.width, normal.height));
+        var result = ButtonLogic(rect);
+
+        Texture texture;
+        if (result.active)
+        {
+            texture = active;
+        }
+        else if (result.hover)
+        {
+            texture = hover;
+        }
+        else
+        {
+            texture = normal;
+        }
+
+        Utils.DrawTextureCentered(texture, center, 0, 1, Raylib.WHITE);
 
         return result.pressed;
     }

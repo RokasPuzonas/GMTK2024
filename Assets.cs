@@ -56,6 +56,12 @@ internal class Assets
         return AsepriteFileLoader.FromStream(name, LoadStream(name));
     }
 
+    public Raylib_CsLo.Texture LoadAsepriteTexture(string name)
+    {
+        var ase = LoadAseprite(name);
+        return Utils.FrameToTexture(ase.Frames[0]);
+    }
+
     public Image LoadImage(string name)
     {
         var extension = Path.GetExtension(name);
