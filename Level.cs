@@ -14,6 +14,7 @@ internal class Level
     static bool debugTowerInfo = false;
     static bool debugEnemyInfo = false;
     static bool debugBulletInfo = false;
+    static bool debugSpawnBulletShell = false; // Use B to spawn revolver bullet shell
 
     RaylibTilemap tilemap;
     Random rng = new Random();
@@ -413,12 +414,16 @@ internal class Level
         return waves[currentWaveIndex].spawns.Count == 0;
     }
 
-    public void DrawTower(Tower tower)
+    public void DrawTowerBottom(Tower tower)
     {
-        var middle = tower.position + tower.size / 2;
         var towerRect = tower.GetRect();
         Program.towerPlatformMain.DrawRectangle(towerRect, Raylib.GetColor(0x5f5f5fFF));
         Program.towerPlatformFoliage.DrawRectangle(towerRect, Raylib.WHITE);
+    }
+
+    public void DrawTowerTop(Tower tower)
+    {
+        var middle = tower.position + tower.size / 2;
 
         var aim = tower.aim + (float)Math.PI / 2;
         var aimDegress = Utils.ToDegrees(aim);
@@ -891,11 +896,37 @@ internal class Level
             }
         }
 
+
         // Bullet shells
         {
+            if (debugSpawnBulletShell && worldMouse != null && Raylib.IsKeyPressed(KeyboardKey.KEY_B))
+            {
+                Console.WriteLine("DEBUG: spawn bullet shell");
+                bulletShells.Add(new BulletShell {
+                    createdAt = (float)Raylib.GetTime(),
+                    start = worldMouse.Value,
+                    position = worldMouse.Value,
+                    type = TowerType.Revolver,
+                    spin = 0,
+                    rotation = 0,
+                    destination = worldMouse.Value + new Vector2(0, 10)
+                });
+            }
+
             foreach (var shell in bulletShells)
             {
                 var velocity = shell.destination - shell.position;
+                
+                foreach (var enemy in enemies)
+                {
+                    if (enemy.dead) continue;
+
+                    var dirToEnemy = enemy.position - shell.position;
+                    if (dirToEnemy.Length() > enemy.collisionRadius) continue;
+
+                    shell.destination -= dirToEnemy * 0.1f;
+                }
+
                 shell.position += velocity * dt;
                 shell.rotation += shell.spin * (1 - shell.GetProgress());
             }
@@ -1066,9 +1097,14 @@ internal class Level
                 DrawGrid(GetScreenRectInWorld(camera), tileSize, Raylib.WHITE);
             }
 
+            foreach (var tower in towers)
+            {
+                DrawTowerBottom(tower);
+            }
+
             foreach (var shell in bulletShells)
             {
-                var scale = Program.bulletShellScale(shell.GetProgress());
+                var scale = Program.bulletShellScale(Math.Clamp(shell.GetProgress(), 0, 1));
                 var opacity = 1 - (shell.TimeSinceCreation() - Program.bulletShellDespawnStart) / Program.bulletShellDespawnDuration;
 
                 Texture? texture = null;
@@ -1122,7 +1158,7 @@ internal class Level
 
             foreach (var tower in towers)
             {
-                DrawTower(tower);
+                DrawTowerTop(tower);
             }
 
             foreach (var bullet in bullets)

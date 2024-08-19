@@ -128,7 +128,7 @@ internal class Program
             coin = Utils.FrameToTexture(coinAse.Frames[0]);
 
             revolverGunshot = assets.LoadSound("hard_gunshot.wav");
-            Raylib.SetSoundVolume(revolverGunshot, 0.1f);
+            Raylib.SetSoundVolume(revolverGunshot, 0.15f);
 
             bigRevolverGunshot = assets.LoadSound("big_gunshot.wav");
             Raylib.SetSoundVolume(bigRevolverGunshot, 0.15f);

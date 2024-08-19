@@ -16,7 +16,8 @@ class BulletShell
 
     public float GetProgress()
     {
-        return Vector2.Distance(start, position) / Vector2.Distance(destination, start);
+        var totalDistance = Math.Max(Vector2.Distance(destination, start), 0.1f);
+        return Vector2.Distance(start, position) / totalDistance;
     }
 
     public float TimeSinceCreation()
