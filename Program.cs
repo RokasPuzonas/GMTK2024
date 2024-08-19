@@ -75,6 +75,7 @@ internal class Program
     public static Texture signPlaque;
     public static Texture signLeftChain;
     public static Texture signRightChain;
+    public static List<Sound> voice;
 
     public static RaylibAnimation revolver;
     public static Texture         revolverBullet;
@@ -252,6 +253,14 @@ internal class Program
             privateMouthPivot = Utils.GetSlicePivot(privateAse, "mouth");
 
             font = assets.LoadFont("font.otf", 32);
+
+            voice = new List<Sound>();
+            voice.Add(assets.LoadSound("voice/v1.wav"));
+            voice.Add(assets.LoadSound("voice/v2.wav"));
+            voice.Add(assets.LoadSound("voice/v3.wav"));
+            voice.Add(assets.LoadSound("voice/v4.wav"));
+            voice.Add(assets.LoadSound("voice/v5.wav"));
+            voice.Add(assets.LoadSound("voice/v6.wav"));
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));

@@ -33,7 +33,7 @@ internal class Assets
         var assembly = Assembly.GetEntryAssembly();
         Debug.Assert(assembly != null);
 
-        var stream = assembly.GetManifestResourceStream(basename + name);
+        var stream = assembly.GetManifestResourceStream(basename + name.Replace("/", "."));
         Debug.Assert(stream != null);
 
         return stream;

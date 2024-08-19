@@ -114,6 +114,8 @@ internal class DialogSystem
                 if (textLength % 5 == 0)
                 {
                     activeFace.Talk();
+                    var rng = new Random();
+                    Utils.PlaySoundRandom(rng, Program.voice);
                 }
                 textLength++;
             }

@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 using System.Reflection.Metadata.Ecma335;
+using System.Security.Cryptography;
 using System.Xml.Linq;
 using TiledCS;
 using static System.Net.Mime.MediaTypeNames;
@@ -391,5 +392,13 @@ static class Utils
     public static Vector2 TextureSize(Raylib_CsLo.Texture texture)
     {
         return new Vector2(texture.width, texture.height);
+    }
+
+    public static void PlaySoundRandom(Random rng, List<Sound> sounds)
+    {
+        if (sounds.Count == 0) return;
+
+        var index = rng.Next(sounds.Count);
+        Raylib.PlaySoundMulti(sounds[index]);
     }
 }

@@ -21,7 +21,7 @@
     <EmbeddedResource Include="assets\*.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="assets\*.wav">
+    <EmbeddedResource Include="assets\**\*.wav">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="assets\*.otf">
