@@ -563,12 +563,12 @@ internal class Level
 
                 Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
 
-                var bullet = CreateBullet(TowerType.Mortar);
+                var bullet = CreateBullet(TowerType.BigRevolver);
                 bullet.position = tower.GetLeftGunCenter();
                 bullet.direction = aimDirection;
                 bullets.Add(bullet);
 
-                //bulletShells.Add(CreateBulletShell(bullet, 10));
+                bulletShells.Add(CreateBulletShell(bullet, Program.bigRevolverShellLaunchPower(rng), Program.bigRevolverShellAngle(rng)));
             }
 
             if (Utils.IsAngleClose(tower.leftTargetAim, tower.leftAim) && tower.rightShootCooldown == 0 && tower.leftShootCooldown < bigRevolverCooldown / 2)
@@ -581,12 +581,12 @@ internal class Level
 
                 Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
 
-                var bullet = CreateBullet(TowerType.Mortar);
+                var bullet = CreateBullet(TowerType.BigRevolver);
                 bullet.position = tower.GetRightGunCenter();
                 bullet.direction = aimDirection;
                 bullets.Add(bullet);
 
-                //bulletShells.Add(CreateBulletShell(bullet, 10));
+                bulletShells.Add(CreateBulletShell(bullet, Program.bigRevolverShellLaunchPower(rng), Program.bigRevolverShellAngle(rng)));
             }
         }
     }
@@ -849,7 +849,6 @@ internal class Level
 
                             enemy.health = Math.Max(enemy.health - bullet.damage, 0);
                             enemy.velocity += Vector2.Normalize(enemy.position - bullet.position) * bullet.knockback;
-                            gold += enemy.goldValue;
                         }
 
                         bullet.dead = true;
@@ -865,7 +864,6 @@ internal class Level
                     
                         enemy.health = Math.Max(enemy.health - bullet.damage, 0);
                         enemy.velocity += bullet.direction * bullet.knockback;
-                        gold += enemy.goldValue;
 
                         if (bullet.pierce > 0) {
                             bullet.hitEnemies.Add(enemy);
@@ -940,6 +938,7 @@ internal class Level
             {
                 if (enemy.health == 0)
                 {
+                    gold += enemy.goldValue;
                     enemy.dead = true;
                 }
 
@@ -1072,14 +1071,26 @@ internal class Level
                 var scale = Program.bulletShellScale(shell.GetProgress());
                 var opacity = 1 - (shell.TimeSinceCreation() - Program.bulletShellDespawnStart) / Program.bulletShellDespawnDuration;
 
+                Texture? texture = null;
                 if (shell.type == TowerType.Revolver)
                 {
-                    Utils.DrawTextureCentered(Program.revolverShell, shell.position, Utils.ToDegrees(shell.rotation) + 90, scale, Raylib.ColorAlpha(Raylib.WHITE, opacity));
+                    texture = Program.revolverShell;
+                }
+                else if (shell.type == TowerType.BigRevolver)
+                {
+                    texture = Program.bigRevolverShell;
+                }
+
+
+                if (texture != null)
+                {
+                    Utils.DrawTextureCentered(texture.Value, shell.position, Utils.ToDegrees(shell.rotation) + 90, scale, Raylib.ColorAlpha(Raylib.WHITE, opacity));
                 }
                 else
                 {
                     Raylib.DrawCircleV(shell.position, 5, Raylib.RED);
                 }
+
             }
 
             foreach (var enemy in enemies)

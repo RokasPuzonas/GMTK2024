@@ -14,7 +14,7 @@ internal class Program
     public static int   startingGold = 1000;
     public static float playerHealth = 100;
     public static float bulletColliderRadius = 3;
-    public static Func<float, float> bulletShellScale = p => (1 - Math.Max(p - 0.5f, 0));
+    public static Func<float, float> bulletShellScale = p => (1 - Math.Max(p - 0.75f, 0));
     public static float bulletShellDespawnStart    = 120f;
     public static float bulletShellDespawnDuration = 3f;
 
@@ -32,12 +32,14 @@ internal class Program
 
     public static float bigRevolverAimSpeed = (float)Math.PI / 2;
     public static float bigRevolverBulletSpeed = 400;
-    public static int   bigRevolverBulletDamage = 100;
+    public static int   bigRevolverBulletDamage = 1;
     public static int   bigRevolverBulletPierce = 10;
     public static float bigRevolverBulletKnockback = 50f;
     public static int   bigRevolverBulletSmear = 10;
     public static float bigRevolverMinRange = 50f;
     public static float bigRevolverMaxRange = 350f;
+    public static Func<Random, float> bigRevolverShellLaunchPower = rng => Utils.RandRange(rng, 50, 150);
+    public static Func<Random, float> bigRevolverShellAngle = rng => Utils.RandRange(rng, -(float)Math.PI / 12, (float)Math.PI / 12);
 
     public static int   mortarCost = 50;
     public static float mortarAimSpeed = (float)Math.PI / 3;
@@ -74,6 +76,7 @@ internal class Program
     public static Vector2 bigRevolverLeftPivot;
     public static Vector2 bigRevolverRightPivot;
     public static Texture bigRevolverBullet;
+    public static Texture bigRevolverShell;
     public static RaylibAnimation mortarReload;
     public static RaylibAnimation mortarFire;
     public static RaylibAnimation slimeJump;
@@ -168,6 +171,9 @@ internal class Program
 
             var revolverShellAse = assets.LoadAseprite("revolver_shell.aseprite");
             revolverShell = Utils.FrameToTexture(revolverShellAse.Frames[0]);
+
+            var bigRevolverShellAse = assets.LoadAseprite("big_revolver_shell.aseprite");
+            bigRevolverShell = Utils.FrameToTexture(bigRevolverShellAse.Frames[0]);
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));
