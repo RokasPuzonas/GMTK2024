@@ -367,6 +367,12 @@ static class Utils
         return min + x * (max - min);
     }
 
+    public static float Remap(float x, float fromMin, float fromMax, float toMin, float toMax)
+    {
+        var t = (x - fromMin) / (fromMax - fromMin);
+        return Lerp(t, toMin, toMax);
+    }
+
     public static float RandRange(Random rng, float from, float to)
     {
         return Lerp(rng.NextSingle(), from, to);
@@ -380,5 +386,10 @@ static class Utils
     public static Vector2 RotateAroundPivot(Vector2 point, Vector2 pivot, float angle)
     {
         return pivot + Vector2Rotate(point - pivot, angle);
+    }
+
+    public static Vector2 TextureSize(Raylib_CsLo.Texture texture)
+    {
+        return new Vector2(texture.width, texture.height);
     }
 }

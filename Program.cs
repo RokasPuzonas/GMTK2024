@@ -70,7 +70,10 @@ internal class Program
     public static Texture enemySpawner;
     public static Texture coin;
     public static RaylibAnimation homeCrystal;
-    
+    public static Texture signPlaque;
+    public static Texture signLeftChain;
+    public static Texture signRightChain;
+
     public static RaylibAnimation revolver;
     public static Texture         revolverBullet;
     public static Texture         revolverShell;
@@ -203,6 +206,11 @@ internal class Program
             revolverButtonNormal = Utils.FlattenTagToTexture(revolverButtonAse, "normal");
             revolverButtonHover = Utils.FlattenTagToTexture(revolverButtonAse, "hover");
             revolverButtonActive = Utils.FlattenTagToTexture(revolverButtonAse, "active");
+
+            var signAse = assets.LoadAseprite("sign.aseprite");
+            signPlaque = Utils.FlattenLayerToTexture(signAse.Frames[0], "sign");
+            signLeftChain = Utils.FlattenLayerToTexture(signAse.Frames[0], "left chain");
+            signRightChain = Utils.FlattenLayerToTexture(signAse.Frames[0], "right chain");
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));

@@ -49,6 +49,14 @@ internal class Level
 
     UI ui = new UI();
 
+    float signDroppedAt = 0;
+    bool playSignDrop = false;
+    bool playSignLift = false;
+    float signPlaqueSpeed = 0;
+    float signPlaqueOffset = 0;
+    float signLeftChainOffset = 0;
+    float signRightChainOffset = 0;
+    
     public Level(RaylibTilemap tilemap)
     {
         this.tilemap = tilemap;
@@ -102,6 +110,69 @@ internal class Level
 
         enemyPath.Insert(0, enemySpawn);
         enemyPath.Add(basePosition);
+
+        DropSign();
+    }
+
+    public void DropSign()
+    {
+        signDroppedAt = (float)Raylib.GetTime();
+        playSignDrop = true;
+        playSignLift = false;
+        signPlaqueSpeed = 0;
+        signPlaqueOffset = 0;
+        signLeftChainOffset = 0;
+        signRightChainOffset = 0;
+    }
+
+    public void ShowSign(float dt, Vector2 position)
+    {
+        if (playSignLift)
+        {
+            signPlaqueOffset -= signPlaqueOffset * 1.5f * dt;
+
+            signLeftChainOffset = signPlaqueOffset;
+            signRightChainOffset = signPlaqueOffset;
+
+        }
+        else if (playSignDrop)
+        {
+            signPlaqueOffset += (Program.signPlaque.height - signPlaqueOffset) * 2.5f * dt;
+
+            signLeftChainOffset += (signPlaqueOffset - signLeftChainOffset) * 10 * dt;
+            signRightChainOffset += (signPlaqueOffset - signRightChainOffset) * 4 * dt;
+
+            if (Raylib.GetTime() - signDroppedAt > 3)
+            {
+                playSignLift = true;
+            }
+        }
+
+        var signPosition = position;
+        signPosition.Y -= (30 + Program.signPlaque.height);
+
+        float rotation = 0;
+        if (playSignDrop && !playSignLift)
+        {
+            var progress = 1 - Math.Abs(Program.signPlaque.height - signPlaqueOffset) / Program.signPlaque.height;
+            
+            var tiltAt = 0.75f;
+            float tiltCoeff;
+            if (progress < tiltAt)
+            {
+                tiltCoeff = Utils.Remap(progress, 0, tiltAt, 0, 1);
+            }
+            else
+            {
+                tiltCoeff = Utils.Remap(progress, tiltAt, 1, 1, 0.1f);
+            }
+
+            rotation = Utils.ToDegrees(-tiltCoeff * (float)Math.PI / 24);
+        }
+
+        Utils.DrawTextureCentered(Program.signPlaque, signPosition + new Vector2(0, signPlaqueOffset) + Utils.TextureSize(Program.signPlaque) / 2, rotation, 1, Raylib.WHITE);
+        Raylib.DrawTextureEx(Program.signLeftChain, signPosition + new Vector2(0, signLeftChainOffset), 0, 1, Raylib.WHITE);
+        Raylib.DrawTextureEx(Program.signRightChain, signPosition + new Vector2(0, signRightChainOffset), 0, 1, Raylib.WHITE);
     }
 
     public Vector2 GetMarkerPosition(string name)
@@ -898,6 +969,8 @@ internal class Level
                 {
                     currentWaveIndex++;
                 }
+
+                ShowSign(dt, new Vector2(20, 0));
             }
 
             if (debugFPS)
