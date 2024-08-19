@@ -46,6 +46,7 @@ internal class Level
 
     bool won = false;
     bool lost = false;
+    bool paused = false;
 
     UI ui = new UI();
 
@@ -917,10 +918,25 @@ internal class Level
 
         ui.Begin(GetOnscreenArea(), canvasSize);
 
-        if (dialogSystem.PlayingDialog()) {
+        if (paused)
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE))
+            {
+                paused = false;
+            }
+
+            Raylib.DrawRectangleV(Vector2.Zero, canvasSize, Raylib.ColorAlpha(Raylib.BLACK, 0.75f));
+            Utils.DrawTextCentered(Program.font, "Paused", canvasSize/2, 32, 3, Raylib.WHITE);
+
+        } else if (dialogSystem.PlayingDialog()) {
             dialogSystem.Show();
         } else
         {
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE))
+            {
+                paused = true;
+            }
+
             if (won)
             {
                 var center = canvasSize / 2;
@@ -1008,7 +1024,7 @@ internal class Level
         // UI
         UpdateUI();
 
-        if (!dialogSystem.PlayingDialog())
+        if (!dialogSystem.PlayingDialog() && !paused)
         {
             worldMouse = null;
             if (!ui.hot && (!won || !lost))

@@ -168,6 +168,7 @@ internal class Program
         Raylib.InitAudioDevice();
         Raylib.SetWindowMinSize((int)canvasSize.X, (int)canvasSize.Y);
         Raylib.SetTargetFPS(60);
+        Raylib.SetExitKey(0);
 
         // Load assets
         {
