@@ -251,7 +251,7 @@ internal class Program
             privateMouth = Utils.FlattenLayerToAnimation(privateAse, "mouth");
             privateMouthPivot = Utils.GetSlicePivot(privateAse, "mouth");
 
-            font = assets.LoadFont("ccoverbyteoff-regular.otf", 32);
+            font = assets.LoadFont("font.otf", 32);
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));
