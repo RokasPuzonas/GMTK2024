@@ -28,18 +28,18 @@ internal class Program
     public static float revolverMinRange = 10f;
     public static float revolverMaxRange = 200f;
     public static Func<Random, float> revolverShellLaunchPower = rng => Utils.RandRange(rng, 25, 75);
-    public static Func<Random, float> revolverShellAngle = rng => Utils.RandRange(rng, -(float)Math.PI / 6, (float)Math.PI / 6);
+    public static Func<Random, float> revolverShellAngle = rng => Utils.RandRange(rng, -1, 1) * (float)Math.PI / 6;
 
     public static float bigRevolverAimSpeed = (float)Math.PI / 2;
     public static float bigRevolverBulletSpeed = 400;
-    public static int   bigRevolverBulletDamage = 1;
+    public static int   bigRevolverBulletDamage = 100;
     public static int   bigRevolverBulletPierce = 10;
     public static float bigRevolverBulletKnockback = 50f;
     public static int   bigRevolverBulletSmear = 10;
     public static float bigRevolverMinRange = 50f;
     public static float bigRevolverMaxRange = 350f;
     public static Func<Random, float> bigRevolverShellLaunchPower = rng => Utils.RandRange(rng, 50, 150);
-    public static Func<Random, float> bigRevolverShellAngle = rng => Utils.RandRange(rng, -(float)Math.PI / 12, (float)Math.PI / 12);
+    public static Func<Random, float> bigRevolverShellAngle = rng => Utils.RandRange(rng, -1, 1) * (float)Math.PI / 12;
 
     public static int   mortarCost = 50;
     public static float mortarAimSpeed = (float)Math.PI / 3;
@@ -52,6 +52,8 @@ internal class Program
     public static float mortarBulletMaxHeightScale = 2.5f;
     public static float mortarMinRange = 75f;
     public static float mortarMaxRange = 400f;
+    public static Func<Random, float> mortarShellLaunchPower = rng => Utils.RandRange(rng, 25, 50);
+    public static Func<Random, float> mortarShellAngle = rng => Utils.RandRange(rng, -1, 1) * (float)Math.PI / 48;
 
     public static int   slimeHealth = 100;
     public static float slimeCollisionRadius = 10;
@@ -73,15 +75,16 @@ internal class Program
     public static RaylibAnimation bigRevolverRightGun;
     public static RaylibAnimation bigRevolverLeftAmmo;
     public static RaylibAnimation bigRevolverRightAmmo;
-    public static Vector2 bigRevolverLeftPivot;
-    public static Vector2 bigRevolverRightPivot;
-    public static Texture bigRevolverBullet;
-    public static Texture bigRevolverShell;
+    public static Vector2         bigRevolverLeftPivot;
+    public static Vector2         bigRevolverRightPivot;
+    public static Texture         bigRevolverBullet;
+    public static Texture         bigRevolverShell;
     public static RaylibAnimation mortarReload;
     public static RaylibAnimation mortarFire;
+    public static Vector2         mortarPivot;
+    public static Texture         mortarBullet;
+    public static Texture         mortarShell;
     public static RaylibAnimation slimeJump;
-    public static Vector2 mortarPivot;
-    public static Texture mortarBullet;
     public static RaylibAnimation slimeWindup;
     public static RaylibAnimation homeCrystal;
     public static Texture enemySpawner;
@@ -124,9 +127,8 @@ internal class Program
             slimeWindup = Utils.FlattenTagToAnimation(slimeAse, "windup");
             slimeJump = Utils.FlattenTagToAnimation(slimeAse, "jump");
 
-            var coinAse = assets.LoadAseprite("coin.aseprite");
-            coin = Utils.FrameToTexture(coinAse.Frames[0]);
-
+            coin = assets.LoadAsepriteTexture("coin.aseprite");
+            
             revolverGunshot = assets.LoadSound("hard_gunshot.wav");
             Raylib.SetSoundVolume(revolverGunshot, 0.15f);
 
@@ -136,9 +138,8 @@ internal class Program
             mortarGunshot = assets.LoadSound("mortar_gunshot.wav");
             Raylib.SetSoundVolume(mortarGunshot, 0.25f);
 
-            var spawnerAse = assets.LoadAseprite("spawner.aseprite");
-            enemySpawner = Utils.FrameToTexture(spawnerAse.Frames[0]);
-
+            enemySpawner = assets.LoadAsepriteTexture("spawner.aseprite");
+            
             var homeCrystalAse = assets.LoadAseprite("end.aseprite");
             homeCrystal = Utils.FlattenToAnimation(homeCrystalAse);
 
@@ -157,23 +158,20 @@ internal class Program
             mortarReload = Utils.FlattenTagToAnimation(mortarAse, "reload");
             mortarPivot = Utils.GetSlicePivot(mortarAse, "gun pivot point");
 
-            var revolverBulletAse = assets.LoadAseprite("revolver_bullet.aseprite");
-            revolverBullet = Utils.FrameToTexture(revolverBulletAse.Frames[0]);
-
-            var bigRevolverBulletAse = assets.LoadAseprite("big_revolver_bullet.aseprite");
-            bigRevolverBullet = Utils.FrameToTexture(bigRevolverBulletAse.Frames[0]);
-
-            var mortarBulletAse = assets.LoadAseprite("mortar_bullet.aseprite");
-            mortarBullet = Utils.FrameToTexture(mortarBulletAse.Frames[0]);
-
+            revolverBullet = assets.LoadAsepriteTexture("revolver_bullet.aseprite");
+            
+            bigRevolverBullet = assets.LoadAsepriteTexture("big_revolver_bullet.aseprite");
+            
+            mortarBullet = assets.LoadAsepriteTexture("mortar_bullet.aseprite");
+            
             slimeJumpSound = assets.LoadSound("uhwra.wav");
             Raylib.SetSoundVolume(slimeJumpSound, 0.5f);
 
-            var revolverShellAse = assets.LoadAseprite("revolver_shell.aseprite");
-            revolverShell = Utils.FrameToTexture(revolverShellAse.Frames[0]);
+            revolverShell = assets.LoadAsepriteTexture("revolver_shell.aseprite");
+            
+            bigRevolverShell = assets.LoadAsepriteTexture("big_revolver_shell.aseprite");
 
-            var bigRevolverShellAse = assets.LoadAseprite("big_revolver_shell.aseprite");
-            bigRevolverShell = Utils.FrameToTexture(bigRevolverShellAse.Frames[0]);
+            mortarShell = assets.LoadAsepriteTexture("mortar_shell.aseprite");
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));

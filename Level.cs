@@ -7,7 +7,7 @@ namespace GMTK2024;
 
 internal class Level
 {
-    static bool debugFPS = false;
+    static bool debugFPS = true;
     static bool debugGrid = false;
     static bool debugShowPath = false;
     static bool debugAimAtMouse = false;
@@ -41,7 +41,7 @@ internal class Level
     float maxHealth = Program.playerHealth;
     float health = Program.playerHealth;
     int gold = Program.startingGold;
-    TowerType selectedTower = TowerType.Revolver;
+    TowerType selectedTower = TowerType.Mortar;
 
     bool won = false;
     bool lost = false;
@@ -551,7 +551,7 @@ internal class Level
                 bullet.direction = aimDirection;
                 bullets.Add(bullet);
 
-                //bulletShells.Add(CreateBulletShell(bullet, 10));
+                bulletShells.Add(CreateBulletShell(bullet, Program.mortarShellLaunchPower(rng), Program.mortarShellAngle(rng)));
             }
         }
         else if (tower.type == TowerType.BigRevolver)
@@ -1116,7 +1116,10 @@ internal class Level
                 {
                     texture = Program.bigRevolverShell;
                 }
-
+                else if (shell.type == TowerType.Mortar)
+                {
+                    texture = Program.mortarShell;
+                }
 
                 if (texture != null)
                 {
