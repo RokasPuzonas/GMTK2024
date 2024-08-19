@@ -103,4 +103,17 @@ internal class Assets
         //Raylib.UnloadWave(wave);
         return sound;
     }
+
+    public Font LoadFont(string name, int fontSize)
+    {
+        var data = LoadBytes(name);
+
+        unsafe
+        {
+            fixed (byte* dataPtr = data)
+            {
+                return Raylib.LoadFontFromMemory(Path.GetExtension(name), dataPtr, data.Length, fontSize, null, 250);
+            }
+        }
+    }
 }

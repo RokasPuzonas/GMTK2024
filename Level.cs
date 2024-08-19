@@ -49,13 +49,15 @@ internal class Level
 
     UI ui = new UI();
 
-    float signDroppedAt = 0;
+    float signTimePassed = 0;
     bool playSignDrop = false;
     bool playSignLift = false;
     float signPlaqueSpeed = 0;
     float signPlaqueOffset = 0;
     float signLeftChainOffset = 0;
     float signRightChainOffset = 0;
+
+    DialogSystem dialogSystem = new DialogSystem();
     
     public Level(RaylibTilemap tilemap)
     {
@@ -112,11 +114,12 @@ internal class Level
         enemyPath.Add(basePosition);
 
         DropSign();
+        dialogSystem.Play(Program.dialog1);
     }
 
     public void DropSign()
     {
-        signDroppedAt = (float)Raylib.GetTime();
+        signTimePassed = 0;
         playSignDrop = true;
         playSignLift = false;
         signPlaqueSpeed = 0;
@@ -142,7 +145,8 @@ internal class Level
             signLeftChainOffset += (signPlaqueOffset - signLeftChainOffset) * 10 * dt;
             signRightChainOffset += (signPlaqueOffset - signRightChainOffset) * 4 * dt;
 
-            if (Raylib.GetTime() - signDroppedAt > 3)
+            signTimePassed += dt;
+            if (signTimePassed > 3)
             {
                 playSignLift = true;
             }
@@ -893,22 +897,18 @@ internal class Level
             }
         }
     }
-    
-    public void Tick()
+
+    public void UpdateUI()
     {
         var canvasSize = Program.canvasSize;
-        var tileSize = Program.tileSize;
-
         var dt = Raylib.GetFrameTime();
-        var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
 
-        camera.offset = screenSize / 2;
-        camera.zoom = Math.Min(screenSize.X / canvasSize.X, screenSize.Y / canvasSize.Y);
+        ui.Begin(GetOnscreenArea(), canvasSize);
 
-        // UI
+        if (dialogSystem.PlayingDialog()) {
+            dialogSystem.Show();
+        } else
         {
-            ui.Begin(GetOnscreenArea(), canvasSize);
-
             if (won)
             {
                 var center = canvasSize / 2;
@@ -972,302 +972,320 @@ internal class Level
 
                 ShowSign(dt, new Vector2(20, 0));
             }
+        }
 
-            if (debugFPS)
+        if (debugFPS)
+        {
+            Raylib.DrawFPS(10, 10);
+        }
+
+        ui.End();
+    }
+
+    public void Tick()
+    {
+        var canvasSize = Program.canvasSize;
+        var tileSize = Program.tileSize;
+
+        var dt = Raylib.GetFrameTime();
+        var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+
+        camera.offset = screenSize / 2;
+        camera.zoom = Math.Min(screenSize.X / canvasSize.X, screenSize.Y / canvasSize.Y);
+
+        // UI
+        UpdateUI();
+
+        if (!dialogSystem.PlayingDialog())
+        {
+            worldMouse = null;
+            if (!ui.hot && (!won || !lost))
             {
-                Raylib.DrawFPS(10, 10);
+                worldMouse = GetMouseInWorld(camera);
             }
 
-            ui.End();
-        }
-
-        worldMouse = null;
-        if (!ui.hot && (!won || !lost))
-        {
-            worldMouse = GetMouseInWorld(camera);
-        }
-
-        // Towers
-        {
-            if (worldMouse != null)
+            // Towers
             {
-                var mouseTile = new Vector2(
-                    DivMultipleFloor(worldMouse.Value.X, tileSize),
-                    DivMultipleFloor(worldMouse.Value.Y, tileSize)
-                );
-                var towerCost = Tower.GetCost(selectedTower);
-
-                if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT) && gold >= towerCost && IsTowerPlaceable(mouseTile))
+                if (worldMouse != null)
                 {
-                    towers.Add(Tower.Create(
-                        selectedTower,
-                        mouseTile,
-                        new Vector2(tileSize, tileSize),
-                        rng.NextSingle() * 2 * (float)Math.PI
-                    ));
+                    var mouseTile = new Vector2(
+                        DivMultipleFloor(worldMouse.Value.X, tileSize),
+                        DivMultipleFloor(worldMouse.Value.Y, tileSize)
+                    );
+                    var towerCost = Tower.GetCost(selectedTower);
 
-                    CheckMergingTowers(towers, mouseTile);
+                    if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT) && gold >= towerCost && IsTowerPlaceable(mouseTile))
+                    {
+                        towers.Add(Tower.Create(
+                            selectedTower,
+                            mouseTile,
+                            new Vector2(tileSize, tileSize),
+                            rng.NextSingle() * 2 * (float)Math.PI
+                        ));
 
-                    gold -= towerCost;
+                        CheckMergingTowers(towers, mouseTile);
+
+                        gold -= towerCost;
+                    }
+                }
+
+                foreach (var tower in towers)
+                {
+                    UpdateTower(tower, dt);
                 }
             }
 
-            foreach (var tower in towers)
+            // Bullets
             {
-                UpdateTower(tower, dt);
-            }
-        }
-
-        // Bullets
-        {
-            foreach (var bullet in bullets)
-            {
-                bullet.position += bullet.direction * dt * bullet.speed;
-
-                if (bullet.explodes)
+                foreach (var bullet in bullets)
                 {
-                    if (Vector2.Distance(bullet.position, bullet.shotFrom) > bullet.maxDistance)
+                    bullet.position += bullet.direction * dt * bullet.speed;
+
+                    if (bullet.explodes)
+                    {
+                        if (Vector2.Distance(bullet.position, bullet.shotFrom) > bullet.maxDistance)
+                        {
+                            foreach (var enemy in enemies)
+                            {
+                                if (enemy.dead) continue;
+                                if (!Raylib.CheckCollisionCircles(bullet.position, bullet.explosionRadius, enemy.position, enemy.collisionRadius)) continue;
+
+                                var hitDirection = Vector2.Normalize(enemy.position - bullet.position);
+                                enemy.health = Math.Max(enemy.health - bullet.damage, 0);
+                                enemy.velocity += hitDirection * bullet.knockback;
+
+                                CreateSlimeHitParticles(enemy.position, hitDirection);
+                            }
+
+                            bullet.dead = true;
+                        }
+                    }
+                    else
                     {
                         foreach (var enemy in enemies)
                         {
                             if (enemy.dead) continue;
-                            if (!Raylib.CheckCollisionCircles(bullet.position, bullet.explosionRadius, enemy.position, enemy.collisionRadius)) continue;
-
-                            var hitDirection = Vector2.Normalize(enemy.position - bullet.position);
+                            if (bullet.hitEnemies.Contains(enemy)) continue;
+                            if (!Raylib.CheckCollisionCircles(bullet.position, Program.bulletColliderRadius, enemy.position, enemy.collisionRadius)) continue;
+                    
                             enemy.health = Math.Max(enemy.health - bullet.damage, 0);
-                            enemy.velocity += hitDirection * bullet.knockback;
+                            enemy.velocity += bullet.direction * bullet.knockback;
+                            CreateSlimeHitParticles(bullet.position, bullet.direction);
 
-                            CreateSlimeHitParticles(enemy.position, hitDirection);
+                            if (bullet.pierce > 0) {
+                                bullet.hitEnemies.Add(enemy);
+                                bullet.pierce -= 1;
+                            } else {
+                                bullet.dead = true;
+                                break;
+                            }
                         }
+                    }
 
+                    if (Vector2.Distance(bullet.position, camera.target) > 10_000)
+                    {
                         bullet.dead = true;
                     }
                 }
-                else
+
+                for (int i = 0; i < bullets.Count; i++)
                 {
+                    if (bullets[i].dead)
+                    {
+                        bullets.RemoveAt(i);
+                        i--;
+                    }
+                }
+            }
+
+
+            // Bullet shells
+            {
+                if (debugSpawnBulletShell && worldMouse != null && Raylib.IsKeyPressed(KeyboardKey.KEY_B))
+                {
+                    Console.WriteLine("DEBUG: spawn bullet shell");
+                    bulletShells.Add(new BulletShell {
+                        createdAt = (float)Raylib.GetTime(),
+                        start = worldMouse.Value,
+                        position = worldMouse.Value,
+                        type = TowerType.Revolver,
+                        spin = 0,
+                        rotation = 0,
+                        destination = worldMouse.Value + new Vector2(0, 10)
+                    });
+                }
+
+                foreach (var shell in bulletShells)
+                {
+                    var velocity = shell.destination - shell.position;
+                
                     foreach (var enemy in enemies)
                     {
                         if (enemy.dead) continue;
-                        if (bullet.hitEnemies.Contains(enemy)) continue;
-                        if (!Raylib.CheckCollisionCircles(bullet.position, Program.bulletColliderRadius, enemy.position, enemy.collisionRadius)) continue;
-                    
-                        enemy.health = Math.Max(enemy.health - bullet.damage, 0);
-                        enemy.velocity += bullet.direction * bullet.knockback;
-                        CreateSlimeHitParticles(bullet.position, bullet.direction);
 
-                        if (bullet.pierce > 0) {
-                            bullet.hitEnemies.Add(enemy);
-                            bullet.pierce -= 1;
-                        } else {
-                            bullet.dead = true;
-                            break;
-                        }
+                        var dirToEnemy = enemy.position - shell.position;
+                        if (dirToEnemy.Length() > enemy.collisionRadius) continue;
+
+                        shell.destination -= dirToEnemy * 0.1f;
+                    }
+
+                    shell.position += velocity * dt;
+                    shell.rotation += shell.spin * (1 - shell.GetProgress());
+                }
+
+                for (int i = 0; i < bulletShells.Count; i++)
+                {
+                    if (bulletShells[i].TimeSinceCreation() > Program.bulletShellDespawnStart + Program.bulletShellDespawnDuration)
+                    {
+                        bulletShells.RemoveAt(i);
+                        i--;
                     }
                 }
+            }
 
-                if (Vector2.Distance(bullet.position, camera.target) > 10_000)
+            // Smoke particles
+            {
+                for (int i = 0; i < smokeParticles.Count; i++)
                 {
-                    bullet.dead = true;
+                    var particle = smokeParticles[i];
+                    if (Raylib.GetTime() > particle.createdAt + particle.duration)
+                    {
+                        smokeParticles.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
+
+                    particle.position += particle.velocity * dt;
                 }
             }
 
-            for (int i = 0; i < bullets.Count; i++)
+            // Enemies
             {
-                if (bullets[i].dead)
+                var currentWave = waves[currentWaveIndex];
+
+                waveSpawnTimer += dt;
+                while (currentWave.spawns.Count > 0 && (waveSpawnTimer > currentWave.spawns[0].delay || enemies.Count == 0))
                 {
-                    bullets.RemoveAt(i);
-                    i--;
+                    enemies.Add(new Enemy
+                    {
+                        position = enemyPath[0] + new Vector2(rng.NextSingle(), rng.NextSingle()) * 4,
+                        targetEndpoint = 1,
+                        type = currentWave.spawns[0].type,
+                        goldValue = Program.slimeGoldDrop,
+                        state = EnemyState.SlimeCooldown,
+                        size = Program.slimeJump.size,
+                        maxHealth = Program.slimeHealth,
+                        health = Program.slimeHealth,
+                        collisionRadius = Program.slimeCollisionRadius
+                    });
+                    waveSpawnTimer = Math.Max(waveSpawnTimer - currentWave.spawns[0].delay, 0);
+
+                    currentWave.spawns.RemoveAt(0);
                 }
-            }
-        }
 
-
-        // Bullet shells
-        {
-            if (debugSpawnBulletShell && worldMouse != null && Raylib.IsKeyPressed(KeyboardKey.KEY_B))
-            {
-                Console.WriteLine("DEBUG: spawn bullet shell");
-                bulletShells.Add(new BulletShell {
-                    createdAt = (float)Raylib.GetTime(),
-                    start = worldMouse.Value,
-                    position = worldMouse.Value,
-                    type = TowerType.Revolver,
-                    spin = 0,
-                    rotation = 0,
-                    destination = worldMouse.Value + new Vector2(0, 10)
-                });
-            }
-
-            foreach (var shell in bulletShells)
-            {
-                var velocity = shell.destination - shell.position;
-                
                 foreach (var enemy in enemies)
                 {
-                    if (enemy.dead) continue;
-
-                    var dirToEnemy = enemy.position - shell.position;
-                    if (dirToEnemy.Length() > enemy.collisionRadius) continue;
-
-                    shell.destination -= dirToEnemy * 0.1f;
-                }
-
-                shell.position += velocity * dt;
-                shell.rotation += shell.spin * (1 - shell.GetProgress());
-            }
-
-            for (int i = 0; i < bulletShells.Count; i++)
-            {
-                if (bulletShells[i].TimeSinceCreation() > Program.bulletShellDespawnStart + Program.bulletShellDespawnDuration)
-                {
-                    bulletShells.RemoveAt(i);
-                    i--;
-                }
-            }
-        }
-
-        // Smoke particles
-        {
-            for (int i = 0; i < smokeParticles.Count; i++)
-            {
-                var particle = smokeParticles[i];
-                if (Raylib.GetTime() > particle.createdAt + particle.duration)
-                {
-                    smokeParticles.RemoveAt(i);
-                    i--;
-                    continue;
-                }
-
-                particle.position += particle.velocity * dt;
-            }
-        }
-
-        // Enemies
-        {
-            var currentWave = waves[currentWaveIndex];
-
-            waveSpawnTimer += dt;
-            while (currentWave.spawns.Count > 0 && (waveSpawnTimer > currentWave.spawns[0].delay || enemies.Count == 0))
-            {
-                enemies.Add(new Enemy
-                {
-                    position = enemyPath[0] + new Vector2(rng.NextSingle(), rng.NextSingle()) * 4,
-                    targetEndpoint = 1,
-                    type = currentWave.spawns[0].type,
-                    goldValue = Program.slimeGoldDrop,
-                    state = EnemyState.SlimeCooldown,
-                    size = Program.slimeJump.size,
-                    maxHealth = Program.slimeHealth,
-                    health = Program.slimeHealth,
-                    collisionRadius = Program.slimeCollisionRadius
-                });
-                waveSpawnTimer = Math.Max(waveSpawnTimer - currentWave.spawns[0].delay, 0);
-
-                currentWave.spawns.RemoveAt(0);
-            }
-
-            foreach (var enemy in enemies)
-            {
-                if (enemy.health == 0)
-                {
-                    gold += enemy.goldValue;
-                    CreateSlimeDeathParticles(enemy.position);
-                    enemy.dead = true;
-                }
-
-                bool gotoNextTarget = false;
-                if (enemy.targetEndpoint > 0)
-                {
-                    var line = enemyPath[enemy.targetEndpoint] - enemyPath[enemy.targetEndpoint - 1];
-                    var enemyProgress = enemy.position - enemyPath[enemy.targetEndpoint - 1];
-
-                    var progress = Vector2.Dot(line, enemyProgress) / line.Length();
-                    if (progress > line.Length())
+                    if (enemy.health == 0)
                     {
-                        gotoNextTarget = true;
-                    }
-                }
-                else
-                {
-                    if (Vector2.Distance(enemyPath[enemy.targetEndpoint], enemy.position) < 0.01)
-                    {
-                        gotoNextTarget = true;
-                    }
-                }
-
-                if (gotoNextTarget)
-                {
-                    if (enemy.targetEndpoint == enemyPath.Count - 1)
-                    {
+                        gold += enemy.goldValue;
+                        CreateSlimeDeathParticles(enemy.position);
                         enemy.dead = true;
-                        health = Math.Max(health - Program.slimeDamage, 0);
+                    }
+
+                    bool gotoNextTarget = false;
+                    if (enemy.targetEndpoint > 0)
+                    {
+                        var line = enemyPath[enemy.targetEndpoint] - enemyPath[enemy.targetEndpoint - 1];
+                        var enemyProgress = enemy.position - enemyPath[enemy.targetEndpoint - 1];
+
+                        var progress = Vector2.Dot(line, enemyProgress) / line.Length();
+                        if (progress > line.Length())
+                        {
+                            gotoNextTarget = true;
+                        }
                     }
                     else
                     {
-                        enemy.targetEndpoint += 1;
-                    }
-                }
-
-                var targetPosition = enemyPath[enemy.targetEndpoint];
-                enemy.targetAim = Utils.GetAimAngle(enemy.position, targetPosition);
-                enemy.aim = Utils.ApproachAngle(enemy.aim, enemy.targetAim, dt * 3);
-
-                if (enemy.type == EnemyType.Slime)
-                {
-                    enemy.jumpCooldown = Math.Max(enemy.jumpCooldown - dt, 0);
-
-                    if (enemy.state == EnemyState.SlimeCooldown)
-                    {
-                        if (enemy.jumpCooldown == 0)
+                        if (Vector2.Distance(enemyPath[enemy.targetEndpoint], enemy.position) < 0.01)
                         {
-                            enemy.state = EnemyState.SlimeWindup;
+                            gotoNextTarget = true;
                         }
                     }
-                    else if (enemy.state == EnemyState.SlimeJump)
+
+                    if (gotoNextTarget)
                     {
-                        if (Program.slimeJump.UpdateOnce(dt, ref enemy.animation))
+                        if (enemy.targetEndpoint == enemyPath.Count - 1)
                         {
-                            enemy.animation.frame = 0;
-                            enemy.state = EnemyState.SlimeCooldown;
+                            enemy.dead = true;
+                            health = Math.Max(health - Program.slimeDamage, 0);
+                        }
+                        else
+                        {
+                            enemy.targetEndpoint += 1;
                         }
                     }
-                    else if (enemy.state == EnemyState.SlimeWindup)
-                    {
-                        if (Program.slimeWindup.UpdateOnce(dt, ref enemy.animation))
-                        {
-                            enemy.jumpCooldown = Program.slimeJumpCooldown(rng);
 
-                            enemy.velocity += Vector2.Normalize(targetPosition - enemy.position) * Program.slimeJumpStrength(rng);
-                            enemy.animation.frame = 0;
-                            enemy.state = EnemyState.SlimeJump;
-                            Raylib.PlaySoundMulti(Program.slimeJumpSound);
+                    var targetPosition = enemyPath[enemy.targetEndpoint];
+                    enemy.targetAim = Utils.GetAimAngle(enemy.position, targetPosition);
+                    enemy.aim = Utils.ApproachAngle(enemy.aim, enemy.targetAim, dt * 3);
+
+                    if (enemy.type == EnemyType.Slime)
+                    {
+                        enemy.jumpCooldown = Math.Max(enemy.jumpCooldown - dt, 0);
+
+                        if (enemy.state == EnemyState.SlimeCooldown)
+                        {
+                            if (enemy.jumpCooldown == 0)
+                            {
+                                enemy.state = EnemyState.SlimeWindup;
+                            }
+                        }
+                        else if (enemy.state == EnemyState.SlimeJump)
+                        {
+                            if (Program.slimeJump.UpdateOnce(dt, ref enemy.animation))
+                            {
+                                enemy.animation.frame = 0;
+                                enemy.state = EnemyState.SlimeCooldown;
+                            }
+                        }
+                        else if (enemy.state == EnemyState.SlimeWindup)
+                        {
+                            if (Program.slimeWindup.UpdateOnce(dt, ref enemy.animation))
+                            {
+                                enemy.jumpCooldown = Program.slimeJumpCooldown(rng);
+
+                                enemy.velocity += Vector2.Normalize(targetPosition - enemy.position) * Program.slimeJumpStrength(rng);
+                                enemy.animation.frame = 0;
+                                enemy.state = EnemyState.SlimeJump;
+                                Raylib.PlaySoundMulti(Program.slimeJumpSound);
+                            }
                         }
                     }
-                }
 
-                foreach (var otherEnemy in enemies)
-                {
-                    if (otherEnemy == enemy) continue;
-
-                    if (Vector2.Distance(otherEnemy.position, enemy.position) < otherEnemy.collisionRadius + enemy.collisionRadius)
+                    foreach (var otherEnemy in enemies)
                     {
-                        enemy.velocity += (enemy.position - otherEnemy.position);
+                        if (otherEnemy == enemy) continue;
+
+                        if (Vector2.Distance(otherEnemy.position, enemy.position) < otherEnemy.collisionRadius + enemy.collisionRadius)
+                        {
+                            enemy.velocity += (enemy.position - otherEnemy.position);
+                        }
                     }
+
+                    if (enemy.velocity.X != 0 || enemy.velocity.Y != 0)
+                    {
+                        enemy.velocity = Vector2.Normalize(enemy.velocity) * enemy.velocity.Length() * (1 - enemy.friction);
+                    }
+                    enemy.position += enemy.velocity * dt;
                 }
 
-                if (enemy.velocity.X != 0 || enemy.velocity.Y != 0)
+                for (int i = 0; i < enemies.Count; i++)
                 {
-                    enemy.velocity = Vector2.Normalize(enemy.velocity) * enemy.velocity.Length() * (1 - enemy.friction);
-                }
-                enemy.position += enemy.velocity * dt;
-            }
-
-            for (int i = 0; i < enemies.Count; i++)
-            {
-                if (enemies[i].dead)
-                {
-                    enemies.RemoveAt(i);
-                    i--;
+                    if (enemies[i].dead)
+                    {
+                        enemies.RemoveAt(i);
+                        i--;
+                    }
                 }
             }
         }

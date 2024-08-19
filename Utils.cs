@@ -243,7 +243,7 @@ static class Utils
     {
         var source = new Raylib_CsLo.Rectangle(0, 0, texture.width, texture.height);
         var dest = new Raylib_CsLo.Rectangle(position.X, position.Y, texture.width * scale, texture.height * scale);
-        Raylib.DrawTexturePro(texture, source, dest, new Vector2(texture.width, texture.height) / 2, rotation, tint);
+        Raylib.DrawTexturePro(texture, source, dest, new Vector2(dest.width, dest.height) / 2, rotation, tint);
     }
 
     public static float LineAngle(Vector2 start, Vector2 end)

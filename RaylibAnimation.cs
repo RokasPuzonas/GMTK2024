@@ -87,7 +87,7 @@ internal class RaylibAnimation
 
         var source = new Rectangle(0, 0, texture.width, texture.height);
         var dest = new Rectangle(position.X, position.Y, texture.width * scale, texture.height * scale);
-        Raylib.DrawTexturePro(texture, source, dest, origin, rotation, tint);
+        Raylib.DrawTexturePro(texture, source, dest, origin * scale, rotation, tint);
     }
 
     public void Draw(AnimationState state, Vector2 position, Vector2 origin, float rotation, float scale, Color tint)

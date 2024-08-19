@@ -1,6 +1,7 @@
 ﻿using Raylib_CsLo;
 using System.Numerics;
 using System.Reflection;
+using System.Windows.Markup;
 
 namespace GMTK2024;
 
@@ -69,6 +70,7 @@ internal class Program
     public static DualGridTileset towerPlatformFoliage;
     public static Texture enemySpawner;
     public static Texture coin;
+    public static Font font;
     public static RaylibAnimation homeCrystal;
     public static Texture signPlaque;
     public static Texture signLeftChain;
@@ -106,6 +108,16 @@ internal class Program
     public static RaylibAnimation slimeWindup;
     public static Sound           slimeJumpSound;
 
+    public static Texture         hansFace;
+    public static RaylibAnimation hansMouth;
+    public static Texture         hansHat;
+    public static Vector2         hansMouthPivot;
+
+    public static Texture         privateFace;
+    public static RaylibAnimation privateMouth;
+    public static Texture         privateHat;
+    public static Vector2         privateMouthPivot;
+
     public static Texture mortarButtonNormal;
     public static Texture mortarButtonHover;
     public static Texture mortarButtonActive;
@@ -113,6 +125,21 @@ internal class Program
     public static Texture revolverButtonNormal;
     public static Texture revolverButtonHover;
     public static Texture revolverButtonActive;
+
+    public static List<DialogItem> dialog1 = new List<DialogItem>
+    {
+        new DialogItem(PersonName.Private, "Hans we need better transmission"),
+        new DialogItem(PersonName.Hans, "More armor you say?"),
+        new DialogItem(PersonName.Private, "Nein!"),
+        new DialogItem(PersonName.Private, "Better transmission"),
+        new DialogItem(PersonName.Hans, "Bigger Kannon, you say?"),
+        new DialogItem(PersonName.Private, "God for damn Hans"),
+        new DialogItem(PersonName.Hans, "Oh!"),
+        new DialogItem(PersonName.Hans, "Battleship kannon!"),
+        new DialogItem(PersonName.Private, "..."),
+        new DialogItem(PersonName.Private, "Ja Hans"),
+        new DialogItem(PersonName.Hans, "Ja"),
+    };
 
     public static void Main(string[] args)
     {
@@ -211,12 +238,26 @@ internal class Program
             signPlaque = Utils.FlattenLayerToTexture(signAse.Frames[0], "sign");
             signLeftChain = Utils.FlattenLayerToTexture(signAse.Frames[0], "left chain");
             signRightChain = Utils.FlattenLayerToTexture(signAse.Frames[0], "right chain");
+
+            var hansAse = assets.LoadAseprite("hans.aseprite");
+            hansFace  = Utils.FlattenLayerToTexture(hansAse.Frames[0], "face");
+            hansHat   = Utils.FlattenLayerToTexture(hansAse.Frames[0], "hat");
+            hansMouth = Utils.FlattenLayerToAnimation(hansAse, "mouth");
+            hansMouthPivot = Utils.GetSlicePivot(hansAse, "mouth");
+
+            var privateAse = assets.LoadAseprite("private.aseprite");
+            privateFace = Utils.FlattenLayerToTexture(privateAse.Frames[0], "face");
+            privateHat = Utils.FlattenLayerToTexture(privateAse.Frames[0], "helm");
+            privateMouth = Utils.FlattenLayerToAnimation(privateAse, "mouth");
+            privateMouthPivot = Utils.GetSlicePivot(privateAse, "mouth");
+
+            font = assets.LoadFont("ccoverbyteoff-regular.otf", 32);
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));
         var currentLevel = new Level(tilemap);
 
-        var mainmenu = false;
+        var mainmenu = true;
         var ui = new UI();
 
         while (!Raylib.WindowShouldClose() && running) 
@@ -244,8 +285,7 @@ internal class Program
                 }
 
                 ui.Draw();
-
-
+                
                 Raylib.EndDrawing();
             } else
             {
