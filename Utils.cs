@@ -345,4 +345,9 @@ static class Utils
     {
         return Math.Abs(AngleDifference(angle1, angle2)) < margin;
     }
+
+    public static float Lerp(float x, float min, float max)
+    {
+        return min + x * (max - min);
+    }
 }

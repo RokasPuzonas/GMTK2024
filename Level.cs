@@ -11,7 +11,7 @@ internal class Level
     static bool debugGrid = false;
     static bool debugShowPath = false;
     static bool debugAimAtMouse = false;
-    static bool debugTowerInfo = false;
+    static bool debugTowerInfo = true;
     static bool debugEnemyInfo = false;
     static bool debugBulletInfo = false;
 
@@ -38,7 +38,7 @@ internal class Level
     float maxHealth = Program.playerHealth;
     float health = Program.playerHealth;
     int gold = Program.startingGold;
-    TowerType selectedTower = TowerType.Revolver;
+    TowerType selectedTower = TowerType.Mortar;
 
     bool won = false;
     bool lost = false;
@@ -492,6 +492,7 @@ internal class Level
                     shotFrom = tower.Center(),
                     maxDistance = Vector2.Distance(tower.Center(), tower.targetPosition.Value),
                     type = TowerType.Mortar,
+                    smearLength = Program.mortarBulletSmear,
                     explodes = true,
                     direction = aimDirection
                 });
@@ -556,6 +557,17 @@ internal class Level
         else
         {
             recoil = Vector2.Zero;
+        }
+    }
+
+    public static void AppendSmearSnapshot(List<SmearSnapshot> smears, int maxSmears, Vector2 position, float scale = 1)
+    {
+        if (maxSmears == 0) return;
+
+        smears.Add(new SmearSnapshot { position = position, scale = scale });
+        if (smears.Count > maxSmears)
+        {
+            smears.RemoveAt(0);
         }
     }
 
@@ -783,15 +795,6 @@ internal class Level
             {
                 bullet.position += bullet.direction * dt * bullet.speed;
 
-                if (bullet.smearLength > 0)
-                {
-                    bullet.smear.Add(bullet.position);
-                    if (bullet.smear.Count > bullet.smearLength)
-                    {
-                        bullet.smear.RemoveAt(0);
-                    }
-                }
-
                 if (bullet.explodes)
                 {
                     if (Vector2.Distance(bullet.position, bullet.shotFrom) > bullet.maxDistance)
@@ -943,6 +946,7 @@ internal class Level
                             enemy.velocity += Vector2.Normalize(targetPosition - enemy.position) * Program.slimeJumpStrength(rng);
                             enemy.animation.frame = 0;
                             enemy.state = EnemyState.SlimeJump;
+                            Raylib.PlaySoundMulti(Program.slimeJumpSound);
                         }
                     }
                 }
@@ -1028,27 +1032,46 @@ internal class Level
                 }
             }
 
+            foreach (var tower in towers)
+            {
+                DrawTower(tower);
+            }
+
             foreach (var bullet in bullets)
             {
                 var rotation = Utils.ToDegrees((float)Math.Atan2(bullet.direction.Y, bullet.direction.X)) + 90;
 
+                var scale = 1f;
                 Texture? texture = null;
                 if (bullet.type == TowerType.Revolver)
                 {
                     texture = Program.revolverBullet;
-                } else if (bullet.type == TowerType.BigRevolver)
+                }
+                else if (bullet.type == TowerType.BigRevolver)
                 {
                     texture = Program.bigRevolverBullet;
+                }
+                else if (bullet.type == TowerType.Mortar)
+                {
+                    var traveledDistance = Vector2.Distance(bullet.shotFrom, bullet.position);
+                    var coeffToCenter = 0.5f - Math.Abs(traveledDistance - bullet.maxDistance / 2) / bullet.maxDistance;
+                    var scaleCoeff = (float)(1 - 4 * Math.Pow(coeffToCenter - 0.5f, 2));
+
+                    texture = Program.mortarBullet;
+                    scale *= Utils.Lerp(scaleCoeff, Program.mortarBulletMinHeightScale, Program.mortarBulletMaxHeightScale);
                 }
 
                 if (texture != null)
                 {
                     for (int i = 0; i < bullet.smear.Count; i++)
                     {
-                        Utils.DrawTextureCentered(texture.Value, bullet.smear[i], rotation, 1, Raylib.ColorAlpha(Raylib.WHITE, (i + 0.5f) / bullet.smear.Count));
+                        Utils.DrawTextureCentered(texture.Value, bullet.smear[i].position, rotation, bullet.smear[i].scale, Raylib.ColorAlpha(Raylib.WHITE, (i + 0.5f) / bullet.smear.Count));
                     }
-                    Utils.DrawTextureCentered(texture.Value, bullet.position, rotation, 1, Raylib.WHITE);
-                } else
+                    Utils.DrawTextureCentered(texture.Value, bullet.position, rotation, scale, Raylib.WHITE);
+
+                    AppendSmearSnapshot(bullet.smear, bullet.smearLength, bullet.position, scale);
+                }
+                else
                 {
                     Raylib.DrawCircleV(bullet.position, Program.bulletColliderRadius, Raylib.RED);
                 }
@@ -1066,10 +1089,6 @@ internal class Level
                 }
             }
 
-            foreach (var tower in towers)
-            {
-                DrawTower(tower);
-            }
 
             if (worldMouse != null)
             {

@@ -39,6 +39,9 @@ internal class Program
     public static int   mortarBulletDamage = 100;
     public static float mortarBulletKnockback = 300f;
     public static float mortarBulletRadius = 60;
+    public static int   mortarBulletSmear = 10;
+    public static float mortarBulletMinHeightScale = 1f;
+    public static float mortarBulletMaxHeightScale = 2.5f;
     public static float mortarMinRange = 75f;
     public static float mortarMaxRange = 400f;
 
@@ -68,6 +71,7 @@ internal class Program
     public static RaylibAnimation mortarFire;
     public static RaylibAnimation slimeJump;
     public static Vector2 mortarPivot;
+    public static Texture mortarBullet;
     public static RaylibAnimation slimeWindup;
     public static RaylibAnimation homeCrystal;
     public static Texture enemySpawner;
@@ -75,6 +79,7 @@ internal class Program
     public static Sound revolverGunshot;
     public static Sound bigRevolverGunshot;
     public static Sound mortarGunshot;
+    public static Sound slimeJumpSound;
 
     public static void Main(string[] args)
     {
@@ -113,10 +118,10 @@ internal class Program
             coin = Utils.FrameToTexture(coinAse.Frames[0]);
 
             revolverGunshot = assets.LoadSound("hard_gunshot.wav");
-            Raylib.SetSoundVolume(revolverGunshot, 0.45f);
+            Raylib.SetSoundVolume(revolverGunshot, 0.1f);
 
             bigRevolverGunshot = assets.LoadSound("big_gunshot.wav");
-            Raylib.SetSoundVolume(bigRevolverGunshot, 0.25f);
+            Raylib.SetSoundVolume(bigRevolverGunshot, 0.15f);
 
             mortarGunshot = assets.LoadSound("mortar_gunshot.wav");
             Raylib.SetSoundVolume(mortarGunshot, 0.25f);
@@ -147,6 +152,12 @@ internal class Program
 
             var bigRevolverBulletAse = assets.LoadAseprite("big_revolver_bullet.aseprite");
             bigRevolverBullet = Utils.FrameToTexture(bigRevolverBulletAse.Frames[0]);
+
+            var mortarBulletAse = assets.LoadAseprite("mortar_bullet.aseprite");
+            mortarBullet = Utils.FrameToTexture(mortarBulletAse.Frames[0]);
+
+            slimeJumpSound = assets.LoadSound("uhwra.wav");
+            Raylib.SetSoundVolume(slimeJumpSound, 0.5f);
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));

@@ -2,6 +2,12 @@
 
 namespace GMTK2024;
 
+class SmearSnapshot
+{
+    public Vector2 position;
+    public float scale;
+}
+
 internal class Bullet
 {
     public bool dead = false;
@@ -20,5 +26,5 @@ internal class Bullet
     public int smearLength = 0;
 
     public List<Enemy> hitEnemies = new List<Enemy>();
-    public List<Vector2> smear = new List<Vector2>();
+    public List<SmearSnapshot> smear = new List<SmearSnapshot>();
 }
