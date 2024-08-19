@@ -350,4 +350,9 @@ static class Utils
     {
         return min + x * (max - min);
     }
+
+    public static float RandRange(Random rng, float from, float to)
+    {
+        return Lerp(rng.NextSingle(), from, to);
+    }
 }

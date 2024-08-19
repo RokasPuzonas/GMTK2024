@@ -1,5 +1,6 @@
 ﻿using Raylib_CsLo;
 using System.Numerics;
+using System.Reflection;
 
 namespace GMTK2024;
 
@@ -13,6 +14,9 @@ internal class Program
     public static int   startingGold = 1000;
     public static float playerHealth = 100;
     public static float bulletColliderRadius = 3;
+    public static Func<float, float> bulletShellScale = p => (1 - Math.Max(p - 0.5f, 0));
+    public static float bulletShellDespawnStart    = 120f;
+    public static float bulletShellDespawnDuration = 3f;
 
     public static int   revolverCost = 25;
     public static float revolverAimSpeed = (float)Math.PI;
@@ -23,7 +27,9 @@ internal class Program
     public static float revolverBulletKnockback = 150f;
     public static float revolverMinRange = 10f;
     public static float revolverMaxRange = 200f;
-    
+    public static Func<Random, float> revolverShellLaunchPower = rng => Utils.RandRange(rng, 25, 75);
+    public static Func<Random, float> revolverShellAngle = rng => Utils.RandRange(rng, -(float)Math.PI / 6, (float)Math.PI / 6);
+
     public static float bigRevolverAimSpeed = (float)Math.PI / 2;
     public static float bigRevolverBulletSpeed = 400;
     public static int   bigRevolverBulletDamage = 100;
@@ -49,8 +55,8 @@ internal class Program
     public static float slimeCollisionRadius = 10;
     public static int   slimeGoldDrop = 5;
     public static float slimeDamage = 10;
-    public static Func<Random, float> slimeJumpStrength = rng => rng.NextSingle() * 100 + 100;
-    public static Func<Random, float> slimeJumpCooldown = rng => rng.NextSingle() * 0.5f;
+    public static Func<Random, float> slimeJumpStrength = rng => Utils.RandRange(rng, 100, 200);
+    public static Func<Random, float> slimeJumpCooldown = rng => Utils.RandRange(rng, 0, 0.5f);
 
     public static Assets assets;
     public static Dictionary<string, RaylibTileset> tilesets;
@@ -58,6 +64,7 @@ internal class Program
     public static DualGridTileset towerPlatformFoliage;
     public static RaylibAnimation revolver;
     public static Texture         revolverBullet;
+    public static Texture         revolverShell;
     public static RaylibAnimation bigRevolverUnderbelly;
     public static RaylibAnimation bigRevolverAmmoRack;
     public static RaylibAnimation bigRevolverLeftGun;
@@ -158,6 +165,9 @@ internal class Program
 
             slimeJumpSound = assets.LoadSound("uhwra.wav");
             Raylib.SetSoundVolume(slimeJumpSound, 0.5f);
+
+            var revolverShellAse = assets.LoadAseprite("revolver_shell.aseprite");
+            revolverShell = Utils.FrameToTexture(revolverShellAse.Frames[0]);
         }
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));

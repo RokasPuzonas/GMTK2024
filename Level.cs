@@ -11,7 +11,7 @@ internal class Level
     static bool debugGrid = false;
     static bool debugShowPath = false;
     static bool debugAimAtMouse = false;
-    static bool debugTowerInfo = true;
+    static bool debugTowerInfo = false;
     static bool debugEnemyInfo = false;
     static bool debugBulletInfo = false;
 
@@ -20,6 +20,8 @@ internal class Level
     List<Tower> towers = new List<Tower>();
     List<Bullet> bullets = new List<Bullet>();
     List<Enemy> enemies = new List<Enemy>();
+    List<BulletShell> bulletShells = new List<BulletShell>();
+
     Camera2D camera = new Camera2D();
     List<Vector2> enemyPath;
     Vector2 basePosition;
@@ -38,7 +40,7 @@ internal class Level
     float maxHealth = Program.playerHealth;
     float health = Program.playerHealth;
     int gold = Program.startingGold;
-    TowerType selectedTower = TowerType.Mortar;
+    TowerType selectedTower = TowerType.Revolver;
 
     bool won = false;
     bool lost = false;
@@ -448,6 +450,60 @@ internal class Level
         }
     }
 
+    public Bullet CreateBullet(TowerType type)
+    {
+        switch (type)
+        {
+        case TowerType.Revolver:
+            return new Bullet
+            {
+                speed = Program.revolverBulletSpeed,
+                damage = Program.revolverBulletDamage,
+                pierce = Program.revolverBulletPierce,
+                knockback = Program.revolverBulletKnockback,
+                type = TowerType.Revolver,
+                smearLength = Program.revolverBulletSmear
+            };
+        case TowerType.BigRevolver:
+            return new Bullet
+            {
+                speed = Program.bigRevolverBulletSpeed,
+                damage = Program.bigRevolverBulletDamage,
+                pierce = Program.bigRevolverBulletPierce,
+                knockback = Program.bigRevolverBulletKnockback,
+                type = TowerType.BigRevolver,
+                smearLength = Program.bigRevolverBulletSmear
+            };
+        case TowerType.Mortar:
+            return new Bullet
+            {
+                speed = Program.mortarBulletSpeed,
+                damage = Program.mortarBulletDamage,
+                knockback = Program.mortarBulletKnockback,
+                explosionRadius = Program.mortarBulletRadius,
+                type = TowerType.Mortar,
+                smearLength = Program.mortarBulletSmear,
+                explodes = true
+            };
+        default:
+            throw new Exception();
+        }
+    }
+
+    public BulletShell CreateBulletShell(Bullet bullet, float launchPower, float angle)
+    {
+        return new BulletShell
+        {
+            type = bullet.type,
+            position = bullet.position,
+            start = bullet.position,
+            destination = bullet.position - Utils.Vector2Rotate(bullet.direction * launchPower, angle),
+            spin = angle,
+            rotation = (float)Math.Atan2(bullet.direction.Y, bullet.direction.X),
+            createdAt = (float)Raylib.GetTime()
+        };
+    }
+
     public void TryShootingBullet(Tower tower)
     {
 
@@ -458,19 +514,16 @@ internal class Level
                 var aimDirection = Utils.GetAngledVector2(tower.aim);
                 tower.reloaded = false;
                 tower.shootCooldown = Program.revolver.GetDuration() * 1.1f;
-                bullets.Add(new Bullet
-                {
-                    position = tower.Center(),
-                    speed = Program.revolverBulletSpeed,
-                    damage = Program.revolverBulletDamage,
-                    pierce = Program.revolverBulletPierce,
-                    knockback = Program.revolverBulletKnockback,
-                    type = TowerType.Revolver,
-                    smearLength = Program.revolverBulletSmear,
-                    direction = aimDirection
-                });
-                Raylib.PlaySoundMulti(Program.revolverGunshot);
                 tower.recoil = -aimDirection * 8;
+
+                Raylib.PlaySoundMulti(Program.revolverGunshot);
+                
+                var bullet = CreateBullet(TowerType.Revolver);
+                bullet.position = tower.Center();
+                bullet.direction = aimDirection;
+                bullets.Add(bullet);
+
+                bulletShells.Add(CreateBulletShell(bullet, Program.revolverShellLaunchPower(rng), Program.revolverShellAngle(rng)));
             }
         }
         else if (tower.type == TowerType.Mortar)
@@ -482,22 +535,18 @@ internal class Level
                 tower.fired = true;
                 tower.reloaded = false;
                 tower.shootCooldown = (Program.mortarReload.GetDuration() + Program.mortarFire.GetDuration()) * 1.1f;
-                bullets.Add(new Bullet
-                {
-                    position = tower.Center(),
-                    speed = Program.mortarBulletSpeed,
-                    damage = Program.mortarBulletDamage,
-                    knockback = Program.mortarBulletKnockback,
-                    explosionRadius = Program.mortarBulletRadius,
-                    shotFrom = tower.Center(),
-                    maxDistance = Vector2.Distance(tower.Center(), tower.targetPosition.Value),
-                    type = TowerType.Mortar,
-                    smearLength = Program.mortarBulletSmear,
-                    explodes = true,
-                    direction = aimDirection
-                });
-                Raylib.PlaySoundMulti(Program.mortarGunshot);
                 tower.recoil = -aimDirection * 2;
+                
+                Raylib.PlaySoundMulti(Program.mortarGunshot);
+
+                var bullet = CreateBullet(TowerType.Mortar);
+                bullet.position = tower.Center();
+                bullet.shotFrom = tower.Center();
+                bullet.maxDistance = Vector2.Distance(tower.Center(), tower.targetPosition.Value);
+                bullet.direction = aimDirection;
+                bullets.Add(bullet);
+
+                //bulletShells.Add(CreateBulletShell(bullet, 10));
             }
         }
         else if (tower.type == TowerType.BigRevolver)
@@ -510,19 +559,16 @@ internal class Level
 
                 tower.leftReloaded = false;
                 tower.leftShootCooldown = bigRevolverCooldown;
-                bullets.Add(new Bullet
-                {
-                    position = tower.GetLeftGunCenter(),
-                    speed = Program.bigRevolverBulletSpeed,
-                    damage = Program.bigRevolverBulletDamage,
-                    pierce = Program.bigRevolverBulletPierce,
-                    knockback = Program.bigRevolverBulletKnockback,
-                    type = TowerType.BigRevolver,
-                    smearLength = Program.bigRevolverBulletSmear,
-                    direction = aimDirection
-                });
-                Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
                 tower.leftRecoil = -aimDirection * 16;
+
+                Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
+
+                var bullet = CreateBullet(TowerType.Mortar);
+                bullet.position = tower.GetLeftGunCenter();
+                bullet.direction = aimDirection;
+                bullets.Add(bullet);
+
+                //bulletShells.Add(CreateBulletShell(bullet, 10));
             }
 
             if (Utils.IsAngleClose(tower.leftTargetAim, tower.leftAim) && tower.rightShootCooldown == 0 && tower.leftShootCooldown < bigRevolverCooldown / 2)
@@ -531,19 +577,16 @@ internal class Level
 
                 tower.rightReloaded = false;
                 tower.rightShootCooldown = bigRevolverCooldown;
-                bullets.Add(new Bullet
-                {
-                    position = tower.GetRightGunCenter(),
-                    speed = Program.bigRevolverBulletSpeed,
-                    damage = Program.bigRevolverBulletDamage,
-                    knockback = Program.bigRevolverBulletKnockback,
-                    pierce = Program.bigRevolverBulletPierce,
-                    type = TowerType.BigRevolver,
-                    smearLength = Program.bigRevolverBulletSmear,
-                    direction = aimDirection
-                });
-                Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
                 tower.rightRecoil = -aimDirection * 16;
+
+                Raylib.PlaySoundMulti(Program.bigRevolverGunshot);
+
+                var bullet = CreateBullet(TowerType.Mortar);
+                bullet.position = tower.GetRightGunCenter();
+                bullet.direction = aimDirection;
+                bullets.Add(bullet);
+
+                //bulletShells.Add(CreateBulletShell(bullet, 10));
             }
         }
     }
@@ -850,6 +893,25 @@ internal class Level
             }
         }
 
+        // Bullet shells
+        {
+            foreach (var shell in bulletShells)
+            {
+                var velocity = shell.destination - shell.position;
+                shell.position += velocity * dt;
+                shell.rotation += shell.spin * (1 - shell.GetProgress());
+            }
+
+            for (int i = 0; i < bulletShells.Count; i++)
+            {
+                if (bulletShells[i].TimeSinceCreation() > Program.bulletShellDespawnStart + Program.bulletShellDespawnDuration)
+                {
+                    bulletShells.RemoveAt(i);
+                    i--;
+                }
+            }
+        }
+
         // Enemies
         {
             var currentWave = waves[currentWaveIndex];
@@ -1005,6 +1067,21 @@ internal class Level
                 DrawGrid(GetScreenRectInWorld(camera), tileSize, Raylib.WHITE);
             }
 
+            foreach (var shell in bulletShells)
+            {
+                var scale = Program.bulletShellScale(shell.GetProgress());
+                var opacity = 1 - (shell.TimeSinceCreation() - Program.bulletShellDespawnStart) / Program.bulletShellDespawnDuration;
+
+                if (shell.type == TowerType.Revolver)
+                {
+                    Utils.DrawTextureCentered(Program.revolverShell, shell.position, Utils.ToDegrees(shell.rotation) + 90, scale, Raylib.ColorAlpha(Raylib.WHITE, opacity));
+                }
+                else
+                {
+                    Raylib.DrawCircleV(shell.position, 5, Raylib.RED);
+                }
+            }
+
             foreach (var enemy in enemies)
             {
                 if (enemy.type == EnemyType.Slime)
@@ -1076,19 +1153,18 @@ internal class Level
                     Raylib.DrawCircleV(bullet.position, Program.bulletColliderRadius, Raylib.RED);
                 }
 
+                if (bullet.explodes)
+                {
+                    var explodesAt = bullet.shotFrom + bullet.direction * bullet.maxDistance;
+                    Raylib.DrawCircleLines((int)explodesAt.X, (int)explodesAt.Y, bullet.explosionRadius, Raylib.RED);
+                }
+
                 if (debugBulletInfo)
                 {
                     Raylib.DrawLineV(bullet.position, bullet.position + bullet.direction * 100, Raylib.GREEN);
                     Raylib.DrawCircleLines((int)bullet.position.X, (int)bullet.position.Y, Program.bulletColliderRadius, Raylib.RED);
-
-                    if (bullet.explodes)
-                    {
-                        var explodesAt = bullet.shotFrom + bullet.direction * bullet.maxDistance;
-                        Raylib.DrawCircleLines((int)explodesAt.X, (int)explodesAt.Y, bullet.explosionRadius, Raylib.RED);
-                    }
                 }
             }
-
 
             if (worldMouse != null)
             {
