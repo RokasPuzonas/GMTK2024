@@ -1,4 +1,5 @@
 ﻿
+using Raylib_CsLo;
 using System.Numerics;
 
 namespace GMTK2024;
@@ -17,6 +18,7 @@ internal class Range
 
 internal class SmokeParticle
 {
+    public Color color;
     public float createdAt;
     public float duration;
     public float scale;

@@ -42,7 +42,7 @@ internal class Level
     float maxHealth = Program.playerHealth;
     float health = Program.playerHealth;
     int gold = Program.startingGold;
-    TowerType selectedTower = TowerType.Mortar;
+    TowerType selectedTower = TowerType.Revolver;
 
     bool won = false;
     bool lost = false;
@@ -520,13 +520,14 @@ internal class Level
         };
     }
 
-    public void CreateSmoke(Vector2 position, Vector2 direction, Range countRange, Range scaleRange, Range speedRange, Range durationRange, Range angleRange)
+    public void CreateSmoke(Vector2 position, Vector2 direction, Color color, Range countRange, Range scaleRange, Range speedRange, Range durationRange, Range angleRange)
     {
         var count = (int)Utils.RandRange(rng, countRange);
         for (int i = 0; i < count; i++)
         {
             smokeParticles.Add(new SmokeParticle
             {
+                color = color,
                 createdAt = (float)Raylib.GetTime(),
                 scale = Utils.RandRange(rng, scaleRange),
                 rotation = rng.NextSingle() * (float)Math.PI * 2,
@@ -541,6 +542,7 @@ internal class Level
     {
         CreateSmoke(
             position, direction,
+            Raylib.WHITE,
             countRange: new Range(10, 15),
             scaleRange: new Range(0.3f, 1),
             speedRange: new Range(15, 40),
@@ -553,6 +555,7 @@ internal class Level
     {
         CreateSmoke(
             position, direction,
+            Raylib.WHITE,
             countRange: new Range(20, 30),
             scaleRange: new Range(0.4f, 1.5f),
             speedRange: new Range(5, 20),
@@ -565,11 +568,38 @@ internal class Level
     {
         CreateSmoke(
             position, direction,
+            Raylib.WHITE,
             countRange: new Range(15, 20),
             scaleRange: new Range(0.6f, 2),
             speedRange: new Range(20, 60),
             durationRange: new Range(0.2f, 0.6f),
             angleRange: new Range(-(float)Math.PI / 12, (float)Math.PI / 12)
+        );
+    }
+
+    public void CreateSlimeHitParticles(Vector2 position, Vector2 direction)
+    {
+        CreateSmoke(
+            position, direction,
+            Raylib.GetColor(0x86cb45ff),
+            countRange: new Range(10, 15),
+            scaleRange: new Range(0.2f, 1f),
+            speedRange: new Range(30, 50),
+            durationRange: new Range(0.15f, 0.5f),
+            angleRange: new Range(-(float)Math.PI / 6, (float)Math.PI / 6)
+        );
+    }
+
+    public void CreateSlimeDeathParticles(Vector2 position)
+    {
+        CreateSmoke(
+            position, new Vector2(1, 0),
+            Raylib.GetColor(0x66953aff),
+            countRange: new Range(30, 40),
+            scaleRange: new Range(1f, 2f),
+            speedRange: new Range(50, 100),
+            durationRange: new Range(0.05f, 0.3f),
+            angleRange: new Range(0, (float)Math.PI * 2)
         );
     }
 
@@ -930,8 +960,11 @@ internal class Level
                             if (enemy.dead) continue;
                             if (!Raylib.CheckCollisionCircles(bullet.position, bullet.explosionRadius, enemy.position, enemy.collisionRadius)) continue;
 
+                            var hitDirection = Vector2.Normalize(enemy.position - bullet.position);
                             enemy.health = Math.Max(enemy.health - bullet.damage, 0);
-                            enemy.velocity += Vector2.Normalize(enemy.position - bullet.position) * bullet.knockback;
+                            enemy.velocity += hitDirection * bullet.knockback;
+
+                            CreateSlimeHitParticles(enemy.position, hitDirection);
                         }
 
                         bullet.dead = true;
@@ -947,6 +980,7 @@ internal class Level
                     
                         enemy.health = Math.Max(enemy.health - bullet.damage, 0);
                         enemy.velocity += bullet.direction * bullet.knockback;
+                        CreateSlimeHitParticles(bullet.position, bullet.direction);
 
                         if (bullet.pierce > 0) {
                             bullet.hitEnemies.Add(enemy);
@@ -1064,6 +1098,7 @@ internal class Level
                 if (enemy.health == 0)
                 {
                     gold += enemy.goldValue;
+                    CreateSlimeDeathParticles(enemy.position);
                     enemy.dead = true;
                 }
 
@@ -1266,7 +1301,7 @@ internal class Level
                     new Rectangle(particle.position.X, particle.position.Y, size, size),
                     new Vector2(size/2, size/2),
                     Utils.ToDegrees(particle.rotation),
-                    Raylib.ColorAlpha(Raylib.WHITE, opacity)
+                    Raylib.ColorAlpha(particle.color, opacity)
                 );
             }
 
