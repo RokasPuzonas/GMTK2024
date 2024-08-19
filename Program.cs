@@ -62,13 +62,21 @@ internal class Program
     public static Func<Random, float> slimeJumpStrength = rng => Utils.RandRange(rng, 100, 200);
     public static Func<Random, float> slimeJumpCooldown = rng => Utils.RandRange(rng, 0, 0.5f);
 
+
     public static Assets assets;
     public static Dictionary<string, RaylibTileset> tilesets;
     public static DualGridTileset towerPlatformMain;
     public static DualGridTileset towerPlatformFoliage;
+    public static Texture enemySpawner;
+    public static Texture coin;
+    public static RaylibAnimation homeCrystal;
+    
     public static RaylibAnimation revolver;
     public static Texture         revolverBullet;
     public static Texture         revolverShell;
+    public static Vector2         revolverNozzle;
+    public static Sound           revolverGunshot;
+
     public static RaylibAnimation bigRevolverUnderbelly;
     public static RaylibAnimation bigRevolverAmmoRack;
     public static RaylibAnimation bigRevolverLeftGun;
@@ -77,22 +85,23 @@ internal class Program
     public static RaylibAnimation bigRevolverRightAmmo;
     public static Vector2         bigRevolverLeftPivot;
     public static Vector2         bigRevolverRightPivot;
+    public static Vector2         bigRevolverLeftNozzle;
+    public static Vector2         bigRevolverRightNozzle;
     public static Texture         bigRevolverBullet;
     public static Texture         bigRevolverShell;
+    public static Sound           bigRevolverGunshot;
+    
     public static RaylibAnimation mortarReload;
     public static RaylibAnimation mortarFire;
     public static Vector2         mortarPivot;
     public static Texture         mortarBullet;
     public static Texture         mortarShell;
+    public static Vector2         mortarNozzle;
+    public static Sound           mortarGunshot;
+    
     public static RaylibAnimation slimeJump;
     public static RaylibAnimation slimeWindup;
-    public static RaylibAnimation homeCrystal;
-    public static Texture enemySpawner;
-    public static Texture coin;
-    public static Sound revolverGunshot;
-    public static Sound bigRevolverGunshot;
-    public static Sound mortarGunshot;
-    public static Sound slimeJumpSound;
+    public static Sound           slimeJumpSound;
 
     public static void Main(string[] args)
     {
@@ -122,6 +131,7 @@ internal class Program
 
             var revolverAse = assets.LoadAseprite("revolver.aseprite");
             revolver = Utils.FlattenToAnimation(revolverAse);
+            revolverNozzle = Utils.GetSlicePivot(revolverAse, "nozzle");
 
             var slimeAse = assets.LoadAseprite("slime2.aseprite");
             slimeWindup = Utils.FlattenTagToAnimation(slimeAse, "windup");
@@ -144,19 +154,22 @@ internal class Program
             homeCrystal = Utils.FlattenToAnimation(homeCrystalAse);
 
             var bigRevolverAse = assets.LoadAseprite("big_revolver.aseprite");
-            bigRevolverLeftGun    = Utils.FlattenLayerToAnimation(bigRevolverAse, "left gub");
-            bigRevolverRightGun   = Utils.FlattenLayerToAnimation(bigRevolverAse, "right gub");
-            bigRevolverLeftAmmo   = Utils.FlattenLayerToAnimation(bigRevolverAse, "ammo left");
-            bigRevolverRightAmmo  = Utils.FlattenLayerToAnimation(bigRevolverAse, "ammo right");
-            bigRevolverAmmoRack   = Utils.FlattenLayerToAnimation(bigRevolverAse, "ammo rack");
-            bigRevolverUnderbelly = Utils.FlattenLayerToAnimation(bigRevolverAse, "underbelly");
-            bigRevolverLeftPivot  = Utils.GetSlicePivot(bigRevolverAse, "left gub pivot");
-            bigRevolverRightPivot = Utils.GetSlicePivot(bigRevolverAse, "right gun pivot");
+            bigRevolverLeftGun     = Utils.FlattenLayerToAnimation(bigRevolverAse, "left gub");
+            bigRevolverRightGun    = Utils.FlattenLayerToAnimation(bigRevolverAse, "right gub");
+            bigRevolverLeftAmmo    = Utils.FlattenLayerToAnimation(bigRevolverAse, "ammo left");
+            bigRevolverRightAmmo   = Utils.FlattenLayerToAnimation(bigRevolverAse, "ammo right");
+            bigRevolverAmmoRack    = Utils.FlattenLayerToAnimation(bigRevolverAse, "ammo rack");
+            bigRevolverUnderbelly  = Utils.FlattenLayerToAnimation(bigRevolverAse, "underbelly");
+            bigRevolverLeftPivot   = Utils.GetSlicePivot(bigRevolverAse, "left gub pivot");
+            bigRevolverRightPivot  = Utils.GetSlicePivot(bigRevolverAse, "right gun pivot");
+            bigRevolverLeftNozzle  = Utils.GetSlicePivot(bigRevolverAse, "left nozzle");
+            bigRevolverRightNozzle = Utils.GetSlicePivot(bigRevolverAse, "right nozzle");
 
             var mortarAse = assets.LoadAseprite("mortar.aseprite");
             mortarFire   = Utils.FlattenTagToAnimation(mortarAse, "fire");
             mortarReload = Utils.FlattenTagToAnimation(mortarAse, "reload");
             mortarPivot = Utils.GetSlicePivot(mortarAse, "gun pivot point");
+            mortarNozzle = Utils.GetSlicePivot(mortarAse, "nozzle");
 
             revolverBullet = assets.LoadAsepriteTexture("revolver_bullet.aseprite");
             

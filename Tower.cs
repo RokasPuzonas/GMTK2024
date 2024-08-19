@@ -127,6 +127,12 @@ internal class Tower
     // Mortar specific
     public bool fired = false;
 
+    public Vector2 GetMortarGunNozzle()
+    {
+        var rotatedNozzle = Utils.RotateAroundPivot(Program.bigRevolverLeftNozzle, Program.mortarPivot, 0);
+        return position + Utils.RotateAroundPivot(rotatedNozzle, size/2, aim + (float)Math.PI / 2);
+    }
+
     // Big revolver specific
     public AnimationState leftGunAnimation = new AnimationState();
     public Vector2 leftRecoil = Vector2.Zero;
@@ -144,11 +150,23 @@ internal class Tower
 
     public Vector2 GetRightGunCenter()
     {
-        return Center() + Utils.Vector2Rotate(Program.bigRevolverRightPivot - size / 2, aim + (float)Math.PI/2);
+        return position + Utils.RotateAroundPivot(Program.bigRevolverRightPivot, size / 2, aim + (float)Math.PI / 2);
     }
 
     public Vector2 GetLeftGunCenter()
     {
-        return Center() + Utils.Vector2Rotate(Program.bigRevolverLeftPivot - size / 2, aim + (float)Math.PI / 2);
+        return position + Utils.RotateAroundPivot(Program.bigRevolverLeftPivot, size / 2, aim + (float)Math.PI / 2);
+    }
+
+    public Vector2 GetLeftGunNozzle()
+    {
+        var rotatedNozzle = Utils.RotateAroundPivot(Program.bigRevolverLeftNozzle, Program.bigRevolverLeftPivot, leftAim);
+        return position + Utils.RotateAroundPivot(rotatedNozzle, size/2, aim + (float)Math.PI / 2);
+    }
+
+    public Vector2 GetRightGunNozzle()
+    {
+        var rotatedNozzle = Utils.RotateAroundPivot(Program.bigRevolverRightNozzle, Program.bigRevolverRightPivot, rightAim);
+        return position + Utils.RotateAroundPivot(rotatedNozzle, size / 2, aim + (float)Math.PI / 2);
     }
 }
