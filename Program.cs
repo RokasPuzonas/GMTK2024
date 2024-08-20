@@ -74,7 +74,6 @@ internal class Program
     public static int   bigSlimeGoldDrop = 20;
     public static int   bigSlimeDamage = 20;
     public static Func<Random, float> bigSlimeJumpStrength = rng => Utils.RandRange(rng, 200, 300);
-    public static Func<Random, float> bigSlimeJumpCooldown = rng => Utils.RandRange(rng, 3f, 4f);
     public static Func<Random, float> bigSlimeJumpCooldown = rng => Utils.RandRange(rng, 6f, 8f);
 
     public static int   smallSlimeHealth = 30;
@@ -487,9 +486,53 @@ internal class Program
         {
             new([
                 new() { delay = 0.1f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
+
+                new() { delay = 8f, type = EnemyType.Slime },
+                new() { delay = 1f, type = EnemyType.Slime },
+                new() { delay = 1f, type = EnemyType.Slime },
+                new() { delay = 1f, type = EnemyType.Slime },
+            ]),
+
+            new([
+                new() { delay = 0.1f, type = EnemyType.SmallSlime },
+                new() { delay = 0.1f, type = EnemyType.SmallSlime },
+                new() { delay = 0.1f, type = EnemyType.SmallSlime },
+
+                new() { delay = 2f, type = EnemyType.Slime },
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.1f, type = EnemyType.Slime },
+
+
+                new() { delay = 2f, type = EnemyType.SmallSlime },
+                new() { delay = 0.1f, type = EnemyType.SmallSlime },
+                new() { delay = 0.1f, type = EnemyType.SmallSlime },
+                new() { delay = 0.1f, type = EnemyType.SmallSlime },
+                new() { delay = 0.1f, type = EnemyType.SmallSlime },
+                new() { delay = 0.1f, type = EnemyType.SmallSlime },
+                new() { delay = 0.1f, type = EnemyType.SmallSlime },
+                new() { delay = 0.1f, type = EnemyType.SmallSlime },
+                new() { delay = 0.1f, type = EnemyType.SmallSlime },
+                new() { delay = 0.1f, type = EnemyType.SmallSlime },
+            ]),
+
+            new([
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 1f, type = EnemyType.Slime },
+                new() { delay = 1f, type = EnemyType.Slime },
+                new() { delay = 1f, type = EnemyType.Slime },
+                new() { delay = 1f, type = EnemyType.Slime },
+
+                new() { delay = 5f, type = EnemyType.BigSlime },
             ])
         };
 
