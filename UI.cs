@@ -80,15 +80,14 @@ internal class UI
         return result.pressed;
     }
 
-    public bool ShowSlider(int id, ref float value, Vector2 position, float width)
+    public bool SliderLogic(int id, ref float value, Vector2 position, float width, float knobSize)
     {
-        var knobSize = 5;
         var knobPosition = position + new Vector2(width * value, 0);
 
         var changed = false;
 
-        Raylib.DrawLineEx(position, position + new Vector2(width, 0), 2, Raylib.BLACK);
-        Raylib.DrawCircleV(position + new Vector2(width * value, 0), knobSize, Raylib.DARKGRAY);
+        //Raylib.DrawLineEx(position, position + new Vector2(width, 0), 2, Raylib.BLACK);
+        //Raylib.DrawCircleV(position + new Vector2(width * value, 0), knobSize, Raylib.DARKGRAY);
 
         if (Vector2.Distance(mouse, knobPosition) < knobSize && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
         {

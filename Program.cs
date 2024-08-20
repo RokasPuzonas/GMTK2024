@@ -108,6 +108,11 @@ internal class Program
     public static Rectangle nextWaveSignTextBounds;
     public static Rectangle totalWaveSignTextBounds;
 
+    public static List<Texture> mainMenuBackground;
+    public static Rectangle mainMenuSlider;
+    public static Texture mainMenuSliderKnob;
+    public static Rectangle mainMenuStartButton;
+
     public static List<Texture> signPlaque;
     public static Texture signLeftChain;
     public static Texture signRightChain;
@@ -340,6 +345,15 @@ internal class Program
             waveSignTextBounds     = Utils.GetSliceBounds(gameInfoAse, "wave text");
             totalWaveSignTextBounds = Utils.GetSliceBounds(gameInfoAse, "total wave text");
             nextWaveSignTextBounds = Utils.GetSliceBounds(gameInfoAse, "next wave text");
+
+            var menuAse = assets.LoadAseprite("menu.aseprite");
+            mainMenuBackground = new List<Texture>
+            {
+                Utils.FlattenLayersToTexture(menuAse.Frames[0], "background"),
+                Utils.FlattenLayersToTexture(menuAse.Frames[1], "background")
+            };
+            mainMenuStartButton = Utils.GetSliceBounds(menuAse, "start button");
+            mainMenuSlider = Utils.GetSliceBounds(menuAse, "slider");
         }
 
         var currentLevel = 1;
@@ -396,21 +410,34 @@ internal class Program
 
             if (mainmenu)
             {
-                ui.Begin(Utils.GetMaxRectInContainer(screenSize, canvasSize), canvasSize);
-
-                var center = canvasSize / 2;
-                Utils.DrawTextCentered(font, "GMTK2024", center, 32, 1, Raylib.WHITE);
+                var maimMenuSize = Utils.TextureSize(mainMenuBackground[0]);
+                ui.Begin(Utils.GetMaxRectInContainer(screenSize, maimMenuSize), maimMenuSize);
                 
-                if (ui.ShowButton(Utils.GetCenteredRect(center + new Vector2(0, 50), new(100, 20)), "Play"))
+                var startButtonResult = ui.ButtonLogic(mainMenuStartButton);
+                if (startButtonResult.hover)
+                {
+                    Raylib.DrawTexture(mainMenuBackground[1], 0, 0, Raylib.WHITE);
+                }
+                else
+                {
+                    Raylib.DrawTexture(mainMenuBackground[0], 0, 0, Raylib.WHITE);
+                }
+
+                if (startButtonResult.pressed)
                 {
                     transitionToLevel1 = true;
                 }
 
-                Utils.DrawTextVerticallyCentered(font, "Audio", center + new Vector2(-60, 200), 16, 3, Raylib.WHITE);
-                if (ui.ShowSlider(0, ref audioVolume, center + new Vector2(0, 200), 100))
+                var knobSize = 1;
+                if (ui.SliderLogic(0, ref audioVolume, new Vector2(mainMenuSlider.x, mainMenuSlider.y + mainMenuSlider.height / 2), mainMenuSlider.width, knobSize))
                 {
                     Raylib.SetMasterVolume(audioVolume);
                 }
+                Raylib.DrawRectangleV(
+                    new Vector2(mainMenuSlider.x - knobSize + mainMenuSlider.width * audioVolume, mainMenuSlider.y + mainMenuSlider.height / 2 - knobSize),
+                    new Vector2(2* knobSize, 2* knobSize),
+                    Raylib.BLACK
+                );
 
                 ui.End();
                 ui.Draw();
