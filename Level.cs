@@ -41,7 +41,7 @@ internal class Level
 
     float maxHealth = Program.playerHealth;
     float health = Program.playerHealth;
-    int gold = Program.startingGold;
+    int gold = 0;
     TowerType selectedTower = TowerType.Revolver;
 
     bool won = false;
@@ -58,11 +58,20 @@ internal class Level
     float signLeftChainOffset = 0;
     float signRightChainOffset = 0;
 
+    int dayNumber = 1;
+    bool canChangeTower = false;
+    bool canMergeTowers = false;
+
     DialogSystem dialogSystem = new DialogSystem();
     
-    public Level(RaylibTilemap tilemap)
+    public Level(int dayNumber, RaylibTilemap tilemap, List<EnemyWave> waves, bool canChangeTower, bool canMergeTowers, int gold)
     {
+        this.canChangeTower = canChangeTower;
+        this.canMergeTowers = canMergeTowers;
+        this.dayNumber = dayNumber;
         this.tilemap = tilemap;
+        this.waves = waves;
+        this.gold = gold;
 
         var baseMarker = GetMarker("base");
         basePosition = new Vector2(baseMarker.x, baseMarker.y);
@@ -78,38 +87,7 @@ internal class Level
 
         camera.rotation = 0;
         camera.target = Program.canvasSize / 2;
-
-        currentWaveIndex = 0;
-        /*waves.Add(new EnemyWave([
-            new() { delay = 0.1f, type = EnemyType.Slime },
-            new() { delay = 0.5f, type = EnemyType.Slime },
-            new() { delay = 0.5f, type = EnemyType.Slime },
-            new() { delay = 0.5f, type = EnemyType.Slime },
-        ]));*/
-        /*waves.Add(new EnemyWave([
-            new() { delay = 0.1f, type = EnemyType.BigSlime },
-        ]));*/
-        waves.Add(new EnemyWave([
-            new() { delay = 0.25f, type = EnemyType.SmallSlime },
-            new() { delay = 0.25f, type = EnemyType.SmallSlime },
-            new() { delay = 0.25f, type = EnemyType.SmallSlime },
-            new() { delay = 0.25f, type = EnemyType.SmallSlime },
-            new() { delay = 0.25f, type = EnemyType.SmallSlime },
-            new() { delay = 0.25f, type = EnemyType.SmallSlime },
-        ]));
-        waves.Add(new EnemyWave([
-            new() { delay = 0.5f, type = EnemyType.Slime },
-            new() { delay = 0.5f, type = EnemyType.Slime },
-            new() { delay = 0.5f, type = EnemyType.Slime },
-            new() { delay = 0.5f, type = EnemyType.Slime },
-            new() { delay = 0.5f, type = EnemyType.Slime },
-            new() { delay = 0.5f, type = EnemyType.Slime },
-            new() { delay = 0.5f, type = EnemyType.Slime },
-            new() { delay = 0.5f, type = EnemyType.Slime },
-            new() { delay = 0.5f, type = EnemyType.Slime },
-        ]));
         
-
         enemyPath = new List<Vector2>();
 
         var pathLayer = tilemap.GetLayer("path", TiledLayerType.ObjectLayer);
@@ -143,6 +121,8 @@ internal class Level
 
     public void ShowSign(float dt, Vector2 position)
     {
+        var signPlaque = Program.signPlaque[this.dayNumber - 1];
+
         if (playSignLift)
         {
             signPlaqueOffset -= signPlaqueOffset * 1.5f * dt;
@@ -153,7 +133,7 @@ internal class Level
         }
         else if (playSignDrop)
         {
-            signPlaqueOffset += (Program.signPlaque.height - signPlaqueOffset) * 2.5f * dt;
+            signPlaqueOffset += (signPlaque.height - signPlaqueOffset) * 2.5f * dt;
 
             signLeftChainOffset += (signPlaqueOffset - signLeftChainOffset) * 10 * dt;
             signRightChainOffset += (signPlaqueOffset - signRightChainOffset) * 4 * dt;
@@ -166,12 +146,12 @@ internal class Level
         }
 
         var signPosition = position;
-        signPosition.Y -= (30 + Program.signPlaque.height);
+        signPosition.Y -= (30 + signPlaque.height);
 
         float rotation = 0;
         if (playSignDrop && !playSignLift)
         {
-            var progress = 1 - Math.Abs(Program.signPlaque.height - signPlaqueOffset) / Program.signPlaque.height;
+            var progress = 1 - Math.Abs(signPlaque.height - signPlaqueOffset) / signPlaque.height;
             
             var tiltAt = 0.75f;
             float tiltCoeff;
@@ -187,7 +167,7 @@ internal class Level
             rotation = Utils.ToDegrees(-tiltCoeff * (float)Math.PI / 24);
         }
 
-        Utils.DrawTextureCentered(Program.signPlaque, signPosition + new Vector2(0, signPlaqueOffset) + Utils.TextureSize(Program.signPlaque) / 2, rotation, 1, Raylib.WHITE);
+        Utils.DrawTextureCentered(signPlaque, signPosition + new Vector2(0, signPlaqueOffset) + Utils.TextureSize(signPlaque) / 2, rotation, 1, Raylib.WHITE);
         Raylib.DrawTextureEx(Program.signLeftChain, signPosition + new Vector2(0, signLeftChainOffset), 0, 1, Raylib.WHITE);
         Raylib.DrawTextureEx(Program.signRightChain, signPosition + new Vector2(0, signRightChainOffset), 0, 1, Raylib.WHITE);
     }
@@ -983,14 +963,17 @@ internal class Level
                 healtbarRect.width *= (health / maxHealth);
                 Raylib.DrawRectangleRec(healtbarRect, Raylib.GREEN);
 
-                if (ui.ShowImageToggleButton(selectedTower == TowerType.Revolver, new Vector2(900, 480), Program.revolverButtonNormal, Program.revolverButtonHover, Program.revolverButtonActive))
+                if (canChangeTower)
                 {
-                    selectedTower = TowerType.Revolver;
-                }
+                    if (ui.ShowImageToggleButton(selectedTower == TowerType.Revolver, new Vector2(900, 480), Program.revolverButtonNormal, Program.revolverButtonHover, Program.revolverButtonActive))
+                    {
+                        selectedTower = TowerType.Revolver;
+                    }
 
-                if (ui.ShowImageToggleButton(selectedTower == TowerType.Mortar, new Vector2(900, 380), Program.mortarButtonNormal, Program.mortarButtonHover, Program.mortarButtonActive))
-                {
-                    selectedTower = TowerType.Mortar;
+                    if (ui.ShowImageToggleButton(selectedTower == TowerType.Mortar, new Vector2(900, 380), Program.mortarButtonNormal, Program.mortarButtonHover, Program.mortarButtonActive))
+                    {
+                        selectedTower = TowerType.Mortar;
+                    }
                 }
 
                 if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ui.ShowButton(new Rectangle(10, canvasSize.Y - 20 - 10, 100, 20), "Next wave"))
@@ -1010,12 +993,11 @@ internal class Level
         ui.End();
     }
 
-    public void Tick()
+    public void Update(float dt)
     {
         var canvasSize = Program.canvasSize;
         var tileSize = Program.tileSize;
 
-        var dt = Raylib.GetFrameTime();
         var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
 
         camera.offset = screenSize / 2;
@@ -1051,7 +1033,10 @@ internal class Level
                             rng.NextSingle() * 2 * (float)Math.PI
                         ));
 
-                        CheckMergingTowers(towers, mouseTile);
+                        if (canMergeTowers)
+                        {
+                            CheckMergingTowers(towers, mouseTile);
+                        }
 
                         gold -= towerCost;
                     }
@@ -1095,15 +1080,18 @@ internal class Level
                             if (enemy.dead) continue;
                             if (bullet.hitEnemies.Contains(enemy)) continue;
                             if (!Raylib.CheckCollisionCircles(bullet.position, Program.bulletColliderRadius, enemy.position, enemy.collisionRadius)) continue;
-                    
+
                             enemy.health = Math.Max(enemy.health - bullet.damage, 0);
                             enemy.velocity += bullet.direction * bullet.knockback;
                             CreateSlimeHitParticles(bullet.position, bullet.direction);
 
-                            if (bullet.pierce > 0) {
+                            if (bullet.pierce > 0)
+                            {
                                 bullet.hitEnemies.Add(enemy);
                                 bullet.pierce -= 1;
-                            } else {
+                            }
+                            else
+                            {
                                 bullet.dead = true;
                                 break;
                             }
@@ -1131,7 +1119,8 @@ internal class Level
                 if (debugSpawnBulletShell && worldMouse != null && Raylib.IsKeyPressed(KeyboardKey.KEY_B))
                 {
                     Console.WriteLine("DEBUG: spawn bullet shell");
-                    bulletShells.Add(new BulletShell {
+                    bulletShells.Add(new BulletShell
+                    {
                         createdAt = (float)Raylib.GetTime(),
                         start = worldMouse.Value,
                         position = worldMouse.Value,
@@ -1145,7 +1134,7 @@ internal class Level
                 foreach (var shell in bulletShells)
                 {
                     var velocity = shell.destination - shell.position;
-                
+
                     foreach (var enemy in enemies)
                     {
                         if (enemy.dead) continue;
@@ -1294,7 +1283,7 @@ internal class Level
                             Raylib.PlaySoundMulti(Program.slimeJumpSound);
                         }
                     }
-                    
+
                     foreach (var otherEnemy in enemies)
                     {
                         if (otherEnemy == enemy) continue;
@@ -1326,17 +1315,20 @@ internal class Level
         if (health == 0)
         {
             lost = true;
-        } 
+        }
 
         if (!lost && IsWaveFinished() && currentWaveIndex == waves.Count - 1 && enemies.Count == 0)
         {
             won = true;
         }
 
-        Program.homeCrystal.UpdateLooped(dt, ref homeCrystalAnimation);
 
-        Raylib.BeginDrawing();
-        Raylib.ClearBackground(Raylib.GetColor(0x232323ff));
+        Program.homeCrystal.UpdateLooped(dt, ref homeCrystalAnimation);
+    }
+
+    public void Draw()
+    {
+        var tileSize = Program.tileSize;
 
         Raylib.BeginMode2D(camera);
         {
@@ -1344,7 +1336,7 @@ internal class Level
 
             Utils.DrawTextureCentered(Program.enemySpawner, enemySpawn, enemySpawnRotation, 1, Raylib.WHITE);
             Program.homeCrystal.DrawCentered(homeCrystalAnimation.frame, basePosition, homeCrystalRotation, 1, Raylib.WHITE);
-            
+
             if (debugGrid)
             {
                 DrawGrid(GetScreenRectInWorld(camera), tileSize, Raylib.WHITE);
@@ -1423,7 +1415,7 @@ internal class Level
                 var opacity = 1 - ((float)Raylib.GetTime() - particle.createdAt) / particle.duration;
                 Raylib.DrawRectanglePro(
                     new Rectangle(particle.position.X, particle.position.Y, size, size),
-                    new Vector2(size/2, size/2),
+                    new Vector2(size / 2, size / 2),
                     Utils.ToDegrees(particle.rotation),
                     Raylib.ColorAlpha(particle.color, opacity)
                 );
@@ -1505,7 +1497,5 @@ internal class Level
         ui.Draw();
 
         CoverOffscreenArea(Raylib.GetColor(0x232323ff));
-
-        Raylib.EndDrawing();
     }
 }

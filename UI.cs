@@ -49,9 +49,8 @@ internal class UI
     {
         var result = ButtonLogic(rect);
 
-        var font = Raylib.GetFontDefault();
         Raylib.DrawRectangleRec(rect, result.hover ? Raylib.GRAY : Raylib.DARKGRAY);
-        Utils.DrawTextCentered(font, text, Utils.GetRectCenter(rect), fontSize, fontSize / 10, Raylib.WHITE);
+        Utils.DrawTextCentered(Program.font, text, Utils.GetRectCenter(rect), fontSize, fontSize / 10, Raylib.WHITE);
 
         return result.pressed;
     }

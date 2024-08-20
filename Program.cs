@@ -1,7 +1,5 @@
 ﻿using Raylib_CsLo;
 using System.Numerics;
-using System.Reflection;
-using System.Windows.Markup;
 
 namespace GMTK2024;
 
@@ -12,7 +10,10 @@ internal class Program
     public static float tileSize = 32;
     public static Vector2 canvasSize = new Vector2(320 * 3, 180 * 3);
 
-    public static int   startingGold = 1000;
+    public static int   level1StartingGold = 1000;
+    public static int   level2StartingGold = 1000;
+    public static int   level3StartingGold = 1000;
+
     public static float playerHealth = 100;
     public static float bulletColliderRadius = 3;
     public static Func<float, float> bulletShellScale = p => (1 - Math.Max(p - 0.75f, 0));
@@ -85,7 +86,7 @@ internal class Program
     public static Texture coin;
     public static Font font;
     public static RaylibAnimation homeCrystal;
-    public static Texture signPlaque;
+    public static List<Texture> signPlaque;
     public static Texture signLeftChain;
     public static Texture signRightChain;
     public static List<Sound> voice;
@@ -146,17 +147,17 @@ internal class Program
 
     public static List<DialogItem> dialog1 = new List<DialogItem>
     {
-        new DialogItem(PersonName.Private, "Hans we need better transmission"),
-        new DialogItem(PersonName.Hans, "More armor you say?"),
-        new DialogItem(PersonName.Private, "Nein!"),
-        new DialogItem(PersonName.Private, "Better transmission"),
-        new DialogItem(PersonName.Hans, "Bigger Kannon, you say?"),
-        new DialogItem(PersonName.Private, "God for damn Hans"),
-        new DialogItem(PersonName.Hans, "Oh!"),
-        new DialogItem(PersonName.Hans, "Battleship kannon!"),
-        new DialogItem(PersonName.Private, "..."),
-        new DialogItem(PersonName.Private, "Ja Hans"),
-        new DialogItem(PersonName.Hans, "Ja"),
+        new(PersonName.Private, "Hans we need better transmission"),
+        new(PersonName.Hans, "More armor you say?"),
+        new(PersonName.Private, "Nein!"),
+        new(PersonName.Private, "Better transmission"),
+        new(PersonName.Hans, "Bigger Kannon, you say?"),
+        new(PersonName.Private, "God for damn Hans"),
+        new(PersonName.Hans, "Oh!"),
+        new(PersonName.Hans, "Battleship kannon!"),
+        new(PersonName.Private, "..."),
+        new(PersonName.Private, "Ja Hans"),
+        new(PersonName.Hans, "Ja"),
     };
 
     public static void Main(string[] args)
@@ -262,7 +263,10 @@ internal class Program
             revolverButtonActive = Utils.FlattenTagToTexture(revolverButtonAse, "active");
 
             var signAse = assets.LoadAseprite("sign.aseprite");
-            signPlaque = Utils.FlattenLayerToTexture(signAse.Frames[0], "sign");
+            signPlaque = new List<Texture>();
+            signPlaque.Add(Utils.FlattenLayerToTexture(signAse.Frames[0], "sign"));
+            signPlaque.Add(Utils.FlattenLayerToTexture(signAse.Frames[1], "sign"));
+            signPlaque.Add(Utils.FlattenLayerToTexture(signAse.Frames[2], "sign"));
             signLeftChain = Utils.FlattenLayerToTexture(signAse.Frames[0], "left chain");
             signRightChain = Utils.FlattenLayerToTexture(signAse.Frames[0], "right chain");
 
@@ -280,36 +284,36 @@ internal class Program
 
             font = assets.LoadFont("font.otf", 32);
 
-            voice = new List<Sound>();
-            voice.Add(assets.LoadSound("voice/v1.wav"));
-            voice.Add(assets.LoadSound("voice/v2.wav"));
-            voice.Add(assets.LoadSound("voice/v3.wav"));
-            voice.Add(assets.LoadSound("voice/v4.wav"));
-            voice.Add(assets.LoadSound("voice/v5.wav"));
-            voice.Add(assets.LoadSound("voice/v6.wav"));
+            voice = [
+                assets.LoadSound("voice/v1.wav"),
+                assets.LoadSound("voice/v2.wav"),
+                assets.LoadSound("voice/v3.wav"),
+                assets.LoadSound("voice/v4.wav"),
+                assets.LoadSound("voice/v5.wav"),
+                assets.LoadSound("voice/v6.wav"),
+            ];
         }
 
-        var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("main.tmx"));
-        var currentLevel = new Level(tilemap);
+        var currentLevel = CreateLevel1();
 
         var mainmenu = true;
         var ui = new UI();
 
         while (!Raylib.WindowShouldClose() && running) 
         {
+            var dt = Raylib.GetFrameTime();
+
+            Raylib.BeginDrawing();
+            Raylib.ClearBackground(Raylib.GetColor(0x232323ff));
+
             if (mainmenu)
             {
-                var font = Raylib.GetFontDefault();
-
-                Raylib.BeginDrawing();
-                Raylib.ClearBackground(Raylib.GetColor(0x232323ff));
-
                 var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
                 {
                     ui.Begin(Utils.GetMaxRectInContainer(screenSize, canvasSize), canvasSize);
 
                     var center = canvasSize / 2;
-                    Utils.DrawTextCentered(font, "GMTK2024", center, 20, 1, Raylib.WHITE);
+                    Utils.DrawTextCentered(font, "GMTK2024", center, 32, 1, Raylib.WHITE);
                 
                     if (ui.ShowButton(Utils.GetCenteredRect(center + new Vector2(0, 50), new(100, 20)), "Play"))
                     {
@@ -320,15 +324,75 @@ internal class Program
                 }
 
                 ui.Draw();
-                
-                Raylib.EndDrawing();
             } else
             {
-                currentLevel.Tick();
+                currentLevel.Update(dt);
+
+                currentLevel.Draw();
             }
+
+            Raylib.EndDrawing();
         }
 
         Raylib.CloseAudioDevice();
         Raylib.CloseWindow();
+    }
+
+    public static Level CreateLevel1()
+    {
+        var waves = new List<EnemyWave>
+        {
+            new([
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+            ]),
+            new([
+                new() { delay = 0.1f, type = EnemyType.BigSlime },
+            ]),
+            new([
+                new() { delay = 0.25f, type = EnemyType.SmallSlime },
+                new() { delay = 0.25f, type = EnemyType.SmallSlime },
+                new() { delay = 0.25f, type = EnemyType.SmallSlime },
+                new() { delay = 0.25f, type = EnemyType.SmallSlime },
+                new() { delay = 0.25f, type = EnemyType.SmallSlime },
+                new() { delay = 0.25f, type = EnemyType.SmallSlime },
+            ]),
+            new([
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+            ])
+        };
+
+        var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
+        return new Level(1, tilemap, waves, false, false, level1StartingGold);
+    }
+
+    public static Level CreateLevel2()
+    {
+        var waves = new List<EnemyWave>
+        {
+        };
+
+        var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
+        return new Level(2, tilemap, waves, false, true, level2StartingGold);
+    }
+
+    public static Level CreateLevel3()
+    {
+        var waves = new List<EnemyWave>
+        {
+        };
+
+        var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
+        return new Level(3, tilemap, waves, true, true, level3StartingGold);
     }
 }
