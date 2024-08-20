@@ -493,11 +493,18 @@ internal class Program
         };
 
         var startDialog = new List<DialogItem> {
-            new(PersonName.Private, "Start"),
+            new(PersonName.Private, "Sir, the slimes are upon us!"),
+            new(PersonName.Hans, "I've had enough, it's time we show those wet balls what we are made of!"),
+            new(PersonName.Hans, "Time to make use of my late grandparent's handmedowns."),
+            new(PersonName.Hans, "*place towers with leftclick*"),
         };
 
         var endDialog = new List<DialogItem> {
-            new(PersonName.Private, "end"),
+            new(PersonName.Private, "Phew, that was close!"),
+            new(PersonName.Private, "I'm ashamed to have thought slimes were weak."),
+            new(PersonName.Hans, "We all make mistakes, boy."),
+            new(PersonName.Hans, "But now is not the time for that."),
+            new(PersonName.Hans, "It will be a long time before we get shuteye."),
         };
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
@@ -517,11 +524,16 @@ internal class Program
         };
 
         var startDialog = new List<DialogItem> {
-            new(PersonName.Private, "Start"),
+            new(PersonName.Private, "Sir, the revolvers are not enough anymore, we need something more reliable!"),
+            new(PersonName.Hans, "I can't hear you over the sound of goop splattering!"),
+            new(PersonName.Hans, "Was it something about making a bigger gun!?"),
+            new(PersonName.Hans, "*place four revolvers next to eachother to create something more \"reliable\"*"),
         };
 
         var endDialog = new List<DialogItem> {
-            new(PersonName.Private, "end"),
+            new(PersonName.Private, "Sir there is no end to them!"),
+            new(PersonName.Hans, "Move."),
+            new(PersonName.Hans, "Move to stay alive."),
         };
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level2.tmx"));
@@ -541,11 +553,19 @@ internal class Program
         };
 
         var startDialog = new List<DialogItem> {
-            new(PersonName.Slime, "You will never take us alive"),
+            new(PersonName.Private, "Sir, at this pace we are going to be overrun!"),
+            new(PersonName.Hans, "Bring out the mortars."),
+            new(PersonName.Private, "But sir, I'm not sure if they will be of any help!"),
+            new(PersonName.Hans, "Son, you better know if we die we'll die standing."),
+            new(PersonName.Slime, "*blorp*"),
+            new(PersonName.Hans, "You will never take us alive."),
         };
 
         var endDialog = new List<DialogItem> {
-            new(PersonName.Private, "end"),
+            new(PersonName.Hans, "damn bastards, that was probably the last of them."),
+            new(PersonName.Private, "I can't believe it, we've won!"),
+            new(PersonName.Hans, "What did I tell you boy."),
+            new(PersonName.Hans, "So we live to see another day."),
         };
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level3.tmx"));
