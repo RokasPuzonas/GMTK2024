@@ -85,9 +85,13 @@ internal class Level
         enemySpawn.Y = DivMultipleFloor(enemySpawn.Y, Program.tileSize) + Program.tileSize / 2;
         enemySpawnRotation = spawnMarker.rotation;
 
+        var screenSize = Utils.GetScreenSize();
         camera.rotation = 0;
         camera.target = Program.canvasSize / 2;
-        
+        camera.offset = screenSize / 2;
+        camera.zoom = Math.Min(screenSize.X / Program.canvasSize.X, screenSize.Y / Program.canvasSize.Y);
+
+
         enemyPath = new List<Vector2>();
 
         var pathLayer = tilemap.GetLayer("path", TiledLayerType.ObjectLayer);
@@ -658,6 +662,19 @@ internal class Level
         );
     }
 
+    public void CreateBuiltTowerParticles(Vector2 position)
+    {
+        CreateSmoke(
+            position + new Vector2(0, Program.tileSize * 0.25f), new Vector2(0, -1),
+            Raylib.WHITE,
+            countRange: new Range(30, 40),
+            scaleRange: new Range(0.6f, 1.2f),
+            speedRange: new Range(30, 80),
+            durationRange: new Range(0.15f, 0.5f),
+            angleRange: new Range(-(float)Math.PI/2, (float)Math.PI/2)
+        );
+    }
+
     public void CreateSlimeDeathParticles(Vector2 position)
     {
         CreateSmoke(
@@ -998,7 +1015,7 @@ internal class Level
         var canvasSize = Program.canvasSize;
         var tileSize = Program.tileSize;
 
-        var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+        var screenSize = Utils.GetScreenSize();
 
         camera.offset = screenSize / 2;
         camera.zoom = Math.Min(screenSize.X / canvasSize.X, screenSize.Y / canvasSize.Y);
@@ -1026,12 +1043,15 @@ internal class Level
 
                     if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT) && gold >= towerCost && IsTowerPlaceable(mouseTile))
                     {
-                        towers.Add(Tower.Create(
+                        var tower = Tower.Create(
                             selectedTower,
                             mouseTile,
                             new Vector2(tileSize, tileSize),
                             rng.NextSingle() * 2 * (float)Math.PI
-                        ));
+                        );
+                        towers.Add(tower);
+
+                        CreateBuiltTowerParticles(tower.Center());
 
                         if (canMergeTowers)
                         {

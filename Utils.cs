@@ -401,4 +401,9 @@ static class Utils
         var index = rng.Next(sounds.Count);
         Raylib.PlaySoundMulti(sounds[index]);
     }
+
+    public static Vector2 GetScreenSize()
+    {
+        return new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+    }
 }

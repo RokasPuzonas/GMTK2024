@@ -113,7 +113,7 @@ internal class UI
 
     public void Draw()
     {
-        Debug.Assert(renderTexture != null);
+        if (renderTexture == null) return;
         var texture = renderTexture.Value.texture;
 
         var source = new Rectangle(0, 0, texture.width, -texture.height);
