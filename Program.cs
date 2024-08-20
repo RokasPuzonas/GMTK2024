@@ -1,5 +1,7 @@
 ﻿using Raylib_CsLo;
 using System.Numerics;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Xml.Linq;
 
 namespace GMTK2024;
 
@@ -88,6 +90,8 @@ internal class Program
     public static RaylibAnimation homeCrystal;
     public static List<Sound> voice;
     public static Texture heart;
+    public static byte[] musicBytes;
+    public static Music music;
 
     public static List<Texture> signPlaque;
     public static Texture signLeftChain;
@@ -296,23 +300,39 @@ internal class Program
             ];
 
             heart = assets.LoadAsepriteTexture("heart.aseprite");
+
+            musicBytes = assets.LoadBytes("bgm.wav");
+            unsafe
+            {
+                fixed (byte* dataPtr = musicBytes)
+                {
+                    music = Raylib.LoadMusicStreamFromMemory(".wav", dataPtr, musicBytes.Length);
+                }
+            }
+            Raylib.SetMusicVolume(music, 0.5f);
         }
 
         var currentLevel = CreateLevel1();
 
+        var loadingAnimation = 0f;
         var mainmenu = true;
         var ui = new UI();
 
         while (!Raylib.WindowShouldClose() && running) 
         {
+            Raylib.UpdateMusicStream(music);
+
             var dt = Raylib.GetFrameTime();
+
+            // loadingAnimation = (float)Math.Clamp(loadingAnimation + dt, 0, 1);
 
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Raylib.GetColor(0x232323ff));
 
+            var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+
             if (mainmenu)
             {
-                var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
                 {
                     ui.Begin(Utils.GetMaxRectInContainer(screenSize, canvasSize), canvasSize);
 
@@ -334,6 +354,8 @@ internal class Program
 
                 currentLevel.Draw();
             }
+
+            Raylib.DrawCircleV(screenSize/2, (screenSize/2).Length() * loadingAnimation, Raylib.GetColor(0x121212ff));
 
             Raylib.EndDrawing();
         }

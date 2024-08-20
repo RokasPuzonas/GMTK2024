@@ -960,15 +960,14 @@ internal class Level
             {
                 var font = Raylib.GetFontDefault();
 
-                Utils.DrawTextVerticallyCentered(font, $"Wave", new Vector2(810, 90), 20, 1, Raylib.WHITE);
-                Utils.DrawTextVerticallyCentered(font, $"{currentWaveIndex + 1}/{waves.Count}", new Vector2(870, 90), 20, 1, Raylib.WHITE);
-
                 Utils.DrawTextureCentered(Program.heart, new Vector2(850, 30), 0, 0.75f, Raylib.WHITE);
                 Utils.DrawTextVerticallyCentered(font, $"{health}/{maxHealth}", new Vector2(870, 30), 20, 3, Raylib.RED);
 
                 Utils.DrawTextureCentered(Program.coin, new Vector2(850, 60), 0, 0.75f, Raylib.WHITE);
                 Utils.DrawTextVerticallyCentered(font, $"{gold}", new Vector2(870, 60), 20, 3, Raylib.GOLD);
 
+                Utils.DrawTextVerticallyCentered(font, $"Wave", new Vector2(810, 90), 20, 1, Raylib.WHITE);
+                Utils.DrawTextVerticallyCentered(font, $"{currentWaveIndex + 1}/{waves.Count}", new Vector2(870, 90), 20, 1, Raylib.WHITE);
 
                 if (canChangeTower)
                 {
@@ -983,7 +982,7 @@ internal class Level
                     }
                 }
 
-                if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ui.ShowButton(new Rectangle(10, canvasSize.Y - 20 - 10, 100, 20), "Next wave"))
+                if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ui.ShowButton(new Rectangle(870, 110, 60, 20), "Next wave"))
                 {
                     currentWaveIndex++;
                 }
@@ -1304,6 +1303,15 @@ internal class Level
                         }
                     }
 
+                    if (!(0 <= enemy.position.X && enemy.position.X <= canvasSize.X))
+                    {
+                        enemy.velocity.X += (canvasSize.X / 2 - enemy.position.X);
+                    }
+                    if (!(0 <= enemy.position.Y && enemy.position.Y <= canvasSize.Y))
+                    {
+                        enemy.velocity.Y += (canvasSize.Y / 2 - enemy.position.Y);
+                    }
+
                     if (enemy.velocity.X != 0 || enemy.velocity.Y != 0)
                     {
                         enemy.velocity = Vector2.Normalize(enemy.velocity) * enemy.velocity.Length() * (1 - enemy.friction);
@@ -1327,11 +1335,20 @@ internal class Level
             lost = true;
         }
 
-        if (!lost && IsWaveFinished() && currentWaveIndex == waves.Count - 1 && enemies.Count == 0)
+        if (currentWaveIndex == waves.Count - 1)
         {
-            won = true;
+            if (!lost && IsWaveFinished() && enemies.Count == 0)
+            {
+                won = true;
+            }
         }
-
+        else
+        {
+            if (IsWaveFinished() && enemies.Count == 0)
+            {
+                currentWaveIndex++;
+            }
+        }
 
         Program.homeCrystal.UpdateLooped(dt, ref homeCrystalAnimation);
     }
