@@ -5,7 +5,7 @@ namespace GMTK2024;
 
 internal class Program
 {
-    public static bool debugSkipLevel = false; // Press T
+    public static bool debugSkipLevel = true; // Press T
 
     public static bool running = true;
     public static bool gotoNextLevel = false;
@@ -108,6 +108,7 @@ internal class Program
     public static Rectangle nextWaveSignTextBounds;
     public static Rectangle totalWaveSignTextBounds;
     public static Texture levelOverlay;
+    public static Texture slimeKing;
 
     public static List<Texture> mainMenuBackground;
     public static Rectangle mainMenuSlider;
@@ -357,6 +358,8 @@ internal class Program
             mainMenuSlider = Utils.GetSliceBounds(menuAse, "slider");
 
             levelOverlay = assets.LoadAsepriteTexture("game border.aseprite");
+
+            slimeKing = assets.LoadAsepriteTexture("slime.aseprite");
         }
 
         var currentLevel = 1;
@@ -538,7 +541,7 @@ internal class Program
         };
 
         var startDialog = new List<DialogItem> {
-            new(PersonName.Private, "You will never take us alive"),
+            new(PersonName.Slime, "You will never take us alive"),
         };
 
         var endDialog = new List<DialogItem> {

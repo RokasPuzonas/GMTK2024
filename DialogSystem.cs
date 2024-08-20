@@ -125,7 +125,7 @@ internal class DialogSystem
             dialogTimer -= 1f / textSpeed;
             if (textLength < dialog.text.Length)
             {
-                if (textLength % 5 == 0)
+                if (textLength % 5 == 0 && dialog.person != PersonName.Slime)
                 {
                     activeFace.Talk();
                     var rng = new Random();
@@ -135,7 +135,15 @@ internal class DialogSystem
             }
         }
 
-        activeFace.Draw(activePosition, rotation: 5 * (float)Math.Sin(3 * Raylib.GetTime()), scale: 1.1f);
+        var activeRotation = 5 * (float)Math.Sin(3 * Raylib.GetTime());
+        var activeScale = 1.1f;
+        if (dialog.person == PersonName.Slime)
+        {
+            Utils.DrawTextureCentered(Program.slimeKing, activePosition + new Vector2(50, -25), activeRotation, activeScale * 9, Raylib.WHITE);
+        } else
+        {
+            activeFace.Draw(activePosition, rotation: activeRotation, scale: activeScale);
+        }
         otherFace.Draw(otherPosition, color: Raylib.GetColor(0xABABABff));
 
         return true;
