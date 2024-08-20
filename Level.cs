@@ -546,6 +546,14 @@ internal class Level
         }
     }
 
+    public void DrawTowerStats(Tower tower)
+    {
+        var center = tower.Center();
+
+        Raylib.DrawCircleLines((int)center.X, (int)center.Y, tower.minRange, Raylib.ORANGE);
+        Raylib.DrawCircleLines((int)center.X, (int)center.Y, tower.maxRange, Raylib.RED);
+    }
+
     public Bullet CreateBullet(TowerType type)
     {
         switch (type)
@@ -1528,10 +1536,17 @@ internal class Level
 
                 if (isPlaceable)
                 {
-                    var ghostOpacity = 0.8f;
+                    var ghostOpacity = 0.6f;
                     var ghostTower = Tower.Create(selectedTower, new Vector2(tileX, tileY), new Vector2(tileSize, tileSize), -(float)Math.PI/2);
                     DrawTowerBottom(ghostTower);
                     DrawTowerTop(ghostTower, Raylib.ColorAlpha(Raylib.WHITE, ghostOpacity));
+                    DrawTowerStats(ghostTower);
+                }
+
+                var existingTower = GetTowerAt(towers, new Vector2(tileX, tileY) + new Vector2(tileSize, tileSize) / 2);
+                if (existingTower != null)
+                {
+                    DrawTowerStats(existingTower);
                 }
             }
 
