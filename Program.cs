@@ -10,7 +10,7 @@ internal class Program
     public static bool running = true;
 
     public static float tileSize = 32;
-    public static Vector2 canvasSize = new Vector2(320 * 3, 180 * 3);
+    public static Vector2 canvasSize = new Vector2(32 * 32, 18 * 32);
 
     public static int   level1StartingGold = 1000;
     public static int   level2StartingGold = 1000;
@@ -309,7 +309,7 @@ internal class Program
                     music = Raylib.LoadMusicStreamFromMemory(".wav", dataPtr, musicBytes.Length);
                 }
             }
-            Raylib.SetMusicVolume(music, 0.5f);
+            Raylib.SetMusicVolume(music, 0.1f);
         }
 
         var currentLevel = CreateLevel1();
