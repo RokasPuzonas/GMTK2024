@@ -109,7 +109,7 @@ internal class Level
         enemyPath.Add(basePosition);
 
         DropSign();
-        //dialogSystem.Play(Program.dialog1);
+        dialogSystem.Play(Program.dialog1);
     }
 
     public void DropSign()
