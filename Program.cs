@@ -470,7 +470,7 @@ internal class Program
             new(PersonName.Private, "end"),
         };
 
-        var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
+        var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level2.tmx"));
         return new Level(2, tilemap, waves, false, true, level2StartingGold, startDialog, endDialog);
     }
 
@@ -487,14 +487,14 @@ internal class Program
         };
 
         var startDialog = new List<DialogItem> {
-            new(PersonName.Private, "Start"),
+            new(PersonName.Private, "You will never take us alive"),
         };
 
         var endDialog = new List<DialogItem> {
             new(PersonName.Private, "end"),
         };
 
-        var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
+        var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level3.tmx"));
         return new Level(3, tilemap, waves, true, true, level3StartingGold, startDialog, endDialog);
     }
 }
