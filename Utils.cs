@@ -66,7 +66,7 @@ static class Utils
     }
 
 
-    public static Rgba32[] FlattenLayer(AsepriteFrame frame, string name, bool onlyVisibleLayers = true, bool includeBackgroundLayer = false, bool includeTilemapCels = true)
+    public static Rgba32[] FlattenLayers(AsepriteFrame frame, string[] layers, bool onlyVisibleLayers = true, bool includeBackgroundLayer = false, bool includeTilemapCels = true)
     {
         ArgumentNullException.ThrowIfNull(frame, "frame");
         Rgba32[] array = new Rgba32[frame.Size.Width * frame.Size.Height];
@@ -79,7 +79,7 @@ static class Utils
                 asepriteCel = asepriteLinkedCel.Cel;
             }
 
-            if (asepriteCel.Layer.Name != name) continue;
+            if (!layers.Contains(asepriteCel.Layer.Name)) continue;
 
             if ((!onlyVisibleLayers || asepriteCel.Layer.IsVisible) && (!asepriteCel.Layer.IsBackgroundLayer || includeBackgroundLayer))
             {
@@ -95,6 +95,11 @@ static class Utils
         }
 
         return array;
+    }
+
+    public static Rgba32[] FlattenLayer(AsepriteFrame frame, string layer)
+    {
+        return FlattenLayers(frame, new string[] { layer });
     }
 
     public static Raylib_CsLo.Image LoadImageFromRgba(Rgba32[] rgba, int width, int height)
@@ -127,9 +132,9 @@ static class Utils
         return texture;
     }
 
-    public static Raylib_CsLo.Texture FlattenLayerToTexture(AsepriteFrame frame, string layer)
+    public static Raylib_CsLo.Texture FlattenLayersToTexture(AsepriteFrame frame, params string[] layers)
     {
-        var rgba = FlattenLayer(frame, layer);
+        var rgba = FlattenLayers(frame, layers);
 
         return RGBAToTexture(rgba, frame.Size.Width, frame.Size.Height);
     }
@@ -350,6 +355,17 @@ static class Utils
         var key = slice.Keys[0];
 
         return new Vector2(key.Bounds.X + key.Pivot.X, key.Bounds.Y + key.Pivot.Y);
+    }
+
+    public static Raylib_CsLo.Rectangle GetSliceBounds(AsepriteFile ase, string name)
+    {
+        var slice = GetSlice(ase, name);
+        Debug.Assert(slice != null);
+
+        Debug.Assert(slice.Keys.Length == 1);
+        var key = slice.Keys[0];
+
+        return new Raylib_CsLo.Rectangle(key.Bounds.X, key.Bounds.Y, key.Bounds.Width, key.Bounds.Height);
     }
 
     public static Vector2 GetAngledVector2(float angle, float length = 1)
