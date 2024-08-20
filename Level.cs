@@ -958,27 +958,17 @@ internal class Level
             }
             else
             {
-                Raylib.DrawText($"Enemies: {enemies.Count}", 10, 30, 10, Raylib.WHITE);
-                Raylib.DrawText($"Wave: {currentWaveIndex + 1}/{waves.Count}", 10, 40, 10, Raylib.WHITE);
+                var font = Raylib.GetFontDefault();
 
-                Utils.DrawTextureCentered(Program.coin, new Vector2(20, 70), 0, 0.75f, Raylib.WHITE);
-                Raylib.DrawText($"{gold}", 30, 53, 30, Raylib.GOLD);
+                Utils.DrawTextVerticallyCentered(font, $"Wave", new Vector2(810, 90), 20, 1, Raylib.WHITE);
+                Utils.DrawTextVerticallyCentered(font, $"{currentWaveIndex + 1}/{waves.Count}", new Vector2(870, 90), 20, 1, Raylib.WHITE);
 
-                var healthbarWidth = canvasSize.X * 0.75f;
-                var healthbarContainer = new Rectangle(
-                    (canvasSize.X - healthbarWidth) / 2,
-                    10,
-                    healthbarWidth,
-                    32
-                );
-                Raylib.DrawRectangleRec(healthbarContainer, Raylib.GRAY);
+                Utils.DrawTextureCentered(Program.heart, new Vector2(850, 30), 0, 0.75f, Raylib.WHITE);
+                Utils.DrawTextVerticallyCentered(font, $"{health}/{maxHealth}", new Vector2(870, 30), 20, 3, Raylib.RED);
 
-                var maxHealthbarRect = Utils.ShrinkRect(healthbarContainer, 8);
-                Raylib.DrawRectangleRec(maxHealthbarRect, Raylib.DARKGRAY);
+                Utils.DrawTextureCentered(Program.coin, new Vector2(850, 60), 0, 0.75f, Raylib.WHITE);
+                Utils.DrawTextVerticallyCentered(font, $"{gold}", new Vector2(870, 60), 20, 3, Raylib.GOLD);
 
-                var healtbarRect = maxHealthbarRect;
-                healtbarRect.width *= (health / maxHealth);
-                Raylib.DrawRectangleRec(healtbarRect, Raylib.GREEN);
 
                 if (canChangeTower)
                 {

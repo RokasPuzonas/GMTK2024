@@ -307,6 +307,13 @@ static class Utils
         Raylib.DrawTextEx(font, text, position - size / 2, fontSize, spacing, tint);
     }
 
+    public static void DrawTextVerticallyCentered(Raylib_CsLo.Font font, string text, Vector2 position, float fontSize, float spacing, Raylib_CsLo.Color tint)
+    {
+        var size = Raylib.MeasureTextEx(font, text, fontSize, spacing);
+
+        Raylib.DrawTextEx(font, text, position - new Vector2(0, size.Y/2), fontSize, spacing, tint);
+    }
+
     public static Raylib_CsLo.Rectangle GetMaxRectInContainer(Vector2 containerSize, Vector2 itemSize)
     {
         var maxScale = Math.Min(containerSize.X / itemSize.X, containerSize.Y / itemSize.Y); ;

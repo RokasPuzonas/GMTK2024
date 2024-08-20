@@ -86,10 +86,12 @@ internal class Program
     public static Texture coin;
     public static Font font;
     public static RaylibAnimation homeCrystal;
+    public static List<Sound> voice;
+    public static Texture heart;
+
     public static List<Texture> signPlaque;
     public static Texture signLeftChain;
     public static Texture signRightChain;
-    public static List<Sound> voice;
 
     public static RaylibAnimation revolver;
     public static Texture         revolverBullet;
@@ -292,6 +294,8 @@ internal class Program
                 assets.LoadSound("voice/v5.wav"),
                 assets.LoadSound("voice/v6.wav"),
             ];
+
+            heart = assets.LoadAsepriteTexture("heart.aseprite");
         }
 
         var currentLevel = CreateLevel1();
