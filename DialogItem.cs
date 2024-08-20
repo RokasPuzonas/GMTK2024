@@ -3,7 +3,8 @@
 internal enum PersonName
 {
     Hans,
-    Private
+    Private,
+    Slime
 };
 
 internal class DialogItem
