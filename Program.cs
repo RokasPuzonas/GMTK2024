@@ -289,7 +289,7 @@ internal class Program
             privateMouth = Utils.FlattenLayerToAnimation(privateAse, "mouth");
             privateMouthPivot = Utils.GetSlicePivot(privateAse, "mouth");
 
-            font = assets.LoadFont("font.otf", 32);
+            font = assets.LoadFont("font.ttf", 30);
 
             voice = [
                 assets.LoadSound("voice/v1.wav"),

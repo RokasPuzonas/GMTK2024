@@ -103,7 +103,7 @@ internal class DialogSystem
         Raylib.DrawCircleV(new Vector2(Program.canvasSize.X/2, 500), 800, Raylib.ColorAlpha(Raylib.BLACK, 0.7f));
         
         Raylib.DrawRectangleRounded(dialogBox, 0.2f, 8, Raylib.ColorAlpha(Raylib.BLACK, 0.8f));
-        DrawTextInRect(Program.font, dialog.text.Substring(0, textLength), Utils.ShrinkRect(dialogBox, 10), 32, 1, Raylib.WHITE);
+        DrawTextInRect(Program.font, dialog.text.Substring(0, textLength), Utils.ShrinkRect(dialogBox, 24), 24, 1, Raylib.WHITE);
 
         dialogTimer += dt;
         while (dialogTimer > 1f / textSpeed)
