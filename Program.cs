@@ -76,7 +76,7 @@ internal class Program
     public static Func<Random, float> bigSlimeJumpStrength = rng => Utils.RandRange(rng, 200, 300);
     public static Func<Random, float> bigSlimeJumpCooldown = rng => Utils.RandRange(rng, 3f, 4f);
 
-    public static int   smallSlimeHealth = 40;
+    public static int   smallSlimeHealth = 30;
     public static float smallSlimeCollisionRadius = 5;
     public static float smallSlimeKnockbackResistance = 0;
     public static int   smallSlimeGoldDrop = 0;
