@@ -58,9 +58,23 @@ internal class DialogSystem
         }
     }
 
-    public void Show()
+    public bool Show()
     {
-        if (currentDialog == null) return;
+        if (currentDialog != null)
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_E) || Raylib.IsKeyPressed(KeyboardKey.KEY_SPACE))
+            {
+                textLength = 0;
+                dialogIndex += 1;
+                if (dialogIndex == currentDialog.Count)
+                {
+                    currentDialog = null;
+                }
+            }
+        }
+
+        if (currentDialog == null) return false;
+
         var dialog = currentDialog[dialogIndex];
 
         var dt = Raylib.GetFrameTime();
@@ -124,14 +138,6 @@ internal class DialogSystem
         activeFace.Draw(activePosition, rotation: 5 * (float)Math.Sin(3 * Raylib.GetTime()), scale: 1.1f);
         otherFace.Draw(otherPosition, color: Raylib.GetColor(0xABABABff));
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_E) || Raylib.IsKeyPressed(KeyboardKey.KEY_SPACE))
-        {
-            textLength = 0;
-            dialogIndex += 1;
-            if (dialogIndex == currentDialog.Count)
-            {
-                currentDialog = null;
-            }
-        }
+        return true;
     }
 }

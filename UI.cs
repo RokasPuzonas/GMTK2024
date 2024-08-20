@@ -24,8 +24,9 @@ internal class UI
     public Rectangle rect;
     public RenderTexture? renderTexture;
     public Vector2 mouse;
+    
     public bool hot = false;
-
+    public int? activeWidget = null;
 
     public ButtonResult ButtonLogic(Rectangle rect)
     {
@@ -77,6 +78,36 @@ internal class UI
         Utils.DrawTextureCentered(texture, center, 0, 1, Raylib.WHITE);
 
         return result.pressed;
+    }
+
+    public bool ShowSlider(int id, ref float value, Vector2 position, float width)
+    {
+        var knobSize = 5;
+        var knobPosition = position + new Vector2(width * value, 0);
+
+        var changed = false;
+
+        Raylib.DrawLineEx(position, position + new Vector2(width, 0), 2, Raylib.BLACK);
+        Raylib.DrawCircleV(position + new Vector2(width * value, 0), knobSize, Raylib.DARKGRAY);
+
+        if (Vector2.Distance(mouse, knobPosition) < knobSize && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+        {
+            this.activeWidget = id;
+        }
+
+        if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && this.activeWidget == id)
+        {
+            this.activeWidget = null;
+        }
+
+        if (this.activeWidget == id)
+        {
+            this.hot = true;
+            value = Math.Clamp((mouse.X - position.X) / width, 0, 1);
+            changed = true;
+        }
+
+        return changed;
     }
 
     public void Begin(Rectangle rect, Vector2 uiSize)

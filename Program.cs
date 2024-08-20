@@ -62,6 +62,7 @@ internal class Program
 
     public static int   slimeHealth = 100;
     public static float slimeCollisionRadius = 10;
+    public static float slimeKnockbackResistance = 0;
     public static int   slimeGoldDrop = 5;
     public static int   slimeDamage = 10;
     public static Func<Random, float> slimeJumpStrength = rng => Utils.RandRange(rng, 100, 200);
@@ -69,6 +70,7 @@ internal class Program
 
     public static int   bigSlimeHealth = 500;
     public static float bigSlimeCollisionRadius = 25;
+    public static float bigSlimeKnockbackResistance = 0.95f;
     public static int   bigSlimeGoldDrop = 50;
     public static int   bigSlimeDamage = 100;
     public static Func<Random, float> bigSlimeJumpStrength = rng => Utils.RandRange(rng, 200, 300);
@@ -76,6 +78,7 @@ internal class Program
 
     public static int   smallSlimeHealth = 10;
     public static float smallSlimeCollisionRadius = 5;
+    public static float smallSlimeKnockbackResistance = 0;
     public static int   smallSlimeGoldDrop = 1;
     public static int   smallSlimeDamage = 5;
     public static Func<Random, float> smallSlimeJumpStrength = rng => Utils.RandRange(rng, 300, 400);
@@ -93,6 +96,8 @@ internal class Program
     public static Texture heart;
     public static byte[] musicBytes;
     public static Music music;
+    public static Sound bigGunDrop;
+    public static Sound smallGunDrop;
 
     public static List<Texture> signPlaque;
     public static Texture signLeftChain;
@@ -310,17 +315,24 @@ internal class Program
                     music = Raylib.LoadMusicStreamFromMemory(".wav", dataPtr, musicBytes.Length);
                 }
             }
+
             Raylib.SetMusicVolume(music, 0.1f);
+
+            smallGunDrop = assets.LoadSound("small_gun_drop.wav");
+            bigGunDrop = assets.LoadSound("big_gun_drop.wav");
         }
 
         var currentLevel = 1;
-        var level = CreateLevel1();
+        var level = GetLevel(currentLevel);
 
         var playSceneTransition = false;
         var loadingAnimation = 0f;
         var mainmenu = true;
         var transitionToLevel1 = false;
+        float audioVolume = 0.6f;
         var ui = new UI();
+
+        Raylib.SetMasterVolume(audioVolume);
 
         Raylib.PlayMusicStream(music);
         while (!Raylib.WindowShouldClose() && running) 
@@ -374,6 +386,12 @@ internal class Program
                     transitionToLevel1 = true;
                 }
 
+                Utils.DrawTextVerticallyCentered(font, "Audio", center + new Vector2(-60, 200), 16, 3, Raylib.WHITE);
+                if (ui.ShowSlider(0, ref audioVolume, center + new Vector2(0, 200), 100))
+                {
+                    Raylib.SetMasterVolume(audioVolume);
+                }
+
                 ui.End();
                 ui.Draw();
             } else
@@ -417,33 +435,19 @@ internal class Program
                 new() { delay = 0.5f, type = EnemyType.Slime },
                 new() { delay = 0.5f, type = EnemyType.Slime },
                 new() { delay = 0.5f, type = EnemyType.Slime },
-            ]),
-            new([
-                new() { delay = 0.1f, type = EnemyType.BigSlime },
-            ]),
-            new([
-                new() { delay = 0.25f, type = EnemyType.SmallSlime },
-                new() { delay = 0.25f, type = EnemyType.SmallSlime },
-                new() { delay = 0.25f, type = EnemyType.SmallSlime },
-                new() { delay = 0.25f, type = EnemyType.SmallSlime },
-                new() { delay = 0.25f, type = EnemyType.SmallSlime },
-                new() { delay = 0.25f, type = EnemyType.SmallSlime },
-            ]),
-            new([
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
             ])
         };
 
+        var startDialog = new List<DialogItem> {
+            new(PersonName.Private, "Start"),
+        };
+
+        var endDialog = new List<DialogItem> {
+            new(PersonName.Private, "end"),
+        };
+
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
-        return new Level(1, tilemap, waves, false, false, level1StartingGold);
+        return new Level(1, tilemap, waves, false, false, level1StartingGold, startDialog, endDialog);
     }
 
     public static Level CreateLevel2()
@@ -458,8 +462,16 @@ internal class Program
             ]),
         };
 
+        var startDialog = new List<DialogItem> {
+            new(PersonName.Private, "Start"),
+        };
+
+        var endDialog = new List<DialogItem> {
+            new(PersonName.Private, "end"),
+        };
+
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
-        return new Level(2, tilemap, waves, false, true, level2StartingGold);
+        return new Level(2, tilemap, waves, false, true, level2StartingGold, startDialog, endDialog);
     }
 
     public static Level CreateLevel3()
@@ -474,7 +486,15 @@ internal class Program
             ]),
         };
 
+        var startDialog = new List<DialogItem> {
+            new(PersonName.Private, "Start"),
+        };
+
+        var endDialog = new List<DialogItem> {
+            new(PersonName.Private, "end"),
+        };
+
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
-        return new Level(3, tilemap, waves, true, true, level3StartingGold);
+        return new Level(3, tilemap, waves, true, true, level3StartingGold, startDialog, endDialog);
     }
 }
