@@ -193,7 +193,7 @@ internal class Program
         assets = new Assets();
 
         Raylib.SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE);
-        Raylib.InitWindow(1920, 1080, "GMTK2024");
+        Raylib.InitWindow(1920, 1080, "Bigshot");
         Raylib.InitAudioDevice();
         Raylib.SetWindowMinSize((int)canvasSize.X, (int)canvasSize.Y);
         Raylib.SetTargetFPS(60);
