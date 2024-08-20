@@ -109,7 +109,7 @@ internal class Level
         enemyPath.Add(basePosition);
 
         DropSign();
-        dialogSystem.Play(Program.dialog1);
+        //dialogSystem.Play(Program.dialog1);
     }
 
     public void DropSign()
@@ -971,14 +971,16 @@ internal class Level
             {
                 var font = Raylib.GetFontDefault();
 
-                Utils.DrawTextureCentered(Program.heart, new Vector2(850, 30), 0, 0.75f, Raylib.WHITE);
-                Utils.DrawTextVerticallyCentered(font, $"{health}/{maxHealth}", new Vector2(870, 30), 20, 3, Raylib.RED);
+                var anchor = new Vector2(900, 30);
 
-                Utils.DrawTextureCentered(Program.coin, new Vector2(850, 60), 0, 0.75f, Raylib.WHITE);
-                Utils.DrawTextVerticallyCentered(font, $"{gold}", new Vector2(870, 60), 20, 3, Raylib.GOLD);
+                Utils.DrawTextureCentered(Program.heart, anchor, 0, 0.75f, Raylib.WHITE);
+                Utils.DrawTextVerticallyCentered(font, $"{health}/{maxHealth}", anchor + new Vector2(20, 0), 20, 3, Raylib.RED);
 
-                Utils.DrawTextVerticallyCentered(font, $"Wave", new Vector2(810, 90), 20, 1, Raylib.WHITE);
-                Utils.DrawTextVerticallyCentered(font, $"{currentWaveIndex + 1}/{waves.Count}", new Vector2(870, 90), 20, 1, Raylib.WHITE);
+                Utils.DrawTextureCentered(Program.coin, anchor + new Vector2(0, 30), 0, 0.75f, Raylib.WHITE);
+                Utils.DrawTextVerticallyCentered(font, $"{gold}", anchor + new Vector2(20, 30), 20, 3, Raylib.GOLD);
+
+                Utils.DrawTextVerticallyCentered(font, $"Wave", anchor + new Vector2(-40, 60), 20, 1, Raylib.WHITE);
+                Utils.DrawTextVerticallyCentered(font, $"{currentWaveIndex + 1}/{waves.Count}", anchor + new Vector2(20, 60), 20, 1, Raylib.WHITE);
 
                 if (canChangeTower)
                 {
@@ -993,7 +995,7 @@ internal class Level
                     }
                 }
 
-                if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ui.ShowButton(new Rectangle(870, 110, 60, 20), "Next wave"))
+                if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ui.ShowButton(new Rectangle(anchor.X + 20, anchor.Y + 80, 60, 20), "Next wave"))
                 {
                     currentWaveIndex++;
                 }

@@ -1,7 +1,5 @@
 ﻿using Raylib_CsLo;
 using System.Numerics;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Xml.Linq;
 
 namespace GMTK2024;
 
@@ -13,7 +11,7 @@ internal class Program
     public static bool gotoNextLevel = false;
 
     public static float tileSize = 32;
-    public static Vector2 canvasSize = new Vector2(320 * 3, 180 * 3);
+    public static Vector2 canvasSize = new Vector2(32 * 32, 32 * 18);
 
     public static int   level1StartingGold = 1000;
     public static int   level2StartingGold = 1000;
