@@ -1338,7 +1338,11 @@ internal class Level
                             enemy.velocity += Vector2.Normalize(targetPosition - enemy.position) * slimeJumpStrength(rng);
                             enemy.animation.frame = 0;
                             enemy.state = EnemyState.SlimeJump;
-                            Raylib.PlaySoundMulti(Program.slimeJumpSound);
+
+                            if (enemy.type != EnemyType.SmallSlime)
+                            {
+                                Raylib.PlaySoundMulti(Program.slimeJumpSound);
+                            }
                         }
                     }
 
