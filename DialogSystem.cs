@@ -45,7 +45,7 @@ internal class DialogSystem
             if (lineSize.X > rect.width)
             {
                 Raylib.DrawTextEx(font, currentLine, new Vector2(rect.x, rect.y + oy), fontSize, spacing, tint);
-                oy += lineSize.Y;
+                oy += lineSize.Y * 1.2f;
                 currentLine = "";
             }
 
@@ -81,7 +81,7 @@ internal class DialogSystem
         hansFace.Update(dt);
         privateFace.Update(dt);
 
-        var dialogBoxSize = new Vector2(400, 100);
+        var dialogBoxSize = new Vector2(400, 120);
         var hansDialogBox = new Rectangle(240, Program.canvasSize.Y - 160, dialogBoxSize.X, dialogBoxSize.Y);
         var privateDialogBox = new Rectangle(Program.canvasSize.X - dialogBoxSize.X - 250, Program.canvasSize.Y - 160, dialogBoxSize.X, dialogBoxSize.Y);
 
