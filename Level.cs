@@ -1094,7 +1094,7 @@ internal class Level
 
                                 var hitDirection = Vector2.Normalize(enemy.position - bullet.position);
                                 enemy.health = Math.Max(enemy.health - bullet.damage, 0);
-                                enemy.velocity += hitDirection * bullet.knockback;
+                                enemy.velocity += hitDirection * bullet.knockback * (1 - enemy.knockbackResistance);
 
                                 CreateSlimeHitParticles(enemy.position, hitDirection);
                             }
@@ -1111,7 +1111,7 @@ internal class Level
                             if (!Raylib.CheckCollisionCircles(bullet.position, Program.bulletColliderRadius, enemy.position, enemy.collisionRadius)) continue;
 
                             enemy.health = Math.Max(enemy.health - bullet.damage, 0);
-                            enemy.velocity += bullet.direction * bullet.knockback;
+                            enemy.velocity += bullet.direction * bullet.knockback * (1 - enemy.knockbackResistance);
                             CreateSlimeHitParticles(bullet.position, bullet.direction);
 
                             if (bullet.pierce > 0)

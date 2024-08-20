@@ -62,6 +62,7 @@ internal class Program
 
     public static int   slimeHealth = 100;
     public static float slimeCollisionRadius = 10;
+    public static float slimeKnockbackResistance = 0;
     public static int   slimeGoldDrop = 5;
     public static int   slimeDamage = 10;
     public static Func<Random, float> slimeJumpStrength = rng => Utils.RandRange(rng, 100, 200);
@@ -69,6 +70,7 @@ internal class Program
 
     public static int   bigSlimeHealth = 500;
     public static float bigSlimeCollisionRadius = 25;
+    public static float bigSlimeKnockbackResistance = 0.95f;
     public static int   bigSlimeGoldDrop = 50;
     public static int   bigSlimeDamage = 100;
     public static Func<Random, float> bigSlimeJumpStrength = rng => Utils.RandRange(rng, 200, 300);
@@ -76,6 +78,7 @@ internal class Program
 
     public static int   smallSlimeHealth = 10;
     public static float smallSlimeCollisionRadius = 5;
+    public static float smallSlimeKnockbackResistance = 0;
     public static int   smallSlimeGoldDrop = 1;
     public static int   smallSlimeDamage = 5;
     public static Func<Random, float> smallSlimeJumpStrength = rng => Utils.RandRange(rng, 300, 400);
@@ -382,7 +385,6 @@ internal class Program
                     transitionToLevel1 = true;
                 }
 
-                
                 Utils.DrawTextVerticallyCentered(font, "Audio", center + new Vector2(-60, 200), 16, 3, Raylib.WHITE);
                 if (ui.ShowSlider(0, ref audioVolume, center + new Vector2(0, 200), 100))
                 {

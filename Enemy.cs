@@ -30,6 +30,7 @@ internal class Enemy
     public int health;
     public int damage;
     public int maxHealth;
+    public float knockbackResistance = 0;
 
     public AnimationState animation = new AnimationState();
 
@@ -67,7 +68,8 @@ internal class Enemy
                 maxHealth = Program.slimeHealth,
                 health = Program.slimeHealth,
                 collisionRadius = Program.slimeCollisionRadius,
-                damage = Program.slimeDamage
+                damage = Program.slimeDamage,
+                knockbackResistance = Program.slimeKnockbackResistance
             };
         case EnemyType.BigSlime:
             return new Enemy
@@ -81,7 +83,8 @@ internal class Enemy
                 maxHealth = Program.bigSlimeHealth,
                 health = Program.bigSlimeHealth,
                 collisionRadius = Program.bigSlimeCollisionRadius,
-                damage = Program.bigSlimeDamage
+                damage = Program.bigSlimeDamage,
+                knockbackResistance = Program.bigSlimeKnockbackResistance
             };
         case EnemyType.SmallSlime:
             return new Enemy
@@ -95,7 +98,8 @@ internal class Enemy
                 maxHealth = Program.smallSlimeHealth,
                 health = Program.smallSlimeHealth,
                 collisionRadius = Program.smallSlimeCollisionRadius,
-                damage = Program.smallSlimeDamage
+                damage = Program.smallSlimeDamage,
+                knockbackResistance = Program.smallSlimeKnockbackResistance
             };
         default:
             throw new NotImplementedException();

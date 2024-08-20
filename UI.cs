@@ -102,10 +102,10 @@ internal class UI
 
         if (this.activeWidget == id)
         {
+            this.hot = true;
             value = Math.Clamp((mouse.X - position.X) / width, 0, 1);
             changed = true;
         }
-
 
         return changed;
     }
