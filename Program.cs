@@ -317,7 +317,8 @@ internal class Program
         var loadingAnimation = 0f;
         var mainmenu = true;
         var ui = new UI();
-
+        
+        Raylib.PlayMusicStream(music);
         while (!Raylib.WindowShouldClose() && running) 
         {
             Raylib.UpdateMusicStream(music);
