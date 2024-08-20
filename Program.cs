@@ -63,7 +63,7 @@ internal class Program
     public static int   slimeHealth = 100;
     public static float slimeCollisionRadius = 10;
     public static float slimeKnockbackResistance = 0;
-    public static int   slimeGoldDrop = 5;
+    public static int   slimeGoldDrop = 1;
     public static int   slimeDamage = 5;
     public static Func<Random, float> slimeJumpStrength = rng => Utils.RandRange(rng, 80, 120);
     public static Func<Random, float> slimeJumpCooldown = rng => Utils.RandRange(rng, 0.75f, 1f);
@@ -71,7 +71,7 @@ internal class Program
     public static int   bigSlimeHealth = 1000;
     public static float bigSlimeCollisionRadius = 25;
     public static float bigSlimeKnockbackResistance = 0.95f;
-    public static int   bigSlimeGoldDrop = 50;
+    public static int   bigSlimeGoldDrop = 10;
     public static int   bigSlimeDamage = 20;
     public static Func<Random, float> bigSlimeJumpStrength = rng => Utils.RandRange(rng, 200, 300);
     public static Func<Random, float> bigSlimeJumpCooldown = rng => Utils.RandRange(rng, 3f, 4f);
@@ -79,7 +79,7 @@ internal class Program
     public static int   smallSlimeHealth = 40;
     public static float smallSlimeCollisionRadius = 5;
     public static float smallSlimeKnockbackResistance = 0;
-    public static int   smallSlimeGoldDrop = 1;
+    public static int   smallSlimeGoldDrop = 0;
     public static int   smallSlimeDamage = 2;
     public static Func<Random, float> smallSlimeJumpStrength = rng => Utils.RandRange(rng, 300, 400);
     public static Func<Random, float> smallSlimeJumpCooldown = rng => Utils.RandRange(rng, 0, 0.5f);
