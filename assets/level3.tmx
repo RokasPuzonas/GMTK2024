@@ -70,109 +70,109 @@
 </data>
  </layer>
  <objectgroup id="5" name="path">
-  <object id="2" name="1" x="143.417" y="249.702">
+  <object id="2" name="1" x="142.809" y="235.103">
    <point/>
   </object>
-  <object id="3" name="2" x="238.696" y="248.878">
+  <object id="3" name="2" x="223.489" y="251.919">
    <point/>
   </object>
-  <object id="4" name="4" x="368.259" y="152.093">
+  <object id="4" name="4" x="351.226" y="154.526">
    <point/>
   </object>
-  <object id="5" name="3" x="240.738" y="153.35">
+  <object id="5" name="3" x="237.088" y="175.249">
    <point/>
   </object>
-  <object id="6" name="5" x="367.926" y="216.901">
+  <object id="6" name="5" x="383.741" y="218.117">
    <point/>
   </object>
-  <object id="7" name="6" x="433.857" y="214.909">
+  <object id="7" name="6" x="431.424" y="201.527">
    <point/>
   </object>
-  <object id="10" name="7" x="432.932" y="87.6636">
+  <object id="10" name="7" x="430.499" y="108.954">
    <point/>
   </object>
-  <object id="25" name="8" x="495.15" y="91.8522">
+  <object id="25" name="8" x="477.51" y="88.2024">
    <point/>
   </object>
-  <object id="26" name="9" x="495.759" y="155.115">
+  <object id="26" name="9" x="498.8" y="152.073">
    <point/>
   </object>
-  <object id="27" name="10" x="878.375" y="155.723">
+  <object id="27" name="10" x="866.817" y="156.94">
    <point/>
   </object>
-  <object id="28" name="11" x="880.808" y="510.358">
+  <object id="28" name="11" x="876.55" y="489.067">
    <point/>
   </object>
-  <object id="29" name="12" x="813.287" y="506.708">
+  <object id="29" name="12" x="824.237" y="510.966">
    <point/>
   </object>
-  <object id="30" name="13" x="810.246" y="541.989">
+  <object id="30" name="13" x="799.905" y="536.514">
    <point/>
   </object>
-  <object id="31" name="14" x="531.648" y="539.556">
+  <object id="31" name="14" x="538.947" y="535.298">
    <point/>
   </object>
-  <object id="32" name="15" x="525.565" y="472.643">
+  <object id="32" name="15" x="518.265" y="478.118">
    <point/>
   </object>
-  <object id="33" name="16" x="77.8615" y="473.86">
+  <object id="33" name="16" x="88.8107" y="472.643">
    <point/>
   </object>
-  <object id="34" name="17" x="79.0781" y="316.312">
+  <object id="34" name="17" x="80.2946" y="328.478">
    <point/>
   </object>
-  <object id="35" name="18" x="171.539" y="313.879">
+  <object id="35" name="18" x="164.847" y="314.487">
    <point/>
   </object>
-  <object id="37" name="19" x="177.013" y="409.989">
+  <object id="37" name="19" x="177.013" y="399.648">
    <point/>
   </object>
-  <object id="38" name="20" x="270.69" y="409.989">
+  <object id="38" name="20" x="259.741" y="410.598">
    <point/>
   </object>
-  <object id="39" name="21" x="272.515" y="313.879">
+  <object id="39" name="21" x="271.907" y="320.57">
    <point/>
   </object>
-  <object id="40" name="22" x="495.759" y="313.271">
+  <object id="40" name="22" x="487.851" y="313.271">
    <point/>
   </object>
-  <object id="41" name="23" x="493.325" y="217.769">
+  <object id="41" name="23" x="493.934" y="226.893">
    <point/>
   </object>
-  <object id="42" name="24" x="816.329" y="219.594">
+  <object id="42" name="24" x="807.813" y="219.594">
    <point/>
   </object>
-  <object id="43" name="25" x="816.329" y="410.598">
+  <object id="43" name="25" x="814.504" y="396.607">
    <point/>
   </object>
-  <object id="44" name="26" x="751.242" y="414.247">
+  <object id="44" name="26" x="767.665" y="411.814">
    <point/>
   </object>
-  <object id="45" name="27" x="748.808" y="473.252">
+  <object id="45" name="27" x="751.242" y="459.261">
    <point/>
   </object>
-  <object id="46" name="28" x="623.5" y="476.902">
+  <object id="46" name="28" x="636.274" y="473.86">
    <point/>
   </object>
-  <object id="47" name="29" x="625.933" y="347.335">
+  <object id="47" name="29" x="623.5" y="361.934">
    <point/>
   </object>
-  <object id="48" name="30" x="751.242" y="340.644">
+  <object id="48" name="30" x="737.251" y="344.902">
    <point/>
   </object>
-  <object id="49" name="31" x="751.85" y="282.248">
+  <object id="49" name="31" x="751.85" y="290.764">
    <point/>
   </object>
-  <object id="50" name="32" x="557.196" y="281.031">
+  <object id="50" name="32" x="573.62" y="281.031">
    <point/>
   </object>
-  <object id="51" name="33" x="558.413" y="407.556">
+  <object id="51" name="33" x="558.413" y="395.39">
    <point/>
   </object>
-  <object id="52" name="34" x="465.344" y="413.639">
+  <object id="52" name="34" x="474.468" y="413.031">
    <point/>
   </object>
-  <object id="53" name="35" x="458.044" y="379.575">
+  <object id="53" name="35" x="435.538" y="380.183">
    <point/>
   </object>
  </objectgroup>
