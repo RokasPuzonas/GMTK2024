@@ -325,7 +325,10 @@ internal class Program
         var loadingAnimation = 0f;
         var mainmenu = true;
         var transitionToLevel1 = false;
+        float audioVolume = 0.6f;
         var ui = new UI();
+
+        Raylib.SetMasterVolume(audioVolume);
 
         Raylib.PlayMusicStream(music);
         while (!Raylib.WindowShouldClose() && running) 
@@ -377,6 +380,13 @@ internal class Program
                 if (ui.ShowButton(Utils.GetCenteredRect(center + new Vector2(0, 50), new(100, 20)), "Play"))
                 {
                     transitionToLevel1 = true;
+                }
+
+                
+                Utils.DrawTextVerticallyCentered(font, "Audio", center + new Vector2(-60, 200), 16, 3, Raylib.WHITE);
+                if (ui.ShowSlider(0, ref audioVolume, center + new Vector2(0, 200), 100))
+                {
+                    Raylib.SetMasterVolume(audioVolume);
                 }
 
                 ui.End();
