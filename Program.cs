@@ -93,6 +93,8 @@ internal class Program
     public static Texture heart;
     public static byte[] musicBytes;
     public static Music music;
+    public static Sound bigGunDrop;
+    public static Sound smallGunDrop;
 
     public static List<Texture> signPlaque;
     public static Texture signLeftChain;
@@ -311,10 +313,13 @@ internal class Program
                 }
             }
             Raylib.SetMusicVolume(music, 0.5f);
+
+            smallGunDrop = assets.LoadSound("small_gun_drop.wav");
+            bigGunDrop = assets.LoadSound("big_gun_drop.wav");
         }
 
         var currentLevel = 1;
-        var level = CreateLevel1();
+        var level = GetLevel(currentLevel);
 
         var playSceneTransition = false;
         var loadingAnimation = 0f;
@@ -417,33 +422,19 @@ internal class Program
                 new() { delay = 0.5f, type = EnemyType.Slime },
                 new() { delay = 0.5f, type = EnemyType.Slime },
                 new() { delay = 0.5f, type = EnemyType.Slime },
-            ]),
-            new([
-                new() { delay = 0.1f, type = EnemyType.BigSlime },
-            ]),
-            new([
-                new() { delay = 0.25f, type = EnemyType.SmallSlime },
-                new() { delay = 0.25f, type = EnemyType.SmallSlime },
-                new() { delay = 0.25f, type = EnemyType.SmallSlime },
-                new() { delay = 0.25f, type = EnemyType.SmallSlime },
-                new() { delay = 0.25f, type = EnemyType.SmallSlime },
-                new() { delay = 0.25f, type = EnemyType.SmallSlime },
-            ]),
-            new([
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
-                new() { delay = 0.5f, type = EnemyType.Slime },
             ])
         };
 
+        var startDialog = new List<DialogItem> {
+            new(PersonName.Private, "Start"),
+        };
+
+        var endDialog = new List<DialogItem> {
+            new(PersonName.Private, "end"),
+        };
+
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
-        return new Level(1, tilemap, waves, false, false, level1StartingGold);
+        return new Level(1, tilemap, waves, false, false, level1StartingGold, startDialog, endDialog);
     }
 
     public static Level CreateLevel2()
@@ -458,8 +449,16 @@ internal class Program
             ]),
         };
 
+        var startDialog = new List<DialogItem> {
+            new(PersonName.Private, "Start"),
+        };
+
+        var endDialog = new List<DialogItem> {
+            new(PersonName.Private, "end"),
+        };
+
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
-        return new Level(2, tilemap, waves, false, true, level2StartingGold);
+        return new Level(2, tilemap, waves, false, true, level2StartingGold, startDialog, endDialog);
     }
 
     public static Level CreateLevel3()
@@ -474,7 +473,15 @@ internal class Program
             ]),
         };
 
+        var startDialog = new List<DialogItem> {
+            new(PersonName.Private, "Start"),
+        };
+
+        var endDialog = new List<DialogItem> {
+            new(PersonName.Private, "end"),
+        };
+
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
-        return new Level(3, tilemap, waves, true, true, level3StartingGold);
+        return new Level(3, tilemap, waves, true, true, level3StartingGold, startDialog, endDialog);
     }
 }

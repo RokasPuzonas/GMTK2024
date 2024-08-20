@@ -63,8 +63,10 @@ internal class Level
     bool canMergeTowers = false;
 
     DialogSystem dialogSystem = new DialogSystem();
-    
-    public Level(int dayNumber, RaylibTilemap tilemap, List<EnemyWave> waves, bool canChangeTower, bool canMergeTowers, int gold)
+    List<DialogItem> startDialog;
+    List<DialogItem> endDialog;
+
+    public Level(int dayNumber, RaylibTilemap tilemap, List<EnemyWave> waves, bool canChangeTower, bool canMergeTowers, int gold, List<DialogItem> startDialog, List<DialogItem> endDialog)
     {
         this.canChangeTower = canChangeTower;
         this.canMergeTowers = canMergeTowers;
@@ -72,6 +74,8 @@ internal class Level
         this.tilemap = tilemap;
         this.waves = waves;
         this.gold = gold;
+        this.startDialog = startDialog;
+        this.endDialog = endDialog;
 
         var baseMarker = GetMarker("base");
         basePosition = new Vector2(baseMarker.x, baseMarker.y);
@@ -109,7 +113,8 @@ internal class Level
         enemyPath.Add(basePosition);
 
         DropSign();
-        dialogSystem.Play(Program.dialog1);
+
+        dialogSystem.Play(this.startDialog);
     }
 
     public void DropSign()
@@ -423,6 +428,7 @@ internal class Level
 
             var aim = rng.NextSingle() * 2 * (float)Math.PI;
             towers.Add(Tower.Create(biggerTowerType, topLeft, size, aim));
+            Raylib.PlaySoundMulti(Program.bigGunDrop);
         }
     }
 
@@ -927,7 +933,10 @@ internal class Level
             Utils.DrawTextCentered(font, "Paused", canvasSize/2, 32, 3, Raylib.WHITE);
 
         } else if (dialogSystem.PlayingDialog()) {
-            dialogSystem.Show();
+            if (!dialogSystem.Show() && dayNumber < 3 && won)
+            {
+                Program.gotoNextLevel = true;
+            }
         } else
         {
             if (Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE))
@@ -935,33 +944,23 @@ internal class Level
                 paused = true;
             }
 
-            if (won)
+            if (won && dayNumber == 3)
             {
                 var center = canvasSize / 2;
                 Utils.DrawTextCentered(font, "You win!", center, 50, 5, Raylib.GREEN);
 
-                if (dayNumber < 3)
+            
+                if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Quit"))
                 {
-                    if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Continue"))
-                    {
-                        Program.gotoNextLevel = true;
-                    }
+                    Program.running = false;
                 }
-                else
-                {
-                    if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Exit"))
-                    {
-                        Program.running = false;
-                    }
-                }
-
             }
             else if (lost)
             {
                 var center = canvasSize / 2;
                 Utils.DrawTextCentered(font, "You lost!", center, 50, 5, Raylib.RED);
 
-                if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Exit"))
+                if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Quit"))
                 {
                     Program.running = false;
                 }
@@ -981,12 +980,12 @@ internal class Level
 
                 if (canChangeTower)
                 {
-                    if (ui.ShowImageToggleButton(selectedTower == TowerType.Revolver, new Vector2(900, 480), Program.revolverButtonNormal, Program.revolverButtonHover, Program.revolverButtonActive))
+                    if (ui.ShowImageToggleButton(selectedTower == TowerType.Revolver, new Vector2(canvasSize.X - 70, canvasSize.Y - 60), Program.revolverButtonNormal, Program.revolverButtonHover, Program.revolverButtonActive))
                     {
                         selectedTower = TowerType.Revolver;
                     }
 
-                    if (ui.ShowImageToggleButton(selectedTower == TowerType.Mortar, new Vector2(900, 380), Program.mortarButtonNormal, Program.mortarButtonHover, Program.mortarButtonActive))
+                    if (ui.ShowImageToggleButton(selectedTower == TowerType.Mortar, new Vector2(canvasSize.X - 70, canvasSize.Y - 160), Program.mortarButtonNormal, Program.mortarButtonHover, Program.mortarButtonActive))
                     {
                         selectedTower = TowerType.Mortar;
                     }
@@ -1050,6 +1049,7 @@ internal class Level
                         );
                         towers.Add(tower);
 
+                        Raylib.PlaySoundMulti(Program.smallGunDrop);
                         CreateBuiltTowerParticles(tower.Center());
 
                         if (canMergeTowers)
@@ -1347,9 +1347,15 @@ internal class Level
 
         if (currentWaveIndex == waves.Count - 1)
         {
-            if (!lost && IsWaveFinished() && enemies.Count == 0)
+            if (!won && !lost && IsWaveFinished() && enemies.Count == 0)
             {
                 won = true;
+
+                Console.WriteLine(endDialog);
+                if (endDialog != null)
+                {
+                    dialogSystem.Play(endDialog);
+                }
             }
         }
         else
