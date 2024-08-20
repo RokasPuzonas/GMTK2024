@@ -68,11 +68,11 @@ internal class DialogSystem
         privateFace.Update(dt);
 
         var dialogBoxSize = new Vector2(400, 100);
-        var hansDialogBox = new Rectangle(230, 400, dialogBoxSize.X, dialogBoxSize.Y);
-        var privateDialogBox = new Rectangle(Program.canvasSize.X - dialogBoxSize.X - 250, 400, dialogBoxSize.X, dialogBoxSize.Y);
+        var hansDialogBox = new Rectangle(240, Program.canvasSize.Y - 160, dialogBoxSize.X, dialogBoxSize.Y);
+        var privateDialogBox = new Rectangle(Program.canvasSize.X - dialogBoxSize.X - 250, Program.canvasSize.Y - 160, dialogBoxSize.X, dialogBoxSize.Y);
 
-        var hansPosition = new Vector2(120, 400);
-        var privatePosition = new Vector2(820, 420);
+        var hansPosition = new Vector2(120, Program.canvasSize.Y - 140);
+        var privatePosition = new Vector2(Program.canvasSize.X - 130, Program.canvasSize.Y - 120);
 
         Rectangle dialogBox;
         AvatarFace activeFace;
@@ -97,13 +97,13 @@ internal class DialogSystem
             otherPosition = hansPosition;
         }
 
-        Raylib.DrawCircleV(new Vector2(Program.canvasSize.X/2, 400), 200, Raylib.ColorAlpha(Raylib.BLACK, 0.7f));
-        Raylib.DrawCircleV(new Vector2(Program.canvasSize.X/2, 400), 400, Raylib.ColorAlpha(Raylib.BLACK, 0.7f));
-        Raylib.DrawCircleV(new Vector2(Program.canvasSize.X/2, 400), 600, Raylib.ColorAlpha(Raylib.BLACK, 0.7f));
-        Raylib.DrawCircleV(new Vector2(Program.canvasSize.X/2, 400), 800, Raylib.ColorAlpha(Raylib.BLACK, 0.7f));
+        Raylib.DrawCircleV(new Vector2(Program.canvasSize.X/2, 500), 200, Raylib.ColorAlpha(Raylib.BLACK, 0.7f));
+        Raylib.DrawCircleV(new Vector2(Program.canvasSize.X/2, 500), 400, Raylib.ColorAlpha(Raylib.BLACK, 0.7f));
+        Raylib.DrawCircleV(new Vector2(Program.canvasSize.X/2, 500), 600, Raylib.ColorAlpha(Raylib.BLACK, 0.7f));
+        Raylib.DrawCircleV(new Vector2(Program.canvasSize.X/2, 500), 800, Raylib.ColorAlpha(Raylib.BLACK, 0.7f));
         
         Raylib.DrawRectangleRounded(dialogBox, 0.2f, 8, Raylib.ColorAlpha(Raylib.BLACK, 0.8f));
-        DrawTextInRect(Program.font, dialog.text.Substring(0, textLength), Utils.ShrinkRect(dialogBox, 10), 32, 1, Raylib.WHITE);
+        DrawTextInRect(Program.font, dialog.text.Substring(0, textLength), Utils.ShrinkRect(dialogBox, 24), 24, 1, Raylib.WHITE);
 
         dialogTimer += dt;
         while (dialogTimer > 1f / textSpeed)

@@ -912,6 +912,7 @@ internal class Level
     {
         var canvasSize = Program.canvasSize;
         var dt = Raylib.GetFrameTime();
+        var font = Program.font;
 
         ui.Begin(GetOnscreenArea(), canvasSize);
 
@@ -923,7 +924,7 @@ internal class Level
             }
 
             Raylib.DrawRectangleV(Vector2.Zero, canvasSize, Raylib.ColorAlpha(Raylib.BLACK, 0.75f));
-            Utils.DrawTextCentered(Program.font, "Paused", canvasSize/2, 32, 3, Raylib.WHITE);
+            Utils.DrawTextCentered(font, "Paused", canvasSize/2, 32, 3, Raylib.WHITE);
 
         } else if (dialogSystem.PlayingDialog()) {
             dialogSystem.Show();
@@ -937,18 +938,27 @@ internal class Level
             if (won)
             {
                 var center = canvasSize / 2;
-                var font = Raylib.GetFontDefault();
                 Utils.DrawTextCentered(font, "You win!", center, 50, 5, Raylib.GREEN);
 
-                if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Exit"))
+                if (dayNumber < 3)
                 {
-                    Program.running = false;
+                    if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Continue"))
+                    {
+                        Program.gotoNextLevel = true;
+                    }
                 }
+                else
+                {
+                    if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Exit"))
+                    {
+                        Program.running = false;
+                    }
+                }
+
             }
             else if (lost)
             {
                 var center = canvasSize / 2;
-                var font = Raylib.GetFontDefault();
                 Utils.DrawTextCentered(font, "You lost!", center, 50, 5, Raylib.RED);
 
                 if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Exit"))
@@ -958,16 +968,16 @@ internal class Level
             }
             else
             {
-                var font = Raylib.GetFontDefault();
+                var anchor = new Vector2(900, 30);
 
-                Utils.DrawTextureCentered(Program.heart, new Vector2(850, 30), 0, 0.75f, Raylib.WHITE);
-                Utils.DrawTextVerticallyCentered(font, $"{health}/{maxHealth}", new Vector2(870, 30), 20, 3, Raylib.RED);
+                Utils.DrawTextureCentered(Program.heart, anchor, 0, 0.75f, Raylib.WHITE);
+                Utils.DrawTextVerticallyCentered(font, $"{health}/{maxHealth}", anchor + new Vector2(20, 2.5f), 20, 3, Raylib.RED);
 
-                Utils.DrawTextureCentered(Program.coin, new Vector2(850, 60), 0, 0.75f, Raylib.WHITE);
-                Utils.DrawTextVerticallyCentered(font, $"{gold}", new Vector2(870, 60), 20, 3, Raylib.GOLD);
+                Utils.DrawTextureCentered(Program.coin, anchor + new Vector2(0, 30), 0, 0.75f, Raylib.WHITE);
+                Utils.DrawTextVerticallyCentered(font, $"{gold}", anchor + new Vector2(20, 32.5f), 20, 3, Raylib.GOLD);
 
-                Utils.DrawTextVerticallyCentered(font, $"Wave", new Vector2(810, 90), 20, 1, Raylib.WHITE);
-                Utils.DrawTextVerticallyCentered(font, $"{currentWaveIndex + 1}/{waves.Count}", new Vector2(870, 90), 20, 1, Raylib.WHITE);
+                Utils.DrawTextVerticallyCentered(font, $"Wave", anchor + new Vector2(-40, 60), 20, 1, Raylib.WHITE);
+                Utils.DrawTextVerticallyCentered(font, $"{currentWaveIndex + 1}/{waves.Count}", anchor + new Vector2(20, 60), 20, 1, Raylib.WHITE);
 
                 if (canChangeTower)
                 {
@@ -982,7 +992,7 @@ internal class Level
                     }
                 }
 
-                if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ui.ShowButton(new Rectangle(870, 110, 60, 20), "Next wave"))
+                if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ui.ShowButton(new Rectangle(anchor.X + 20, anchor.Y + 80, 80, 20), "Next wave"))
                 {
                     currentWaveIndex++;
                 }
@@ -1478,7 +1488,7 @@ internal class Level
                     {
                         Utils.DrawTextureCentered(texture.Value, bullet.smear[i].position, rotation, bullet.smear[i].scale, Raylib.ColorAlpha(Raylib.WHITE, (i + 0.5f) / bullet.smear.Count));
                     }
-                    Utils.DrawTextureCentered(texture.Value, bullet.position, rotation, scale, Raylib.WHITE);
+                    Utils.DrawTextureCentered(texture.Value, bullet.position, rotation, scale, Raylib.WHITE);   
 
                     AppendSmearSnapshot(bullet.smear, bullet.smearLength, bullet.position, scale);
                 }

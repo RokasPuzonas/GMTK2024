@@ -9,22 +9,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="assets\*.aseprite">
+    <EmbeddedResource Include="assets\**\*.aseprite">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="assets\*.tsx">
+    <EmbeddedResource Include="assets\**\*.tsx">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="assets\*.tmx">
+    <EmbeddedResource Include="assets\**\*.tmx">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="assets\*.png">
+    <EmbeddedResource Include="assets\**\*.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="assets\**\*.wav">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="assets\*.otf">
+    <EmbeddedResource Include="assets\**\*.otf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="assets\**\*.ttf">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
