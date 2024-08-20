@@ -5,7 +5,7 @@ namespace GMTK2024;
 
 internal class Program
 {
-    public static bool debugSkipLevel = false; // Press T
+    public static bool debugSkipLevel = true; // Press T
 
     public static bool running = true;
     public static bool gotoNextLevel = false;
