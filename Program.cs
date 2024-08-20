@@ -7,7 +7,10 @@ namespace GMTK2024;
 
 internal class Program
 {
+    public static bool debugSkipLevel = false; // Press T
+
     public static bool running = true;
+    public static bool gotoNextLevel = false;
 
     public static float tileSize = 32;
     public static Vector2 canvasSize = new Vector2(320 * 3, 180 * 3);
@@ -312,12 +315,15 @@ internal class Program
             Raylib.SetMusicVolume(music, 0.5f);
         }
 
-        var currentLevel = CreateLevel1();
+        var currentLevel = 1;
+        var level = CreateLevel1();
 
+        var playSceneTransition = false;
         var loadingAnimation = 0f;
         var mainmenu = true;
+        var transitionToLevel1 = false;
         var ui = new UI();
-        
+
         Raylib.PlayMusicStream(music);
         while (!Raylib.WindowShouldClose() && running) 
         {
@@ -325,7 +331,33 @@ internal class Program
 
             var dt = Raylib.GetFrameTime();
 
-            // loadingAnimation = (float)Math.Clamp(loadingAnimation + dt, 0, 1);
+            if (transitionToLevel1 || gotoNextLevel)
+            {
+                playSceneTransition = true;
+            }
+
+            float loadingDirection = playSceneTransition ? 1 : -1;
+            loadingAnimation = (float)Math.Clamp(loadingAnimation + dt * loadingDirection, 0, 1);
+            if (loadingAnimation == 1)
+            {
+                playSceneTransition = false;
+                if (transitionToLevel1)
+                {
+                    mainmenu = false;
+                }
+                else if (gotoNextLevel)
+                {
+                    currentLevel += 1;
+                    level = GetLevel(currentLevel);
+                }
+                transitionToLevel1 = false;
+                gotoNextLevel = false;
+            }
+
+            if (debugSkipLevel && Raylib.IsKeyPressed(KeyboardKey.KEY_T))
+            {
+                gotoNextLevel = true;
+            }
 
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Raylib.GetColor(0x232323ff));
@@ -334,35 +366,48 @@ internal class Program
 
             if (mainmenu)
             {
-                {
-                    ui.Begin(Utils.GetMaxRectInContainer(screenSize, canvasSize), canvasSize);
+                ui.Begin(Utils.GetMaxRectInContainer(screenSize, canvasSize), canvasSize);
 
-                    var center = canvasSize / 2;
-                    Utils.DrawTextCentered(font, "GMTK2024", center, 32, 1, Raylib.WHITE);
+                var center = canvasSize / 2;
+                Utils.DrawTextCentered(font, "GMTK2024", center, 32, 1, Raylib.WHITE);
                 
-                    if (ui.ShowButton(Utils.GetCenteredRect(center + new Vector2(0, 50), new(100, 20)), "Play"))
-                    {
-                        mainmenu = false;
-                    }
-
-                    ui.End();
+                if (ui.ShowButton(Utils.GetCenteredRect(center + new Vector2(0, 50), new(100, 20)), "Play"))
+                {
+                    transitionToLevel1 = true;
                 }
 
+                ui.End();
                 ui.Draw();
             } else
             {
-                currentLevel.Update(dt);
-
-                currentLevel.Draw();
+                level.Update(dt);
+                level.Draw();
             }
 
-            Raylib.DrawCircleV(screenSize/2, (screenSize/2).Length() * loadingAnimation, Raylib.GetColor(0x121212ff));
+            Raylib.DrawCircleV(screenSize/2, (screenSize/2).Length() * loadingAnimation * 1.1f, Raylib.GetColor(0x121212ff));
 
             Raylib.EndDrawing();
         }
 
         Raylib.CloseAudioDevice();
         Raylib.CloseWindow();
+    }
+
+    public static Level GetLevel(int level)
+    {
+        if (level == 1)
+        {
+            return CreateLevel1();
+        } else if (level == 2)
+        {
+            return CreateLevel2();
+        } else if (level == 3)
+        {
+            return CreateLevel3();
+        } else
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public static Level CreateLevel1()
@@ -407,6 +452,12 @@ internal class Program
     {
         var waves = new List<EnemyWave>
         {
+            new([
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+            ]),
         };
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));
@@ -417,6 +468,12 @@ internal class Program
     {
         var waves = new List<EnemyWave>
         {
+            new([
+                new() { delay = 0.1f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+                new() { delay = 0.5f, type = EnemyType.Slime },
+            ]),
         };
 
         var tilemap = new RaylibTilemap(tilesets, assets.LoadStream("level1.tmx"));

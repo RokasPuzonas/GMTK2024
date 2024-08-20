@@ -940,10 +940,21 @@ internal class Level
                 var font = Raylib.GetFontDefault();
                 Utils.DrawTextCentered(font, "You win!", center, 50, 5, Raylib.GREEN);
 
-                if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Exit"))
+                if (dayNumber < 3)
                 {
-                    Program.running = false;
+                    if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Continue"))
+                    {
+                        Program.gotoNextLevel = true;
+                    }
                 }
+                else
+                {
+                    if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Exit"))
+                    {
+                        Program.running = false;
+                    }
+                }
+
             }
             else if (lost)
             {
@@ -1478,7 +1489,7 @@ internal class Level
                     {
                         Utils.DrawTextureCentered(texture.Value, bullet.smear[i].position, rotation, bullet.smear[i].scale, Raylib.ColorAlpha(Raylib.WHITE, (i + 0.5f) / bullet.smear.Count));
                     }
-                    Utils.DrawTextureCentered(texture.Value, bullet.position, rotation, scale, Raylib.WHITE);
+                    Utils.DrawTextureCentered(texture.Value, bullet.position, rotation, scale, Raylib.WHITE);   
 
                     AppendSmearSnapshot(bullet.smear, bullet.smearLength, bullet.position, scale);
                 }
