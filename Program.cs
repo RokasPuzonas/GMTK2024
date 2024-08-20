@@ -107,6 +107,7 @@ internal class Program
     public static Rectangle waveSignTextBounds;
     public static Rectangle nextWaveSignTextBounds;
     public static Rectangle totalWaveSignTextBounds;
+    public static Texture levelOverlay;
 
     public static List<Texture> mainMenuBackground;
     public static Rectangle mainMenuSlider;
@@ -354,6 +355,8 @@ internal class Program
             };
             mainMenuStartButton = Utils.GetSliceBounds(menuAse, "start button");
             mainMenuSlider = Utils.GetSliceBounds(menuAse, "slider");
+
+            levelOverlay = assets.LoadAsepriteTexture("game border.aseprite");
         }
 
         var currentLevel = 1;
@@ -405,7 +408,7 @@ internal class Program
 
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Raylib.GetColor(0x232323ff));
-
+            
             var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
 
             if (mainmenu)
@@ -446,6 +449,7 @@ internal class Program
                 level.Update(dt);
                 level.Draw();
             }
+
 
             Raylib.DrawCircleV(screenSize/2, (screenSize/2).Length() * loadingAnimation * 1.1f, Raylib.GetColor(0x121212ff));
 

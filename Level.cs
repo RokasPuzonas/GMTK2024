@@ -931,6 +931,8 @@ internal class Level
 
         ui.Begin(GetOnscreenArea(), canvasSize);
 
+        Raylib.DrawTextureEx(Program.levelOverlay, Vector2.Zero, 0, 1, Raylib.WHITE);
+
         if (paused)
         {
             if (Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE))
@@ -1409,6 +1411,7 @@ internal class Level
     public void Draw()
     {
         var tileSize = Program.tileSize;
+            
 
         Raylib.BeginMode2D(camera);
         {
@@ -1416,7 +1419,7 @@ internal class Level
 
             Utils.DrawTextureCentered(Program.enemySpawner, enemySpawn, enemySpawnRotation, 1, Raylib.WHITE);
             Program.homeCrystal.DrawCentered(homeCrystalAnimation.frame, basePosition, homeCrystalRotation, 1, Raylib.WHITE);
-
+            
             if (debugGrid)
             {
                 DrawGrid(GetScreenRectInWorld(camera), tileSize, Raylib.WHITE);
