@@ -500,25 +500,27 @@ internal class Level
         Program.towerPlatformFoliage.DrawRectangle(towerRect, Raylib.WHITE);
     }
 
-    public void DrawTowerTop(Tower tower)
+    public void DrawTowerTop(Tower tower, Color? tint = null)
     {
+        var tintColor = tint ?? Raylib.WHITE;
+
         var middle = tower.position + tower.size / 2;
 
         var aim = tower.aim + (float)Math.PI / 2;
         var aimDegress = Utils.ToDegrees(aim);
         if (tower.type == TowerType.Revolver)
         {
-            Program.revolver.DrawCentered(tower.animation, middle + tower.recoil, aimDegress, 1, Raylib.WHITE);
+            Program.revolver.DrawCentered(tower.animation, middle + tower.recoil, aimDegress, 1, tintColor);
         }
         else if (tower.type == TowerType.BigRevolver)
         {
-            Program.bigRevolverUnderbelly.DrawCentered(tower.animation, middle, aimDegress, 1, Raylib.WHITE);
-            Program.bigRevolverLeftAmmo.DrawCentered(tower.leftGunAnimation, middle, aimDegress, 1, Raylib.WHITE);
-            Program.bigRevolverRightAmmo.DrawCentered(tower.rightGunAnimation, middle, aimDegress, 1, Raylib.WHITE);
-            Program.bigRevolverAmmoRack.DrawCentered(tower.animation, middle, aimDegress, 1, Raylib.WHITE);
+            Program.bigRevolverUnderbelly.DrawCentered(tower.animation, middle, aimDegress, 1, tintColor);
+            Program.bigRevolverLeftAmmo.DrawCentered(tower.leftGunAnimation, middle, aimDegress, 1, tintColor);
+            Program.bigRevolverRightAmmo.DrawCentered(tower.rightGunAnimation, middle, aimDegress, 1, tintColor);
+            Program.bigRevolverAmmoRack.DrawCentered(tower.animation, middle, aimDegress, 1, tintColor);
 
-            Program.bigRevolverRightGun.Draw(tower.rightGunAnimation, tower.GetRightGunCenter() + tower.rightRecoil, Program.bigRevolverRightPivot, Utils.ToDegrees(aim + tower.rightAim), 1, Raylib.WHITE);
-            Program.bigRevolverLeftGun.Draw(tower.leftGunAnimation, tower.GetLeftGunCenter() + tower.leftRecoil, Program.bigRevolverLeftPivot, Utils.ToDegrees(aim + tower.leftAim), 1, Raylib.WHITE);
+            Program.bigRevolverRightGun.Draw(tower.rightGunAnimation, tower.GetRightGunCenter() + tower.rightRecoil, Program.bigRevolverRightPivot, Utils.ToDegrees(aim + tower.rightAim), 1, tintColor);
+            Program.bigRevolverLeftGun.Draw(tower.leftGunAnimation, tower.GetLeftGunCenter() + tower.leftRecoil, Program.bigRevolverLeftPivot, Utils.ToDegrees(aim + tower.leftAim), 1, tintColor);
 
             if (debugTowerInfo)
             {
@@ -528,7 +530,7 @@ internal class Level
         }
         else if (tower.type == TowerType.Mortar)
         {
-            Program.mortarReload.Draw(tower.animation, middle + tower.recoil, Program.mortarPivot, aimDegress, 1, Raylib.WHITE);
+            Program.mortarReload.Draw(tower.animation, middle + tower.recoil, Program.mortarPivot, aimDegress, 1, tintColor);
 
             if (debugTowerInfo)
             {
@@ -947,9 +949,9 @@ internal class Level
             if (won && dayNumber == 3)
             {
                 var center = canvasSize / 2;
-                Utils.DrawTextCentered(font, "You win!", center, 50, 5, Raylib.GREEN);
+                Utils.DrawTextCentered(font, "You won!", center + new Vector2(0, -40), 50, 5, Raylib.GREEN);
+                Utils.DrawTextCentered(font, "Thanks for playing", center + new Vector2(0, 20), 50, 5, Raylib.GREEN);
 
-            
                 if (ui.ShowButton(new(center.X - 100, center.Y + 80, 200, 20), "Quit"))
                 {
                     Program.running = false;
@@ -1518,10 +1520,19 @@ internal class Level
 
             if (worldMouse != null)
             {
+                var isPlaceable = IsTowerPlaceable(worldMouse.Value);
                 var tileX = DivMultipleFloor(worldMouse.Value.X, tileSize);
                 var tileY = DivMultipleFloor(worldMouse.Value.Y, tileSize);
-                var color = IsTowerPlaceable(worldMouse.Value) ? Raylib.GREEN : Raylib.RED;
+                var color = isPlaceable ? Raylib.GREEN : Raylib.RED;
                 Raylib.DrawRectangleLinesEx(new Rectangle(tileX, tileY, tileSize, tileSize), 1, color);
+
+                if (isPlaceable)
+                {
+                    var ghostOpacity = 0.8f;
+                    var ghostTower = Tower.Create(selectedTower, new Vector2(tileX, tileY), new Vector2(tileSize, tileSize), -(float)Math.PI/2);
+                    DrawTowerBottom(ghostTower);
+                    DrawTowerTop(ghostTower, Raylib.ColorAlpha(Raylib.WHITE, ghostOpacity));
+                }
             }
 
             if (debugShowPath)
