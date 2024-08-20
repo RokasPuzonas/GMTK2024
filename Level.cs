@@ -61,10 +61,13 @@ internal class Level
     int dayNumber = 1;
     bool canChangeTower = false;
     bool canMergeTowers = false;
+    float waveSpawningDoneAt = 0;
 
     DialogSystem dialogSystem = new DialogSystem();
     List<DialogItem> startDialog;
     List<DialogItem> endDialog;
+
+    float nextWaveButtonAnimation = 0;
 
     public Level(int dayNumber, RaylibTilemap tilemap, List<EnemyWave> waves, bool canChangeTower, bool canMergeTowers, int gold, List<DialogItem> startDialog, List<DialogItem> endDialog)
     {
@@ -148,10 +151,6 @@ internal class Level
             signRightChainOffset += (signPlaqueOffset - signRightChainOffset) * 4 * dt;
 
             signTimePassed += dt;
-            if (signTimePassed > 3)
-            {
-                playSignLift = true;
-            }
         }
 
         var signPosition = position;
@@ -932,6 +931,8 @@ internal class Level
 
         ui.Begin(GetOnscreenArea(), canvasSize);
 
+        Raylib.DrawTextureEx(Program.levelOverlay, Vector2.Zero, 0, 1, Raylib.WHITE);
+
         if (paused)
         {
             if (Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE))
@@ -977,16 +978,39 @@ internal class Level
             }
             else
             {
-                var anchor = new Vector2(900, 30);
+                var anchor = new Vector2(800, -50);
+                var signScale = 1.5f;
 
-                Utils.DrawTextureCentered(Program.heart, anchor, 0, 0.75f, Raylib.WHITE);
-                Utils.DrawTextVerticallyCentered(font, $"{health}/{maxHealth}", anchor + new Vector2(20, 2.5f), 20, 3, Raylib.RED);
+                {
+                    var nextWaveOffset = new Vector2(0, -Program.nextWaveSign.height * (1 - nextWaveButtonAnimation) * signScale);
+                    Raylib.DrawTextureEx(Program.nextWaveSign, anchor + nextWaveOffset, 0, signScale, Raylib.WHITE);
 
-                Utils.DrawTextureCentered(Program.coin, anchor + new Vector2(0, 30), 0, 0.75f, Raylib.WHITE);
-                Utils.DrawTextVerticallyCentered(font, $"{gold}", anchor + new Vector2(20, 32.5f), 20, 3, Raylib.GOLD);
+                    var buttonRect = Program.nextWaveSignTextBounds;
+                    buttonRect.x *= signScale;
+                    buttonRect.y *= signScale;
+                    buttonRect.width *= signScale;
+                    buttonRect.height *= signScale;
 
-                Utils.DrawTextVerticallyCentered(font, $"Wave", anchor + new Vector2(-40, 60), 20, 1, Raylib.WHITE);
-                Utils.DrawTextVerticallyCentered(font, $"{currentWaveIndex + 1}/{waves.Count}", anchor + new Vector2(20, 60), 20, 1, Raylib.WHITE);
+                    buttonRect.x += anchor.X + nextWaveOffset.X;
+                    buttonRect.y += anchor.Y + nextWaveOffset.Y;
+
+                    var buttonResult = ui.ButtonLogic(buttonRect);
+                    if (buttonResult.pressed)
+                    {
+                        currentWaveIndex++;
+                    }
+
+                    Utils.DrawTextCentered(font, "Next wave", Utils.GetRectCenter(buttonRect), 8, 1, Raylib.WHITE);
+                }
+
+                Raylib.DrawTextureEx(Program.waveSign, anchor, 0, signScale, Raylib.WHITE);
+                Raylib.DrawTextureEx(Program.coinSign, anchor, 0, signScale, Raylib.WHITE);
+                Raylib.DrawTextureEx(Program.heartSign, anchor, 0, signScale, Raylib.WHITE);
+
+                Utils.DrawTextCentered(font, $"{health}", anchor + Utils.GetRectCenter(Program.heartSignTextBounds) * signScale, 20, 1, Raylib.WHITE);
+                Utils.DrawTextCentered(font, $"{gold}", anchor + Utils.GetRectCenter(Program.coinSignTextBounds) * signScale, 20, 1, Raylib.WHITE);
+                Utils.DrawTextCentered(font, $"{currentWaveIndex + 1}", anchor + Utils.GetRectCenter(Program.waveSignTextBounds) * signScale, 16, 1, Raylib.WHITE);
+                Utils.DrawTextCentered(font, $"{waves.Count}", anchor + Utils.GetRectCenter(Program.totalWaveSignTextBounds) * signScale, 16, 1, Raylib.WHITE);
 
                 if (canChangeTower)
                 {
@@ -999,11 +1023,6 @@ internal class Level
                     {
                         selectedTower = TowerType.Mortar;
                     }
-                }
-
-                if (IsWaveFinished() && currentWaveIndex < waves.Count - 1 && ui.ShowButton(new Rectangle(anchor.X + 20, anchor.Y + 80, 80, 20), "Next wave"))
-                {
-                    currentWaveIndex++;
                 }
 
                 ShowSign(dt, new Vector2(20, 0));
@@ -1221,6 +1240,16 @@ internal class Level
                     }
                 }
 
+                if (IsWaveFinished() && currentWaveIndex < waves.Count - 1)
+                {
+                    nextWaveButtonAnimation += dt;
+                } else
+                {
+                    nextWaveButtonAnimation -= dt;
+                }
+                nextWaveButtonAnimation = Math.Clamp(nextWaveButtonAnimation, 0, 1);
+
+
                 foreach (var enemy in enemies)
                 {
                     if (enemy.health == 0)
@@ -1382,6 +1411,7 @@ internal class Level
     public void Draw()
     {
         var tileSize = Program.tileSize;
+            
 
         Raylib.BeginMode2D(camera);
         {
@@ -1389,7 +1419,7 @@ internal class Level
 
             Utils.DrawTextureCentered(Program.enemySpawner, enemySpawn, enemySpawnRotation, 1, Raylib.WHITE);
             Program.homeCrystal.DrawCentered(homeCrystalAnimation.frame, basePosition, homeCrystalRotation, 1, Raylib.WHITE);
-
+            
             if (debugGrid)
             {
                 DrawGrid(GetScreenRectInWorld(camera), tileSize, Raylib.WHITE);

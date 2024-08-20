@@ -98,6 +98,21 @@ internal class Program
     public static Music music;
     public static Sound bigGunDrop;
     public static Sound smallGunDrop;
+    public static Texture heartSign;
+    public static Texture coinSign;
+    public static Texture waveSign;
+    public static Texture nextWaveSign;
+    public static Rectangle heartSignTextBounds;
+    public static Rectangle coinSignTextBounds;
+    public static Rectangle waveSignTextBounds;
+    public static Rectangle nextWaveSignTextBounds;
+    public static Rectangle totalWaveSignTextBounds;
+    public static Texture levelOverlay;
+
+    public static List<Texture> mainMenuBackground;
+    public static Rectangle mainMenuSlider;
+    public static Texture mainMenuSliderKnob;
+    public static Rectangle mainMenuStartButton;
 
     public static List<Texture> signPlaque;
     public static Texture signLeftChain;
@@ -190,12 +205,12 @@ internal class Program
             var towerBaseTileset = assets.LoadAseprite("grass_tower_base_tileset.aseprite");
 
             towerPlatformMain = new DualGridTileset(
-                Utils.FlattenLayerToTexture(towerBaseTileset.Frames[0], "tower_base"),
+                Utils.FlattenLayersToTexture(towerBaseTileset.Frames[0], "tower_base"),
                 new Vector2(tileSize, tileSize)
             );
 
             towerPlatformFoliage = new DualGridTileset(
-                Utils.FlattenLayerToTexture(towerBaseTileset.Frames[0], "foliage"),
+                Utils.FlattenLayersToTexture(towerBaseTileset.Frames[0], "foliage"),
                 new Vector2(tileSize, tileSize)
             );
 
@@ -276,21 +291,21 @@ internal class Program
 
             var signAse = assets.LoadAseprite("sign.aseprite");
             signPlaque = new List<Texture>();
-            signPlaque.Add(Utils.FlattenLayerToTexture(signAse.Frames[0], "sign"));
-            signPlaque.Add(Utils.FlattenLayerToTexture(signAse.Frames[1], "sign"));
-            signPlaque.Add(Utils.FlattenLayerToTexture(signAse.Frames[2], "sign"));
-            signLeftChain = Utils.FlattenLayerToTexture(signAse.Frames[0], "left chain");
-            signRightChain = Utils.FlattenLayerToTexture(signAse.Frames[0], "right chain");
+            signPlaque.Add(Utils.FlattenLayersToTexture(signAse.Frames[0], "sign"));
+            signPlaque.Add(Utils.FlattenLayersToTexture(signAse.Frames[1], "sign"));
+            signPlaque.Add(Utils.FlattenLayersToTexture(signAse.Frames[2], "sign"));
+            signLeftChain = Utils.FlattenLayersToTexture(signAse.Frames[0], "left chain");
+            signRightChain = Utils.FlattenLayersToTexture(signAse.Frames[0], "right chain");
 
             var hansAse = assets.LoadAseprite("hans.aseprite");
-            hansFace  = Utils.FlattenLayerToTexture(hansAse.Frames[0], "face");
-            hansHat   = Utils.FlattenLayerToTexture(hansAse.Frames[0], "hat");
+            hansFace  = Utils.FlattenLayersToTexture(hansAse.Frames[0], "face");
+            hansHat   = Utils.FlattenLayersToTexture(hansAse.Frames[0], "hat");
             hansMouth = Utils.FlattenLayerToAnimation(hansAse, "mouth");
             hansMouthPivot = Utils.GetSlicePivot(hansAse, "mouth");
 
             var privateAse = assets.LoadAseprite("private.aseprite");
-            privateFace = Utils.FlattenLayerToTexture(privateAse.Frames[0], "face");
-            privateHat = Utils.FlattenLayerToTexture(privateAse.Frames[0], "helm");
+            privateFace = Utils.FlattenLayersToTexture(privateAse.Frames[0], "face");
+            privateHat = Utils.FlattenLayersToTexture(privateAse.Frames[0], "helm");
             privateMouth = Utils.FlattenLayerToAnimation(privateAse, "mouth");
             privateMouthPivot = Utils.GetSlicePivot(privateAse, "mouth");
 
@@ -320,6 +335,28 @@ internal class Program
 
             smallGunDrop = assets.LoadSound("small_gun_drop.wav");
             bigGunDrop = assets.LoadSound("big_gun_drop.wav");
+
+            var gameInfoAse = assets.LoadAseprite("game info.aseprite");
+            heartSign    = Utils.FlattenLayersToTexture(gameInfoAse.Frames[0], "heart sign", "heart chain");
+            coinSign     = Utils.FlattenLayersToTexture(gameInfoAse.Frames[0], "coin sign", "coin chain");
+            waveSign     = Utils.FlattenLayersToTexture(gameInfoAse.Frames[0], "wave sign", "wave chain");
+            nextWaveSign = Utils.FlattenLayersToTexture(gameInfoAse.Frames[0], "next sign", "next chain");
+            heartSignTextBounds    = Utils.GetSliceBounds(gameInfoAse, "life text");
+            coinSignTextBounds     = Utils.GetSliceBounds(gameInfoAse, "coin text");
+            waveSignTextBounds     = Utils.GetSliceBounds(gameInfoAse, "wave text");
+            totalWaveSignTextBounds = Utils.GetSliceBounds(gameInfoAse, "total wave text");
+            nextWaveSignTextBounds = Utils.GetSliceBounds(gameInfoAse, "next wave text");
+
+            var menuAse = assets.LoadAseprite("menu.aseprite");
+            mainMenuBackground = new List<Texture>
+            {
+                Utils.FlattenLayersToTexture(menuAse.Frames[0], "background"),
+                Utils.FlattenLayersToTexture(menuAse.Frames[1], "background")
+            };
+            mainMenuStartButton = Utils.GetSliceBounds(menuAse, "start button");
+            mainMenuSlider = Utils.GetSliceBounds(menuAse, "slider");
+
+            levelOverlay = assets.LoadAsepriteTexture("game border.aseprite");
         }
 
         var currentLevel = 1;
@@ -371,26 +408,39 @@ internal class Program
 
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Raylib.GetColor(0x232323ff));
-
+            
             var screenSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
 
             if (mainmenu)
             {
-                ui.Begin(Utils.GetMaxRectInContainer(screenSize, canvasSize), canvasSize);
-
-                var center = canvasSize / 2;
-                Utils.DrawTextCentered(font, "GMTK2024", center, 32, 1, Raylib.WHITE);
+                var maimMenuSize = Utils.TextureSize(mainMenuBackground[0]);
+                ui.Begin(Utils.GetMaxRectInContainer(screenSize, maimMenuSize), maimMenuSize);
                 
-                if (ui.ShowButton(Utils.GetCenteredRect(center + new Vector2(0, 50), new(100, 20)), "Play"))
+                var startButtonResult = ui.ButtonLogic(mainMenuStartButton);
+                if (startButtonResult.hover)
+                {
+                    Raylib.DrawTexture(mainMenuBackground[1], 0, 0, Raylib.WHITE);
+                }
+                else
+                {
+                    Raylib.DrawTexture(mainMenuBackground[0], 0, 0, Raylib.WHITE);
+                }
+
+                if (startButtonResult.pressed)
                 {
                     transitionToLevel1 = true;
                 }
 
-                Utils.DrawTextVerticallyCentered(font, "Audio", center + new Vector2(-60, 200), 16, 3, Raylib.WHITE);
-                if (ui.ShowSlider(0, ref audioVolume, center + new Vector2(0, 200), 100))
+                var knobSize = 1;
+                if (ui.SliderLogic(0, ref audioVolume, new Vector2(mainMenuSlider.x, mainMenuSlider.y + mainMenuSlider.height / 2), mainMenuSlider.width, knobSize))
                 {
                     Raylib.SetMasterVolume(audioVolume);
                 }
+                Raylib.DrawRectangleV(
+                    new Vector2(mainMenuSlider.x - knobSize + mainMenuSlider.width * audioVolume, mainMenuSlider.y + mainMenuSlider.height / 2 - knobSize),
+                    new Vector2(2* knobSize, 2* knobSize),
+                    Raylib.BLACK
+                );
 
                 ui.End();
                 ui.Draw();
@@ -399,6 +449,7 @@ internal class Program
                 level.Update(dt);
                 level.Draw();
             }
+
 
             Raylib.DrawCircleV(screenSize/2, (screenSize/2).Length() * loadingAnimation * 1.1f, Raylib.GetColor(0x121212ff));
 
